@@ -1,0 +1,125 @@
+<div class="page-container">
+  <header class="page-header">
+    <div>
+      <h1>Cadastro de Instituições</h1>
+      <p class="subtitle">Gerenciamento de congregações, igrejas, presbitérios, sínodos e concílio</p>
+    </div>
+    <div class="actions">
+      <a routerLink="/instituicoes/arvore" class="btn btn-secondary">🌳 Árvore Organizacional</a>
+      <a routerLink="/instituicoes/nova" class="btn btn-primary">➕ Cadastrar Instituição</a>
+    </div>
+  </header>
+
+  <div class="filter-card">
+    <div class="filter-group">
+      <input
+        type="text"
+        placeholder="Pesquisar por nome, código, CNPJ, cidade ou estado..."
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        (keyup.enter)="onSearch()"
+      />
+      
+      <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event); onSearch()">
+        <option value="">Todos os Tipos</option>
+        <option value="supremo_concilio">Supremo Concílio</option>
+        <option value="sinodo">Sínodo</option>
+        <option value="presbiterio">Presbitério</option>
+        <option value="igreja">Igreja</option>
+        <option value="congregacao">Congregação</option>
+      </select>
+
+      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); onSearch()">
+        <option value="">Todos os Status</option>
+        <option value="ativa">Ativa</option>
+        <option value="inativa">Inativa</option>
+        <option value="em_organizacao">Em Organização</option>
+      </select>
+
+      <button class="btn btn-primary" (click)="onSearch()">Buscar</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Carregando instituições...</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Instituição</th>
+            <th>Código</th>
+            <th>Tipo</th>
+            <th>Instituição Superior</th>
+            <th>Cidade/UF</th>
+            <th>CNPJ</th>
+            <th>Status</th>
+            <th class="text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of institutions(); track item.id) {
+            <tr>
+              <td>
+                <div class="inst-name">
+                  <a [routerLink]="['/instituicoes', item.id]">{{ item.name }}</a>
+                  @if (item.short_name && item.short_name !== item.name) {
+                    <span class="short-code">({{ item.short_name }})</span>
+                  }
+                </div>
+              </td>
+              <td><code>{{ item.code || '—' }}</code></td>
+              <td>
+                <span class="type-tag">{{ getTypeLabel(item.type) }}</span>
+              </td>
+              <td>
+                @if (item.parent) {
+                  <a [routerLink]="['/instituicoes', item.parent.id]" class="parent-link">
+                    {{ item.parent.name }}
+                  </a>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+              <td>
+                @if (item.city) {
+                  {{ item.city }}/{{ item.state }}
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+              <td>{{ item.cnpj || '—' }}</td>
+              <td>
+                <span class="status-badge" [class.ativa]="item.status === 'ativa'">
+                  {{ item.status }}
+                </span>
+              </td>
+              <td class="text-right actions-cell">
+                <a [routerLink]="['/instituicoes', item.id]" [queryParams]="{ tab: 'link_requests' }" class="btn-sm btn-link" title="Solicitar Vínculo / Aprovações">🔗</a>
+                <a [routerLink]="['/instituicoes', item.id, 'dashboard']" class="btn-sm btn-dash" title="Dashboard">📊</a>
+                <a [routerLink]="['/instituicoes', item.id]" class="btn-sm btn-edit" title="Editar">✏️</a>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="text-center py-4">Nenhuma instituição encontrada com os filtros aplicados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (meta() && meta()!.last_page > 1) {
+        <div class="pagination">
+          <span>Página {{ meta()!.current_page }} de {{ meta()!.last_page }}</span>
+          <div class="pg-buttons">
+            <button [disabled]="meta()!.current_page === 1" (click)="setPage(meta()!.current_page - 1)">Anterior</button>
+            <button [disabled]="meta()!.current_page === meta()!.last_page" (click)="setPage(meta()!.current_page + 1)">Próxima</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

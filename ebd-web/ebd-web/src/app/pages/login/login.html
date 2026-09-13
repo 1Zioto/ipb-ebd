@@ -1,0 +1,134 @@
+<div class="login-wrap">
+  <div class="card">
+    <div class="brand-logo">
+      <img src="ipb-logo.png" alt="Igreja Presbiteriana do Brasil" />
+    </div>
+    <h1 class="login-title">Escola Bíblica Dominical</h1>
+    <p class="sub">Gestão integrada da igreja</p>
+
+    <!-- Alternador Login / Cadastro -->
+    <div class="mode-toggle">
+      <button type="button" [class.active]="!isRegisterMode()" (click)="isRegisterMode() ? toggleMode() : null">
+        🔑 Entrar
+      </button>
+      <button type="button" [class.active]="isRegisterMode()" (click)="!isRegisterMode() ? toggleMode() : null">
+        ⛪ Nova Igreja
+      </button>
+    </div>
+
+    @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
+    @if (successMsg()) { <div class="alert alert-success">{{ successMsg() }}</div> }
+
+    <!-- Formulário 1: Login de Usuário -->
+    @if (!isRegisterMode()) {
+      <form (ngSubmit)="submitLogin()">
+        <div class="field">
+          <label>Usuário *</label>
+          <input type="text" [ngModel]="username()" (ngModelChange)="username.set($event)"
+                 name="username" autocomplete="username" autofocus placeholder="Digite seu usuário..." />
+        </div>
+
+        <div class="field">
+          <label>Senha *</label>
+          <input type="password" [ngModel]="password()" (ngModelChange)="password.set($event)"
+                 name="password" autocomplete="current-password" placeholder="Digite sua senha..." />
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loading() || !username().trim() || !password()">
+          {{ loading() ? 'Entrando...' : 'Entrar' }}
+        </button>
+      </form>
+    }
+
+    <!-- Formulário 2: Cadastro de Nova Igreja -->
+    @if (isRegisterMode()) {
+      <form (ngSubmit)="submitRegister()" class="register-form">
+        <div class="form-section-title">🏢 Dados da Nova Igreja</div>
+
+        <div class="field">
+          <label>Nome Oficial da Igreja *</label>
+          <input type="text" [ngModel]="churchName()" (ngModelChange)="churchName.set($event)"
+                 name="churchName" placeholder="Ex: Igreja Presbiteriana em Vila Nova" required />
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label>Sigla / Nome Curto *</label>
+            <input type="text" [ngModel]="shortName()" (ngModelChange)="shortName.set($event)"
+                   name="shortName" placeholder="Ex: IP Vila Nova" required />
+          </div>
+
+          <div class="field">
+            <label>Tipo *</label>
+            <select [ngModel]="type()" (ngModelChange)="type.set($event)" name="type">
+              <option value="igreja">Igreja</option>
+              <option value="congregacao">Congregação</option>
+              <option value="presbiterio">Presbitério</option>
+              <option value="sinodo">Sínodo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label>Cidade</label>
+            <input type="text" [ngModel]="city()" (ngModelChange)="city.set($event)"
+                   name="city" placeholder="Ex: Cariacica" />
+          </div>
+
+          <div class="field">
+            <label>Estado (UF)</label>
+            <input type="text" [ngModel]="state()" (ngModelChange)="state.set($event)"
+                   name="state" placeholder="Ex: ES" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Código da Instituição Superior (Opcional)</label>
+          <input type="text" [ngModel]="superiorCode()" (ngModelChange)="superiorCode.set($event)"
+                 name="superiorCode" placeholder="Ex: INST-8X9K2P (Se já possuir)" />
+        </div>
+
+        <div class="form-section-title mt-3">👤 Usuário Administrador (Acesso)</div>
+
+        <div class="field">
+          <label>Nome do Responsável *</label>
+          <input type="text" [ngModel]="adminName()" (ngModelChange)="adminName.set($event)"
+                 name="adminName" placeholder="Ex: João da Silva" required />
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label>Nome de Usuário (Login) *</label>
+            <input type="text" [ngModel]="adminUsername()" (ngModelChange)="adminUsername.set($event)"
+                   name="adminUsername" placeholder="Ex: joao.admin" required />
+          </div>
+
+          <div class="field">
+            <label>E-mail (Opcional)</label>
+            <input type="email" [ngModel]="adminEmail()" (ngModelChange)="adminEmail.set($event)"
+                   name="adminEmail" placeholder="admin@igreja.org" />
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label>Senha de Acesso *</label>
+            <input type="password" [ngModel]="regPassword()" (ngModelChange)="regPassword.set($event)"
+                   name="regPassword" placeholder="Mínimo 6 caracteres" required />
+          </div>
+
+          <div class="field">
+            <label>Confirmar Senha *</label>
+            <input type="password" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)"
+                   name="confirmPassword" placeholder="Repita a senha" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary mt-2" [disabled]="loading() || !churchName().trim() || !shortName().trim() || !adminUsername().trim() || !regPassword()">
+          {{ loading() ? 'Cadastrando...' : '✨ Cadastrar Igreja e Entrar' }}
+        </button>
+      </form>
+    }
+  </div>
+</div>

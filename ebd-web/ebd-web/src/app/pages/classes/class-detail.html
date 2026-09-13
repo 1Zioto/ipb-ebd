@@ -1,0 +1,149 @@
+<div class="page">
+  <a class="back" routerLink="/classes">← Classes</a>
+  <div class="head">
+    <div>
+      <h1>{{ classInfo()?.name }}</h1>
+      <span class="count">
+        @if (classInfo()?.age_range) { {{ classInfo()?.age_range }} · }
+        {{ students().length }} alunos · {{ teachers().length }} professores
+      </span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button [class.active]="tab()==='alunos'" (click)="tab.set('alunos')">Alunos</button>
+    <button [class.active]="tab()==='professores'" (click)="tab.set('professores')">Professores</button>
+    @if (canViewCalls()) {
+      <button [class.active]="tab()==='chamadas'" (click)="tab.set('chamadas')">Chamadas</button>
+    }
+  </div>
+
+  @if (error()) { <div class="alert">{{ error() }}</div> }
+
+  @if (tab() === 'alunos') {
+    @if (canEnroll()) {
+      <div class="enrollment-picker">
+        <div class="picker-toolbar">
+          <input
+            type="search"
+            placeholder="Pesquisar pessoa pelo nome..."
+            [ngModel]="studentSearch()"
+            (ngModelChange)="studentSearch.set($event)"
+          />
+          <button
+            class="btn-primary"
+            [disabled]="selectedStudentIds().size === 0 || enrolling()"
+            (click)="enrollSelected()"
+          >
+            {{ enrolling() ? 'Matriculando...' : 'Matricular selecionados (' + selectedStudentIds().size + ')' }}
+          </button>
+        </div>
+
+        <label class="select-all">
+          <input
+            type="checkbox"
+            [checked]="allVisibleSelected()"
+            (change)="toggleAllVisible($any($event.target).checked)"
+          />
+          Selecionar todas as pessoas exibidas
+        </label>
+
+        <div class="checkbox-list">
+          @for (p of availableStudents(); track p.id) {
+            <label class="person-check" [class.selected]="isStudentSelected(p.id)">
+              <input
+                type="checkbox"
+                [checked]="isStudentSelected(p.id)"
+                (change)="toggleStudent(p.id, $any($event.target).checked)"
+              />
+              <span>{{ p.full_name }}</span>
+              @if (p.age !== null) { <small>{{ p.age }} anos</small> }
+            </label>
+          } @empty {
+            <div class="picker-empty">Nenhuma pessoa disponível encontrada.</div>
+          }
+        </div>
+      </div>
+    }
+    @if (students().length === 0) { <div class="empty">Nenhum aluno matriculado.</div> }
+    @else {
+      <div class="list">
+        @for (e of students(); track e.id) {
+          <div class="row">
+            <div class="info">
+              <div class="name">{{ e.person_name }}</div>
+              <div class="meta">@if (e.age !== null && e.age !== undefined) { {{ e.age }} anos · } desde {{ e.enrolled_at }}</div>
+            </div>
+            @if (canEnroll()) { <div class="actions"><button class="btn-ghost small danger" (click)="unenroll(e)">Encerrar</button></div> }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if (tab() === 'professores') {
+    @if (canManage()) {
+      <div class="add-row">
+        <select [ngModel]="selectedTeacherId()" (ngModelChange)="selectedTeacherId.set($event)">
+          <option [ngValue]="null">Selecione um professor habilitado...</option>
+          @for (p of availableTeachers(); track p.id) { <option [ngValue]="p.id">{{ p.full_name }}</option> }
+        </select>
+        <button class="btn-primary" [disabled]="!selectedTeacherId()" (click)="addTeacher()">Adicionar</button>
+      </div>
+      <p class="hint">Apenas pessoas habilitadas como professoras (can_teach) aparecem aqui.</p>
+    }
+    @if (teachers().length === 0) { <div class="empty">Nenhum professor vinculado.</div> }
+    @else {
+      <div class="list">
+        @for (t of teachers(); track t.id) {
+          <div class="row">
+            <div class="info"><div class="name">{{ t.person_name }}</div></div>
+            @if (canManage()) { <div class="actions"><button class="btn-ghost small danger" (click)="removeTeacher(t)">Remover</button></div> }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if (tab() === 'chamadas' && canViewCalls()) {
+    <div class="calls-heading">
+      <div>
+        <h2>Chamadas da classe</h2>
+        <p>Abra a chamada do domingo ou consulte as chamadas já finalizadas.</p>
+      </div>
+      <a class="btn-ghost call-calendar" routerLink="/eventos">Ver calendário</a>
+    </div>
+
+    @if (loadingSessions()) {
+      <div class="empty">Carregando chamadas...</div>
+    } @else if (sessions().length === 0) {
+      <div class="empty call-empty">
+        <strong>Nenhuma chamada criada para esta classe.</strong>
+        <span>Crie ou abra o evento da EBD no calendário para gerar a chamada de cada classe.</span>
+        <a class="btn-primary call-empty-action" routerLink="/eventos">Abrir calendário</a>
+      </div>
+    } @else {
+      <div class="call-list">
+        @for (session of sessions(); track session.id; let first = $first) {
+          <article class="call-card" [class.current]="first && session.status !== 'finalizada'">
+            <div class="call-date">
+              <strong>{{ formatDate(session.event_date) }}</strong>
+              <span [class]="'call-status ' + session.status">{{ statusLabel(session.status) }}</span>
+            </div>
+            <div class="call-details">
+              <span>Professor: <strong>{{ session.teacher_name || 'Não definido' }}</strong></span>
+              @if (session.total > 0 || session.status === 'finalizada') {
+                <span><strong>{{ session.present }}</strong> presentes · <strong>{{ session.absent }}</strong> ausentes</span>
+              } @else {
+                <span>A chamada ainda não foi iniciada.</span>
+              }
+            </div>
+            <a class="btn-primary call-action" [routerLink]="['/chamada', session.id]">
+              {{ session.status === 'finalizada' ? 'Ver chamada' : session.status === 'em_andamento' ? 'Continuar chamada' : 'Abrir chamada' }}
+            </a>
+          </article>
+        }
+      </div>
+    }
+  }
+</div>

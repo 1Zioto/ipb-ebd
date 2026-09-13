@@ -1,0 +1,240 @@
+<div class="page-container">
+  <!-- Top Summary Header -->
+  <header class="coleta-header">
+    <div class="back-link">
+      <a routerLink="/dizimos/coletas">← Voltar às Coletas</a>
+    </div>
+    @if (coleta()) {
+      <div class="coleta-title">
+        <h2>Coleta de {{ coleta()?.date | date: 'dd/MM/yyyy' }} — {{ coleta()?.service_meeting }}</h2>
+        <span class="status-badge" [class.open]="coleta()?.status === 'Aberta'" [class.closed]="coleta()?.status === 'Fechada'">
+          Status: {{ coleta()?.status }}
+        </span>
+      </div>
+
+      <!-- Resumo Agregado -->
+      <div class="summary-cards">
+        <div class="card-metric">
+          <span class="lbl">Total Arrecadado</span>
+          <strong class="val amount">{{ coleta()?.total_amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+        </div>
+        <div class="card-metric">
+          <span class="lbl">Envelopes / Lançamentos</span>
+          <strong class="val">{{ coleta()?.entry_count }}</strong>
+        </div>
+        <div class="card-metric">
+          <span class="lbl">Não Identificados</span>
+          <strong class="val warn">{{ coleta()?.unidentified_count }}</strong>
+        </div>
+        <div class="card-metric actions">
+          @if ((coleta()?.status === 'Aberta' || coleta()?.status === 'Reaberta para correção') && auth.can('dizimos.coleta.fechar')) {
+            <button class="btn btn-danger" (click)="showCloseModal.set(true)">
+              🔒 Fechar Coleta
+            </button>
+          } @else if (coleta()?.status === 'Fechada' && auth.can('dizimos.coleta.reabrir')) {
+            <button class="btn btn-warning" (click)="showReopenModal.set(true)">
+              🔓 Reabrir Coleta
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </header>
+
+  <!-- Se a Coleta estiver aberta, exibir painel de Lançamento Rápido -->
+  @if (coleta()?.status === 'Aberta' || coleta()?.status === 'Reaberta para correção') {
+    <section class="fast-entry-section">
+      <div class="entry-box">
+        <h3>⚡ Lançamento Rápido de Envelope</h3>
+
+        <form (ngSubmit)="submitLancamento()" (keydown.enter)="$event.preventDefault(); submitLancamento()">
+          <div class="form-row">
+            <!-- Pesquisa Membro / Envelope -->
+            <div class="form-group search-group">
+              <label>1. Pesquisar Dizimista (Nome ou N° Envelope)</label>
+              <input
+                #searchInput
+                type="text"
+                [(ngModel)]="searchTerm"
+                name="searchTerm"
+                (input)="onSearchChange()"
+                class="form-input large-input"
+                placeholder="Digite o nome ou n° do envelope..."
+                [disabled]="isUnidentified"
+                autocomplete="off"
+              />
+
+              <!-- Autocomplete Popup -->
+              @if (searchLoading()) {
+                <div class="autocomplete-dropdown">
+                  <div class="autocomplete-item searching">🔍 Buscando...</div>
+                </div>
+              } @else if (filteredTithers().length > 0 && !isUnidentified) {
+                <div class="autocomplete-dropdown">
+                  @for (t of filteredTithers(); track t.id) {
+                    <div class="autocomplete-item" (click)="selectPerson(t)">
+                      <strong>{{ t.full_name }}</strong>
+                      @if (t.envelope_number) {
+                        <span class="env-tag">Env: #{{ t.envelope_number }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Opção Não Identificado -->
+            <div class="form-group check-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="isUnidentified"
+                  name="isUnidentified"
+                  (change)="searchTerm = ''; selectedPerson = null"
+                />
+                Contribuição não identificada
+              </label>
+            </div>
+
+            <!-- Valor -->
+            <div class="form-group amount-group">
+              <label>2. Valor (R$)</label>
+              <input
+                #amountInput
+                type="number"
+                step="0.01"
+                min="0.01"
+                [(ngModel)]="amount"
+                name="amount"
+                class="form-input large-input amount-field"
+                placeholder="0,00"
+              />
+            </div>
+
+            <!-- Forma de Recebimento -->
+            <div class="form-group type-group">
+              <label>Forma</label>
+              <select [(ngModel)]="contributionType" name="contributionType" class="form-input">
+                <option value="envelope">Envelope</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="pix">PIX</option>
+                <option value="transferencia">Transferência</option>
+                <option value="outros">Outros</option>
+              </select>
+            </div>
+
+            <!-- Botão Salvar -->
+            <div class="form-group btn-group">
+              <button type="submit" class="btn btn-success large-btn" [disabled]="saving()">
+                {{ saving() ? 'Salvando...' : 'Salvar (Enter)' }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+  }
+
+  <!-- Tabela de Lançamentos ou Aviso de Sigilo do Diaconato -->
+  <section class="table-section">
+    <div class="table-card">
+      <div class="card-header">
+        <h4>Histórico dos Envelopes nesta Coleta</h4>
+      </div>
+
+      @if (coleta()?.privacy_notice) {
+        <div class="privacy-banner">
+          <span>🔒 {{ coleta()?.privacy_notice }}</span>
+        </div>
+      } @else {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Membro Contribuinte</th>
+              <th>Forma</th>
+              <th>Valor (R$)</th>
+              <th>Hora do Lançamento</th>
+              <th>Operador</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lancamentos(); track l.id) {
+              <tr>
+                <td>
+                  @if (l.is_unidentified) {
+                    <span class="unidentified-tag">❓ Contribuição não identificada</span>
+                  } @else {
+                    <strong>{{ l.person?.full_name }}</strong>
+                    @if (l.person?.envelope_number) {
+                      <span class="env-subtext">(Env. #{{ l.person?.envelope_number }})</span>
+                    }
+                  }
+                </td>
+                <td>{{ l.contribution_type | uppercase }}</td>
+                <td><strong class="amount-val">{{ l.amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong></td>
+                <td>{{ l.created_at | date: 'HH:mm:ss' }}</td>
+                <td>{{ l.creator?.name || 'Operador' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty-state">
+                  Nenhum envelope lançado nesta coleta até o momento.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </section>
+
+  <!-- Modal Aviso de Duplicidade (Regra 6) -->
+  @if (showDuplicateModal()) {
+    <div class="modal-backdrop">
+      <div class="modal-card warning-modal">
+        <h3>⚠️ Aviso de Contribuição Existente</h3>
+        <p class="modal-msg">{{ duplicateMessage }}</p>
+        <p class="modal-sub">Deseja adicionar outro lançamento para esta pessoa nesta mesma coleta?</p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="cancelDuplicateModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="confirmForceLancamento()">Adicionar outro lançamento</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Fechamento -->
+  @if (showCloseModal()) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>🔒 Confirmar Fechamento da Coleta</h3>
+        <p>Ao fechar a coleta, os lançamentos normais serão bloqueados e os totais serão consolidados.</p>
+        <div class="modal-summary">
+          <div>Envelopes: <strong>{{ coleta()?.entry_count }}</strong></div>
+          <div>Total: <strong>{{ coleta()?.total_amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="showCloseModal.set(false)">Cancelar</button>
+          <button class="btn btn-danger" (click)="closeColeta()">Confirmar Fechamento</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Reabertura -->
+  @if (showReopenModal()) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>🔓 Motivo da Reabertura</h3>
+        <div class="form-group">
+          <label>Motivo da correção (obrigatório para auditoria)</label>
+          <textarea [(ngModel)]="reopenReason" class="form-input" rows="3" placeholder="Informe o motivo..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="showReopenModal.set(false)">Cancelar</button>
+          <button class="btn btn-warning" (click)="reopenColeta()" [disabled]="!reopenReason.trim()">Confirmar Reabertura</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

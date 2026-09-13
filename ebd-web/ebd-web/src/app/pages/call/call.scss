@@ -1,0 +1,61 @@
+.call { max-width: 560px; margin: 0 auto; padding-bottom: 90px; }
+.topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.back { font-size: 26px; text-decoration: none; color: var(--primary); line-height: 1; }
+.tt .cls { font-size: 22px; font-weight: 800; }
+.tt .sub { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; }
+.badge.run { background: var(--info-bg); color: var(--info-ink); }
+.badge.fin { background: var(--success-bg); color: var(--success-ink); }
+
+.counter { text-align: center; background: var(--primary-soft); border-radius: 16px; padding: 14px; margin-bottom: 16px; }
+.counter .big { font-size: 40px; font-weight: 800; color: var(--primary); line-height: 1; }
+.counter .big span { font-size: 22px; color: var(--muted); font-weight: 700; }
+.counter .lbl { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+.field { margin-bottom: 14px; }
+.field > label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+.field select { width: 100%; height: 50px; border: 1px solid var(--border); border-radius: 12px; padding: 0 14px; font-size: 16px; background: var(--surface); color: var(--text); }
+.seg { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.seg button { flex: 1; height: 46px; border: none; background: var(--surface); color: var(--text); font-weight: 700; font-size: 15px; cursor: pointer; }
+.seg button.on { background: var(--primary); color: var(--on-primary); }
+.agg { display: flex; gap: 12px; margin-top: 10px; }
+.agg .num { flex: 1; }
+.agg .num label { font-size: 12px; color: var(--muted); }
+.agg .num input { width: 100%; height: 54px; border: 1px solid var(--border); border-radius: 12px; text-align: center; font-size: 24px; font-weight: 700; background: var(--surface); color: var(--text); }
+.hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+.students { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.stud {
+  display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px;
+  background: var(--surface); border: 2px solid var(--border); border-radius: 14px; cursor: pointer; user-select: none;
+}
+.stud.present { border-color: var(--success); background: var(--success-tint); }
+.mark {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--success);
+}
+.stud.present .mark { background: var(--success); border-color: var(--success); color: var(--on-primary); }
+.nm { flex: 1; font-size: 17px; font-weight: 600; }
+.mat { display: flex; gap: 6px; }
+.chip { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); font-size: 20px; cursor: pointer; opacity: .4; }
+.chip.on { opacity: 1; border-color: var(--primary); background: var(--primary-soft); }
+
+.saved { text-align: center; color: var(--success-ink); font-size: 13px; margin-top: 12px; }
+.empty { text-align: center; color: var(--muted); padding: 30px; }
+.alert { background: var(--danger-bg); color: var(--danger-ink); padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; }
+
+.actions {
+  position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 10px; align-items: center;
+  padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); z-index: 40;
+}
+.actions .btn-ghost { flex: 1; }
+.actions .btn-primary { flex: 2; }
+.done { flex: 1; text-align: center; color: var(--success-ink); font-weight: 700; }
+.btn-primary { height: 52px; border: none; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 17px; font-weight: 800; cursor: pointer; }
+.btn-primary:disabled { opacity: .6; }
+.btn-ghost { height: 52px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-size: 16px; font-weight: 700; cursor: pointer; }
+
+/* No desktop, a barra de ações acompanha a coluna central */
+@media (min-width: 769px) {
+  .actions { left: 240px; }
+}

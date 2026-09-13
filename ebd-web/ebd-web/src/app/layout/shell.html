@@ -1,0 +1,81 @@
+<div class="shell" [class.mobile]="responsive.isMobile()">
+  <!-- Sidebar (desktop) -->
+  @if (!responsive.isMobile()) {
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><img src="ipb-logo.png" alt="Igreja Presbiteriana do Brasil" /></div>
+        <span class="brand-caption">Escola Bíblica Dominical</span>
+      </div>
+      <nav class="menu">
+        @for (item of visibleNav(); track item.path) {
+          <a [routerLink]="item.path" routerLinkActive="active">
+            <span class="ic">{{ item.icon }}</span>
+            <span class="tx">{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+      <div class="spacer"></div>
+      <button class="theme-btn" (click)="theme.toggle()">
+        <span>{{ theme.isDark() ? '☀️' : '🌙' }}</span>
+        {{ theme.isDark() ? 'Modo claro' : 'Modo escuro' }}
+      </button>
+      <div class="user-box">
+        <div class="avatar">{{ initials() }}</div>
+        <div class="ub-info">
+          <div class="uname">{{ user()?.name }}</div>
+          <div class="urole">{{ user()?.roles?.join(', ') }}</div>
+        </div>
+        <button class="icon-btn" title="Sair" (click)="logout()">⎋</button>
+      </div>
+    </aside>
+  }
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <div class="mobile-title-wrap">
+        @if (responsive.isMobile()) {
+          <button class="icon-btn menu-trigger" (click)="openMobileMenu()" aria-label="Abrir menu">☰</button>
+        }
+        <div class="title">Escola Bíblica Dominical</div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" (click)="theme.toggle()" title="Alternar tema">{{ theme.isDark() ? '☀️' : '🌙' }}</button>
+        @if (responsive.isMobile()) {
+          <button class="icon-btn" title="Sair" (click)="logout()">⎋</button>
+        }
+      </div>
+    </header>
+    <app-institution-context-banner></app-institution-context-banner>
+    <main class="content"><router-outlet /></main>
+  </div>
+
+  <!-- Menu lateral deslizante (mobile) -->
+  @if (responsive.isMobile() && mobileMenuOpen()) {
+    <button class="drawer-backdrop" aria-label="Fechar menu" (click)="closeMobileMenu()"></button>
+    <aside class="mobile-drawer">
+      <div class="drawer-head">
+        <div class="drawer-brand"><img src="ipb-logo.png" alt="Igreja Presbiteriana do Brasil" /></div>
+        <button class="icon-btn" (click)="closeMobileMenu()" aria-label="Fechar menu">×</button>
+      </div>
+      <nav class="drawer-menu">
+        @for (item of visibleNav(); track item.path) {
+          <a [routerLink]="item.path" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="ic">{{ item.icon }}</span><span>{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+      <div class="drawer-footer">
+        <div class="user-box mobile-user">
+          <div class="avatar">{{ initials() }}</div>
+          <div class="ub-info"><div class="uname">{{ user()?.name }}</div><div class="urole">{{ user()?.roles?.join(', ') }}</div></div>
+        </div>
+        <button class="drawer-action" (click)="theme.toggle()">{{ theme.isDark() ? '☀️ Modo claro' : '🌙 Modo escuro' }}</button>
+        <button class="drawer-action danger" (click)="logout()">⎋ Sair</button>
+      </div>
+    </aside>
+  }
+
+  <!-- Toast de notificações globais -->
+  <app-toast />
+</div>

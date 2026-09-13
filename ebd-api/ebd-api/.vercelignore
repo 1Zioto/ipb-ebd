@@ -1,0 +1,13 @@
+.env
+.env.*
+.git
+.github
+.vercel
+database/*.sqlite
+node_modules
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+tests
+vendor

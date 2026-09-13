@@ -1,0 +1,142 @@
+<div class="page-container">
+  <header class="page-header">
+    <div>
+      <h1>Escalas da EBD</h1>
+      <p class="subtitle">Planejamento mensal de professores e superintendência responsável</p>
+    </div>
+    <div class="header-actions">
+      @if (activeTab === 'teachers' && auth.can('schedule.manage')) {
+        <button class="btn btn-primary" (click)="openTeacherModal()">➕ Nova Escala de Professor</button>
+      }
+      @if (activeTab === 'superintendents' && auth.can('schedule.manage')) {
+        <button class="btn btn-primary" (click)="openSuperModal()">➕ Escalar Superintendente</button>
+      }
+    </div>
+  </header>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-bar">
+    <button class="tab-btn" [class.active]="activeTab === 'teachers'" (click)="activeTab = 'teachers'">
+      👨‍🏫 Escala de Professores
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'superintendents'" (click)="activeTab = 'superintendents'">
+      👔 Escala de Superintendentes
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">Carregando escalas...</div>
+  } @else {
+    <!-- Tab Professores -->
+    @if (activeTab === 'teachers') {
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data (Domingo)</th>
+              <th>Classe</th>
+              <th>Professor Escalado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of teacherSchedules(); track s.id) {
+              <tr>
+                <td><strong>{{ s.date | date: 'dd/MM/yyyy' }}</strong></td>
+                <td>{{ s.class_room?.name }}</td>
+                <td><strong class="highlight-name">{{ s.teacher?.full_name }}</strong></td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="empty-state">Nenhuma escala de professor definida para este mês.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Tab Superintendentes -->
+    @if (activeTab === 'superintendents') {
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data (Domingo)</th>
+              <th>Superintendente Escalado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of superSchedules(); track s.id) {
+              <tr>
+                <td><strong>{{ s.date | date: 'dd/MM/yyyy' }}</strong></td>
+                <td><strong class="highlight-name">{{ s.superintendent?.full_name }}</strong></td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="2" class="empty-state">Nenhuma escala de superintendente definida para este mês.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Modal Escala Professor -->
+  @if (showTeacherModal()) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Escalar Professor para Classe</h3>
+        <div class="form-group">
+          <label>Data (Domingo)</label>
+          <input type="date" [(ngModel)]="scheduleDate" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Classe</label>
+          <select [(ngModel)]="selectedClassId" class="form-input">
+            @for (c of classes(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Professor Previsto</label>
+          <select [(ngModel)]="selectedTeacherId" class="form-input">
+            @for (t of teachers(); track t.id) {
+              <option [value]="t.id">{{ t.full_name }}</option>
+            }
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="showTeacherModal.set(false)">Cancelar</button>
+          <button class="btn btn-primary" (click)="saveTeacherSchedule()">Salvar Escala</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Escala Superintendente -->
+  @if (showSuperModal()) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Escalar Superintendente do Dia</h3>
+        <div class="form-group">
+          <label>Data (Domingo)</label>
+          <input type="date" [(ngModel)]="scheduleDate" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Superintendente Responsável</label>
+          <select [(ngModel)]="selectedSuperId" class="form-input">
+            @for (s of superintendents(); track s.id) {
+              <option [value]="s.id">{{ s.full_name }}</option>
+            }
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="showSuperModal.set(false)">Cancelar</button>
+          <button class="btn btn-primary" (click)="saveSuperSchedule()">Salvar Escala</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

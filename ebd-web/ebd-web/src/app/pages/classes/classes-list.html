@@ -1,0 +1,57 @@
+<div class="page">
+  <div class="head">
+    <h1>Classes</h1>
+    @if (canManage()) { <button class="btn-primary" (click)="openCreate()">+ Nova classe</button> }
+  </div>
+
+  @if (error()) { <div class="alert">{{ error() }}</div> }
+
+  @if (loading()) { <div class="empty">Carregando...</div> }
+  @else if (classes().length === 0) { <div class="empty">Nenhuma classe cadastrada.</div> }
+  @else {
+    <div class="list">
+      @for (c of classes(); track c.id) {
+        <div class="row" [class.inactive]="!c.is_active">
+          <a class="info" [routerLink]="['/classes', c.id]">
+            <div class="name">
+              <span class="order">{{ c.display_order }}</span>
+              {{ c.name }}
+              @if (!c.is_active) { <span class="tag muted">inativa</span> }
+            </div>
+            <div class="meta">
+              @if (c.age_range) { {{ c.age_range }} · }
+              {{ c.students_count ?? 0 }} alunos · {{ c.teachers_count ?? 0 }} professores
+            </div>
+          </a>
+          @if (canManage()) {
+            <div class="actions">
+              <button class="btn-ghost small" (click)="openEdit(c)">Editar</button>
+              <button class="btn-ghost small danger" (click)="remove(c)">Inativar</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (showForm()) {
+  <div class="overlay" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ editing() ? 'Editar classe' : 'Nova classe' }}</h2>
+      <label>Nome *</label>
+      <input type="text" [ngModel]="form().name" (ngModelChange)="patch('name', $event)" />
+      <label>Faixa etária</label>
+      <input type="text" [ngModel]="form().age_range" (ngModelChange)="patch('age_range', $event)" placeholder="ex.: 15-25 anos" />
+      <label>Ordem de exibição</label>
+      <input type="number" [ngModel]="form().display_order" (ngModelChange)="patch('display_order', $event)" />
+      <label>Descrição</label>
+      <textarea rows="2" [ngModel]="form().description" (ngModelChange)="patch('description', $event)"></textarea>
+      <label class="switch"><input type="checkbox" [ngModel]="form().is_active" (ngModelChange)="patch('is_active', $event)" /> Ativa</label>
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="close()">Cancelar</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,67 @@
+<div class="page">
+  <a class="back" routerLink="/calendario">← Calendário</a>
+  <div class="head">
+    <div>
+      <h1>{{ event()?.event_date }} · {{ typeLabel(event()?.type || '') }}</h1>
+      <span class="count">{{ event()?.sessions?.length ?? 0 }} classes</span>
+    </div>
+  </div>
+
+  @if (error()) { <div class="alert">{{ error() }}</div> }
+
+  <!-- Superintendente do dia -->
+  <div class="card">
+    <div class="card-title">Superintendente do dia</div>
+    @if (canAssignSuper()) {
+      <div class="add-row">
+        <select [ngModel]="selectedSuper()" (ngModelChange)="selectedSuper.set($event)">
+          <option [ngValue]="null">— Nenhum —</option>
+          @for (p of superintendents(); track p.id) { <option [ngValue]="p.id">{{ p.full_name }}</option> }
+        </select>
+        <button class="btn-primary" (click)="saveSuper()">Salvar</button>
+      </div>
+    } @else {
+      <div>{{ event()?.superintendent_name || 'Não definido' }}</div>
+    }
+  </div>
+
+  <!-- Sessões (classes) -->
+  <div class="section-title">Classes do encontro</div>
+  <div class="list">
+    @for (s of event()?.sessions || []; track s.id) {
+      <div class="row">
+        <div class="info">
+          <div class="name">{{ s.class_name }} <span class="tag" [class]="'st-' + s.status">{{ statusLabel(s.status) }}</span></div>
+          <div class="meta">
+            @if (s.teacher_name) { Prof.: {{ s.teacher_name }} · }
+            @if (s.status_reason) { {{ s.status_reason }} }
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn-primary small" [routerLink]="['/chamada', s.id]">
+            {{ s.status === 'finalizada' ? 'Ver chamada' : 'Abrir chamada' }}
+          </a>
+          @if (canEditSession() && s.status !== 'finalizada') {
+            <button class="btn-ghost small" (click)="openStatus(s)">Status</button>
+          }
+        </div>
+      </div>
+
+      @if (statusEditing() === s.id) {
+        <div class="status-editor">
+          <select [ngModel]="statusForm().status" (ngModelChange)="patchStatus('status', $event)">
+            <option value="pendente">Pendente</option>
+            <option value="nao_realizada">Não realizada</option>
+            <option value="cancelada">Cancelada</option>
+            <option value="classe_unificada">Classe unificada</option>
+            <option value="evento_especial">Evento especial</option>
+          </select>
+          <input type="text" placeholder="Motivo (opcional)" [ngModel]="statusForm().status_reason" (ngModelChange)="patchStatus('status_reason', $event)" />
+          <button class="btn-primary small" (click)="saveStatus(s)">Aplicar</button>
+          <button class="btn-ghost small" (click)="statusEditing.set(null)">Cancelar</button>
+        </div>
+      }
+    }
+  </div>
+  <p class="hint">A chamada completa (presenças, professor do dia, materiais) entra na próxima fase. Aqui você registra quando uma classe não funcionou, sem perder o histórico.</p>
+</div>

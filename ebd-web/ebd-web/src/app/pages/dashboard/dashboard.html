@@ -1,0 +1,155 @@
+<div class="dashboard-container" [class.mobile]="responsive.isMobile()">
+  <header class="dash-header">
+    <div>
+      <h1>Escola Bíblica Dominical</h1>
+      <p class="subtitle">Painel Geral de Gestão Operacional</p>
+    </div>
+    @if (summary()?.next_event) {
+      <a [routerLink]="['/eventos', summary()?.next_event?.id]" class="btn btn-primary large-btn">
+        <span>⚡ Realizar Chamada ({{ summary()?.next_event?.event_date | date: 'dd/MM' }})</span>
+      </a>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">Carregando painel da EBD...</div>
+  } @else {
+    <!-- Main Stat Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="icon">🎓</span>
+        <div>
+          <span class="lbl">Total de Alunos</span>
+          <strong class="val">{{ summary()?.metrics?.total_students }}</strong>
+        </div>
+      </div>
+      <div class="metric-card">
+        <span class="icon">👨‍🏫</span>
+        <div>
+          <span class="lbl">Professores Habilitados</span>
+          <strong class="val">{{ summary()?.metrics?.total_teachers }}</strong>
+        </div>
+      </div>
+      <div class="metric-card">
+        <span class="icon">📚</span>
+        <div>
+          <span class="lbl">Classes Ativas</span>
+          <strong class="val">{{ summary()?.metrics?.total_classes }}</strong>
+        </div>
+      </div>
+      <div class="metric-card highlight">
+        <span class="icon">📋</span>
+        <div>
+          <span class="lbl">Chamadas Pendentes</span>
+          <strong class="val">{{ summary()?.metrics?.pending_calls }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Superintendent Monitor (Regra 30) -->
+    @if (liveMonitor()) {
+      <section class="live-monitor-section">
+        <div class="monitor-card">
+          <div class="monitor-header">
+            <div>
+              <h2>EBD — Painel em Tempo Real do Domingo ({{ liveMonitor()?.event?.event_date | date: 'dd/MM/yyyy' }})</h2>
+              <p class="sub">Superintendente Responsável: <strong>{{ liveMonitor()?.event?.superintendent || 'Não escalado' }}</strong></p>
+            </div>
+            <span class="live-badge">🔴 Ao Vivo</span>
+          </div>
+
+          <!-- Live Totals Bar -->
+          <div class="live-totals-bar">
+            <div class="total-item">
+              <span class="lbl">Presentes</span>
+              <strong class="val green">{{ liveMonitor()?.live_summary?.present }}</strong>
+            </div>
+            <div class="total-item">
+              <span class="lbl">Ausentes</span>
+              <strong class="val red">{{ liveMonitor()?.live_summary?.absent }}</strong>
+            </div>
+            <div class="total-item">
+              <span class="lbl">Bíblias</span>
+              <strong class="val blue">{{ liveMonitor()?.live_summary?.bibles }}</strong>
+            </div>
+            <div class="total-item">
+              <span class="lbl">Revistas</span>
+              <strong class="val purple">{{ liveMonitor()?.live_summary?.magazines }}</strong>
+            </div>
+          </div>
+
+          <!-- Classes Real-Time Table -->
+          <div class="sessions-list">
+            <h4>Status das Classes</h4>
+            <div class="sessions-grid">
+              @for (s of liveMonitor()?.sessions; track s.id) {
+                <div class="session-card" [ngClass]="getSessionStatusClass(s.status)">
+                  <div class="card-top">
+                    <strong>{{ s.class_name }}</strong>
+                    <span class="status-lbl">{{ s.status }}</span>
+                  </div>
+                  <div class="card-info">
+                    <span>Prof: {{ s.teacher_name || 'Não informado' }}</span>
+                  </div>
+                  @if (s.status === 'Finalizada') {
+                    <div class="card-footer">
+                      <span>Concluído {{ s.finalized_at | date: 'HH:mm' }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Birthdays & Announcements Grid -->
+    <div class="content-grid">
+      <!-- Birthdays Card -->
+      <section class="card-box birthdays-box">
+        <h3>🎉 Aniversariantes</h3>
+        
+        <!-- Aniversariantes de Hoje -->
+        <div class="bday-group today">
+          <h4 class="group-title">🎂 Aniversariantes de Hoje</h4>
+          @for (p of summary()?.birthdays_today; track p.id) {
+            <div class="bday-item today-item">
+              <span class="name"><strong>{{ p.full_name }}</strong></span>
+              <span class="bday-tag">🎂 Hoje ({{ p.age }} anos)</span>
+            </div>
+          } @empty {
+            <div class="empty-text">Nenhum aniversariante hoje.</div>
+          }
+        </div>
+
+        <!-- Aniversariantes da Semana -->
+        <div class="bday-group week">
+          <h4 class="group-title">🎈 Aniversariantes da Semana</h4>
+          @for (p of summary()?.birthdays_week; track p.id) {
+            <div class="bday-item">
+              <span class="name">{{ p.full_name }}</span>
+              <span class="date-text">Dia {{ p.birth_date | date: 'dd/MM' }}</span>
+            </div>
+          } @empty {
+            <div class="empty-text">Nenhum outro aniversariante nesta semana.</div>
+          }
+        </div>
+      </section>
+
+      <!-- Announcements Card -->
+      <section class="card-box announcements-box">
+        <h3>📢 Quadro de Avisos da EBD</h3>
+        @for (a of summary()?.announcements; track a.id) {
+          <div class="announcement-item">
+            <h4>{{ a.title }}</h4>
+            <p>{{ a.content }}</p>
+            <span class="ann-date">{{ a.created_at | date: 'dd/MM/yyyy' }}</span>
+          </div>
+        } @empty {
+          <div class="empty-text">Nenhum aviso geral no momento.</div>
+        }
+      </section>
+    </div>
+  }
+</div>

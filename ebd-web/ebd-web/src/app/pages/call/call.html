@@ -1,0 +1,82 @@
+<div class="call">
+  <div class="topbar">
+    <a class="back" [routerLink]="['/eventos', session()?.ebd_event_id]">←</a>
+    <div class="tt">
+      <div class="cls">{{ session()?.class_name }}</div>
+      <div class="sub">
+        Chamada
+        @if (isFinalized()) { <span class="badge fin">Finalizada</span> }
+        @else { <span class="badge run">Em andamento</span> }
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) { <div class="empty">Carregando...</div> }
+  @else {
+    @if (error()) { <div class="alert">{{ error() }}</div> }
+
+    <!-- contador -->
+    <div class="counter">
+      <div class="big">{{ presentCount() }}<span>/{{ records().length }}</span></div>
+      <div class="lbl">presentes</div>
+    </div>
+
+    <!-- professor do dia -->
+    <div class="field">
+      <label>Professor do dia</label>
+      <select [ngModel]="teacherId()" (ngModelChange)="teacherId.set($event)" [disabled]="readOnly()">
+        <option [ngValue]="null">— Selecionar —</option>
+        @for (t of teachers(); track t.id) { <option [ngValue]="t.person_id">{{ t.person_name }}</option> }
+      </select>
+    </div>
+
+    <!-- materiais -->
+    <div class="field">
+      <label>Bíblias e revistas</label>
+      <div class="seg">
+        <button [class.on]="materialMode()==='individual'" (click)="!readOnly() && materialMode.set('individual')">Individual</button>
+        <button [class.on]="materialMode()==='agregado'" (click)="!readOnly() && materialMode.set('agregado')">Total</button>
+      </div>
+      @if (materialMode()==='agregado') {
+        <div class="agg">
+          <div class="num"><label>Bíblias</label><input type="number" min="0" [ngModel]="biblesAgg()" (ngModelChange)="biblesAgg.set($event)" [disabled]="readOnly()" /></div>
+          <div class="num"><label>Revistas</label><input type="number" min="0" [ngModel]="magazinesAgg()" (ngModelChange)="magazinesAgg.set($event)" [disabled]="readOnly()" /></div>
+        </div>
+      } @else {
+        <div class="hint">Toque em 📖/📗 ao lado de cada aluno. Totais: {{ biblesCount() }} Bíblias · {{ magazinesCount() }} revistas.</div>
+      }
+    </div>
+
+    <!-- lista de alunos -->
+    <div class="students">
+      @for (r of records(); track r.person_id) {
+        <div class="stud" [class.present]="r.present" (click)="togglePresent(r)">
+          <div class="mark">{{ r.present ? '✓' : '' }}</div>
+          <div class="nm">{{ r.person_name }}</div>
+          @if (materialMode()==='individual' && r.present) {
+            <div class="mat">
+              <button class="chip" [class.on]="r.brought_bible" (click)="toggleBible(r, $event)">📖</button>
+              <button class="chip" [class.on]="r.brought_magazine" (click)="toggleMagazine(r, $event)">📗</button>
+            </div>
+          }
+        </div>
+      }
+      @if (records().length === 0) { <div class="empty">Nenhum aluno matriculado nesta classe.</div> }
+    </div>
+
+    @if (savedAt()) { <div class="saved">Salvo às {{ savedAt() }}</div> }
+  }
+
+  <!-- barra de ações fixa -->
+  @if (!loading()) {
+    <div class="actions">
+      @if (isFinalized()) {
+        @if (canReopen()) { <button class="btn-ghost" (click)="reopen()">Reabrir</button> }
+        <div class="done">✓ Chamada finalizada</div>
+      } @else {
+        <button class="btn-ghost" [disabled]="saving()" (click)="save()">{{ saving() ? '...' : 'Salvar' }}</button>
+        @if (canFinalize()) { <button class="btn-primary" [disabled]="saving()" (click)="finalize()">Finalizar</button> }
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,90 @@
+<div class="page-container">
+  <header class="page-header">
+    <div>
+      <h1>Configurações do Módulo de Dízimos</h1>
+      <p class="subtitle">Parâmetros das regras de alerta, privacidade e regras operacionais de coletas</p>
+    </div>
+  </header>
+
+  @if (successMsg()) {
+    <div class="alert alert-success">{{ successMsg() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading">Carregando configurações...</div>
+  } @else {
+    <div class="config-grid">
+      <!-- Card Regras de Alertas Pastoral -->
+      <div class="card-box">
+        <h3>🔔 Regras do Motor de Alertas Pastoral</h3>
+        <p class="card-desc">Parâmetros utilizados para identificar alterações significativas na contribuição dos membros</p>
+
+        <div class="form-group">
+          <label>Ativar Motor de Alertas Automáticos</label>
+          <select [(ngModel)]="settings.tithes_alerts_enabled" class="form-input">
+            <option value="true">Sim — Ativado</option>
+            <option value="false">Não — Desativado</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Quantidade mínima de meses de histórico antes de analisar</label>
+          <input type="number" min="1" max="12" [(ngModel)]="settings.tithes_min_history_months" class="form-input" />
+          <span class="help-text">Membros com menos tempo de contribuição não gerarão alertas indevidos.</span>
+        </div>
+
+        <div class="form-group">
+          <label>Número de meses consecutivos com queda para gerar alerta</label>
+          <input type="number" min="1" max="6" [(ngModel)]="settings.tithes_consecutive_months" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label>Percentual mínimo de queda em relação à média recente (%)</label>
+          <input type="number" min="5" max="90" step="5" [(ngModel)]="settings.tithes_drop_percentage" class="form-input" />
+          <span class="help-text">Exemplo: 30% abaixo da média dos 3 meses de referência.</span>
+        </div>
+
+        <div class="form-group">
+          <label>Quantidade de meses sem contribuição para alerta de interrupção</label>
+          <input type="number" min="1" max="6" [(ngModel)]="settings.tithes_no_contribution_months" class="form-input" />
+        </div>
+      </div>
+
+      <!-- Card Regras das Coletas Domincais -->
+      <div class="card-box">
+        <h3>🧺 Regras das Coletas Semanais</h3>
+        <p class="card-desc">Controles e validações para o lançamento de envelopes e fechamento de coletas</p>
+
+        <div class="form-group">
+          <label>Exigir dupla conferência no fechamento da coleta</label>
+          <select [(ngModel)]="settings.tithes_require_double_check" class="form-input">
+            <option value="false">Não — Fechamento por operador simples</option>
+            <option value="true">Sim — Exigir operador B para conferência</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Permitir múltiplos lançamentos para a mesma pessoa no mesmo domingo</label>
+          <select [(ngModel)]="settings.tithes_allow_multiple_entries" class="form-input">
+            <option value="true">Sim — Permitir com aviso preventivo</option>
+            <option value="false">Não — Bloquear lançamentos duplicados</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Permitir contribuições não identificadas (anônimas)</label>
+          <select [(ngModel)]="settings.tithes_allow_unidentified" class="form-input">
+            <option value="true">Sim — Entra no total da coleta sem afetar histórico do membro</option>
+            <option value="false">Não — Exigir vinculo com membro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn btn-primary" (click)="saveSettings()" [disabled]="saving()">
+        {{ saving() ? 'Salvando...' : 'Salvar Configurações' }}
+      </button>
+    </div>
+  }
+</div>

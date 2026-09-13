@@ -1,0 +1,558 @@
+<div class="page-container">
+  @if (!isNew() && institutionId()) {
+    <app-institution-breadcrumb [institutionId]="institutionId()"></app-institution-breadcrumb>
+  }
+
+  <header class="page-header">
+    <div>
+      <div class="title-with-code">
+        <h1>{{ isNew() ? 'Nova Instituição' : institutionData()?.name }}</h1>
+        @if (!isNew() && institutionData()?.code) {
+          <div class="code-badge" title="Clique para copiar o código" (click)="copyCode(institutionData()?.code)">
+            🔑 Código: <strong>{{ institutionData()?.code }}</strong>
+            <span class="copy-icon">{{ copiedCode() ? '✅ Copiado!' : '📋' }}</span>
+          </div>
+        }
+      </div>
+      <p class="subtitle">
+        {{ isNew() ? 'Cadastrar nova unidade na estrutura denominacional' : formatType(institutionData()?.type || '') }}
+      </p>
+    </div>
+    <div class="actions">
+      @if (!isNew() && institutionId()) {
+        <a [routerLink]="['/instituicoes', institutionId(), 'dashboard']" class="btn btn-dash">📊 Dashboard</a>
+        <a [routerLink]="['/instituicoes/nova']" [queryParams]="{ parent_id: institutionId() }" class="btn btn-primary">➕ Nova Vinculada</a>
+      }
+      <a routerLink="/instituicoes" class="btn btn-secondary">Voltar</a>
+    </div>
+  </header>
+
+  @if (successMsg()) {
+    <div class="alert alert-success">{{ successMsg() }}</div>
+  }
+  @if (errorMsg()) {
+    <div class="alert alert-danger">{{ errorMsg() }}</div>
+  }
+
+  @if (!isNew() && institutionData()?.code) {
+    <div class="privacy-notice-box">
+      <div class="notice-icon">🔒</div>
+      <div class="notice-body">
+        <strong>Privacidade da Estrutura Institucional:</strong>
+        Por privacidade, a plataforma não exibe uma lista pública de todas as igrejas.
+        Para vincular esta instituição a uma instituição superior ou subordinada, forneça o seu <strong>Código ({{ institutionData()?.code }})</strong> para a outra instituição, ou digite o código recebido na aba <strong>🔗 Solicitações de Vínculo</strong>.
+      </div>
+      <button type="button" class="btn-copy-code" (click)="copyCode(institutionData()?.code)">
+        {{ copiedCode() ? '✅ Código Copiado!' : '📋 Copiar Código' }}
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Carregando dados da instituição...</p>
+    </div>
+  } @else {
+    <!-- Abas de Navegação -->
+    @if (!isNew()) {
+      <nav class="tabs">
+        <button [class.active]="activeTab() === 'general'" (click)="activeTab.set('general')">📝 Dados Cadastrais</button>
+        <button [class.active]="activeTab() === 'subordinates'" (click)="activeTab.set('subordinates')">
+          🏢 Instituições Vinculadas ({{ subordinatesList().length }})
+        </button>
+        <button [class.active]="activeTab() === 'link_requests'" (click)="activeTab.set('link_requests')">
+          🔗 Solicitações de Vínculo
+          @if (receivedLinkRequests().length > 0) {
+            <span class="badge-pending">{{ receivedLinkRequests().length }}</span>
+          }
+        </button>
+        <button [class.active]="activeTab() === 'transfer'" (click)="activeTab.set('transfer')">🔄 Histórico & Transferências</button>
+      </nav>
+    }
+
+    <!-- Aba 1: Dados Gerais -->
+    @if (activeTab() === 'general') {
+      <form [formGroup]="form" (ngSubmit)="save()" class="form-card">
+        <div class="form-section">
+          <h3>Identificação da Instituição</h3>
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Nome Oficial *</label>
+              <input type="text" formControlName="name" placeholder="Ex: Igreja Presbiteriana em Campo Verde" />
+            </div>
+
+            <div class="form-group">
+              <label>Nome Abreviado / Sigla *</label>
+              <input type="text" formControlName="short_name" placeholder="Ex: IP Campo Verde" />
+            </div>
+
+            <div class="form-group">
+              <label>Tipo da Instituição *</label>
+              <select formControlName="type">
+                <option value="supremo_concilio">Supremo Concílio</option>
+                <option value="sinodo">Sínodo</option>
+                <option value="presbiterio">Presbitério</option>
+                <option value="igreja">Igreja</option>
+                <option value="congregacao">Congregação</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Código da Instituição (Vínculo)</label>
+              <input type="text" formControlName="code" readonly class="bg-readonly" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Instituição Superior (Vínculo Hierárquico)</label>
+              @if (institutionData()?.parent) {
+                <div class="parent-info-badge">
+                  <span class="ic">🏛️</span>
+                  <strong>{{ institutionData()?.parent?.name }}</strong>
+                  <span class="type-tag">{{ formatType(institutionData()?.parent?.type || '') }}</span>
+                </div>
+              } @else {
+                <div class="parent-info-badge empty">
+                  <span class="ic">🌐</span>
+                  <span class="text-muted">Nenhuma instituição superior vinculada (Nó Raiz da Plataforma)</span>
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>CNPJ</label>
+              <input type="text" formControlName="cnpj" placeholder="00.000.000/0000-00" />
+            </div>
+
+            <div class="form-group">
+              <label>Status *</label>
+              <select formControlName="status">
+                <option value="ativa">Ativa</option>
+                <option value="inativa">Inativa</option>
+                <option value="em_organizacao">Em Organização</option>
+                <option value="congregacao">Congregação</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Data de Fundação</label>
+              <input type="date" formControlName="foundation_date" />
+            </div>
+
+            <div class="form-group">
+              <label>Data de Organização</label>
+              <input type="date" formControlName="organization_date" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Endereço & Contato</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>CEP</label>
+              <input type="text" formControlName="zipcode" placeholder="00000-000" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Logradouro / Rua</label>
+              <input type="text" formControlName="street" placeholder="Rua, Avenida..." />
+            </div>
+
+            <div class="form-group">
+              <label>Número</label>
+              <input type="text" formControlName="number" />
+            </div>
+
+            <div class="form-group">
+              <label>Complemento</label>
+              <input type="text" formControlName="complement" placeholder="Sala, Bloco..." />
+            </div>
+
+            <div class="form-group">
+              <label>Bairro</label>
+              <input type="text" formControlName="district" />
+            </div>
+
+            <div class="form-group">
+              <label>Cidade</label>
+              <input type="text" formControlName="city" />
+            </div>
+
+            <div class="form-group">
+              <label>Estado (UF)</label>
+              <input type="text" formControlName="state" placeholder="ES, SP, RJ..." />
+            </div>
+
+            <div class="form-group">
+              <label>Telefone</label>
+              <input type="text" formControlName="phone" />
+            </div>
+
+            <div class="form-group">
+              <label>WhatsApp</label>
+              <input type="text" formControlName="whatsapp" />
+            </div>
+
+            <div class="form-group">
+              <label>E-mail</label>
+              <input type="email" formControlName="email" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Site</label>
+              <input type="text" formControlName="website" placeholder="https://..." />
+            </div>
+
+            <div class="form-group full-width mt-3">
+              <label class="checkbox-container">
+                <input type="checkbox" formControlName="share_financials_with_parent" />
+                <span class="checkmark"></span>
+                <span class="label-text">
+                  🔒 <strong>Permitir que a instituição superior veja o valor total arrecadado</strong>
+                  <small class="block text-muted" style="font-weight: normal; margin-top: 2px;">
+                    Se desativado, a instituição superior verá apenas os números de membros e o valor arrecadado permanecerá estritamente privado.
+                  </small>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
+            {{ saving() ? 'Salvando...' : 'Salvar Alterações' }}
+          </button>
+        </div>
+      </form>
+    }
+
+    <!-- Aba 2: Subordinadas -->
+    @if (activeTab() === 'subordinates') {
+      <div class="tab-card">
+        <div class="sub-header">
+          <h3>Instituições Subordinadas a {{ institutionData()?.name }}</h3>
+          <div class="sub-actions">
+            <a [routerLink]="['/instituicoes/nova']" [queryParams]="{ parent_id: institutionId() }" class="btn btn-secondary">
+              ➕ Nova Subordinada (Criar)
+            </a>
+          </div>
+        </div>
+
+        <!-- Bloco para Vincular Subordinada por Código -->
+        <div class="quick-link-box">
+          <div class="quick-link-header">
+            <h4>🔗 Vincular Instituição Subordinada por Código</h4>
+            <p class="text-muted">Informe o código da instituição cadastrada na plataforma para solicitar o vínculo como sua subordinada.</p>
+          </div>
+          <div class="quick-link-form">
+            <input
+              type="text"
+              class="code-input"
+              placeholder="Digite o Código da Instituição (ex: INST-ABC123)..."
+              [ngModel]="lookupCodeInput()"
+              (ngModelChange)="lookupCodeInput.set($event)"
+              (keyup.enter)="onLookupCode()"
+            />
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onLookupCode()"
+              [disabled]="lookupLoading() || !lookupCodeInput().trim()"
+            >
+              {{ lookupLoading() ? 'Buscando...' : '🔍 Buscar Código' }}
+            </button>
+          </div>
+
+          @if (lookupError()) {
+            <div class="alert alert-danger mt-2 mb-0">{{ lookupError() }}</div>
+          }
+
+          @if (targetLookupResult()) {
+            <div class="target-confirmation-card mt-3">
+              <div class="target-info">
+                <span class="icon">🏛️</span>
+                <div>
+                  <strong>{{ targetLookupResult()?.name }}</strong>
+                  <span class="type-tag ml-2">{{ formatType(targetLookupResult()?.type || '') }}</span>
+                  <span class="location text-muted block">{{ targetLookupResult()?.city }}/{{ targetLookupResult()?.state }} | Código: <code>{{ targetLookupResult()?.code }}</code></span>
+                </div>
+              </div>
+              <div class="target-actions">
+                <button type="button" class="btn btn-success" (click)="confirmLinkSubordinate()" [disabled]="submittingLinkRequest()">
+                  {{ submittingLinkRequest() ? 'Enviando...' : '✅ Confirmar Vínculo Subordinada' }}
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="targetLookupResult.set(null)">Cancelar</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <table class="data-table mt-4">
+          <thead>
+            <tr>
+              <th>Instituição Subordinada</th>
+              <th>Código</th>
+              <th>Tipo</th>
+              <th>Membros</th>
+              <th>Subordinadas</th>
+              <th>Arrecadação Mensal</th>
+              <th>Status</th>
+              <th class="text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sub of subordinatesList(); track sub.id) {
+              <tr>
+                <td>
+                  <strong>{{ sub.name }}</strong>
+                  <span class="text-muted block">{{ sub.city }}/{{ sub.state }}</span>
+                </td>
+                <td><code>{{ sub.code || '—' }}</code></td>
+                <td><span class="type-tag">{{ formatType(sub.type) }}</span></td>
+                <td><strong>{{ sub.members_count }}</strong></td>
+                <td>{{ sub.subordinates_count }}</td>
+                <td>
+                  @if (sub.share_financials_with_parent && sub.revenue_total !== null && sub.revenue_total !== undefined) {
+                    <strong class="text-green">{{ sub.revenue_total | currency:'BRL' }}</strong>
+                  } @else {
+                    <span class="badge-private" title="A instituição optou por não compartilhar valores de arrecadação">🔒 Privado</span>
+                  }
+                </td>
+                <td><span class="status-badge" [class.ativa]="sub.status === 'ativa'">{{ sub.status }}</span></td>
+                <td class="text-right actions-cell">
+                  <a [routerLink]="['/instituicoes', sub.id, 'dashboard']" class="btn-sm btn-dash" title="Ver Indicadores e Métricas">📊 Ver Métricas</a>
+                  @if (sub.code) {
+                    <button class="btn-sm btn-danger" title="Solicitar Desvinculação" (click)="requestUnlink(sub.code, sub.name)">✂️ Desvincular</button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="text-center py-4">Nenhuma instituição subordinada cadastrada diretamente abaixo desta.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Aba 3: Vínculos e Solicitações por Código -->
+    @if (activeTab() === 'link_requests') {
+      <div class="tab-card">
+        <!-- Banner do Código da Instituição -->
+        <div class="code-share-box">
+          <div class="code-info">
+            <span class="label">Código de Vínculo desta Instituição:</span>
+            <span class="code-text">{{ institutionData()?.code }}</span>
+          </div>
+          <button class="btn btn-primary" (click)="copyCode(institutionData()?.code)">
+            {{ copiedCode() ? '✅ Código Copiado!' : '📋 Copiar Código' }}
+          </button>
+          <p class="help-text">
+            Forneça este código para que outra instituição possa solicitar um vínculo (superior ou inferior) com você.
+          </p>
+        </div>
+
+        <!-- Formulário para Solicitar Vínculo por Código -->
+        <div class="link-form-box">
+          <h3>🔗 Solicitar Novo Vínculo por Código</h3>
+          <p class="text-muted">Informe o código da instituição com a qual deseja se vincular.</p>
+
+          <div class="form-grid">
+            <div class="form-group full-width flex-row">
+              <input
+                type="text"
+                placeholder="Informe o Código da Instituição (ex: INST-8X9K2P)..."
+                [ngModel]="lookupCodeInput()"
+                (ngModelChange)="lookupCodeInput.set($event)"
+                (keyup.enter)="onLookupCode()"
+              />
+              <button class="btn btn-secondary" (click)="onLookupCode()" [disabled]="lookupLoading() || !lookupCodeInput().trim()">
+                {{ lookupLoading() ? 'Buscando...' : '🔍 Buscar Código' }}
+              </button>
+            </div>
+          </div>
+
+          @if (lookupError()) {
+            <div class="alert alert-danger">{{ lookupError() }}</div>
+          }
+
+          @if (targetLookupResult()) {
+            <div class="target-card">
+              <div class="target-header">
+                <h4>🎯 Instituição Encontrada: {{ targetLookupResult()?.name }}</h4>
+                <span class="type-tag">{{ formatType(targetLookupResult()?.type || '') }}</span>
+              </div>
+              <p>
+                <strong>Cidade/UF:</strong> {{ targetLookupResult()?.city }}/{{ targetLookupResult()?.state }} |
+                <strong>Código:</strong> <code>{{ targetLookupResult()?.code }}</code>
+              </p>
+
+              <div class="form-grid mt-3">
+                <div class="form-group full-width">
+                  <label>Tipo de Vínculo Desejado *</label>
+                  <select [ngModel]="linkType()" (ngModelChange)="linkType.set($event)">
+                    <option value="vinculo_superior">Vincular como minha Instituição Superior (Pai)</option>
+                    <option value="vinculo_inferior">Vincular como minha Instituição Inferior (Filha)</option>
+                  </select>
+                </div>
+
+                <div class="form-group full-width">
+                  <label>Observação / Mensagem da Solicitação (opcional)</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Escreva uma mensagem para a diretoria da instituição destino..."
+                    [ngModel]="linkReason()"
+                    (ngModelChange)="linkReason.set($event)"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="actions mt-3">
+                <button class="btn btn-primary" (click)="sendLinkRequest()" [disabled]="submittingLinkRequest()">
+                  {{ submittingLinkRequest() ? 'Enviando...' : '✉️ Confirmar e Enviar Solicitação' }}
+                </button>
+                <button class="btn btn-secondary" (click)="targetLookupResult.set(null)">Cancelar</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Solicitações Recebidas Pendentes -->
+        <div class="requests-section">
+          <h3>📥 Solicitações Recebidas (Aguardando Seu Aceite)</h3>
+
+          @if (receivedLinkRequests().length === 0) {
+            <p class="text-muted py-2">Nenhuma solicitação pendente recebida no momento.</p>
+          } @else {
+            <div class="requests-list">
+              @for (req of receivedLinkRequests(); track req.id) {
+                <div class="request-card pending">
+                  <div class="req-main">
+                    <div class="req-title">
+                      <strong>{{ req.requester_institution?.name }}</strong>
+                      <span class="type-tag">{{ formatType(req.requester_institution?.type || '') }}</span>
+                    </div>
+                    <p class="req-detail">
+                      @if (req.type === 'vinculo_superior') {
+                        <span>Solicita tornar-se <strong>Subordinada (Filha)</strong> da sua instituição.</span>
+                      } @else if (req.type === 'vinculo_inferior') {
+                        <span>Solicita ser a <strong>Superior (Pai)</strong> da sua instituição.</span>
+                      } @else if (req.type === 'desvinculo') {
+                        <span class="text-danger">Solicita a <strong>Desvinculação (Remoção de vínculo)</strong>.</span>
+                      }
+                    </p>
+                    @if (req.reason) {
+                      <p class="req-reason"><em>"{{ req.reason }}"</em></p>
+                    }
+                    <div class="req-meta">
+                      Enviado por {{ req.requested_by?.name || 'Usuário' }} em {{ req.created_at | date:'dd/MM/yyyy HH:mm' }}
+                    </div>
+                  </div>
+
+                  <div class="req-actions">
+                    <button class="btn btn-success" (click)="acceptRequest(req.id)">✅ Aceitar</button>
+                    <button class="btn btn-danger" (click)="rejectRequest(req.id)">❌ Recusar</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Solicitações Enviadas -->
+        <div class="requests-section mt-4">
+          <h3>📤 Solicitações Enviadas (Aguardando Resposta)</h3>
+
+          @if (sentLinkRequests().length === 0) {
+            <p class="text-muted py-2">Nenhuma solicitação enviada pendente.</p>
+          } @else {
+            <div class="requests-list">
+              @for (req of sentLinkRequests(); track req.id) {
+                <div class="request-card sent">
+                  <div class="req-main">
+                    <div class="req-title">
+                      <strong>Para: {{ req.target_institution?.name }}</strong>
+                      <span class="status-badge pendente">{{ req.status }}</span>
+                    </div>
+                    <p class="req-detail">
+                      Tipo: <strong>{{ req.type === 'vinculo_superior' ? 'Instituição Superior' : (req.type === 'vinculo_inferior' ? 'Instituição Inferior' : 'Desvinculação') }}</strong>
+                    </p>
+                    <div class="req-meta">
+                      Enviado em {{ req.created_at | date:'dd/MM/yyyy HH:mm' }}
+                    </div>
+                  </div>
+
+                  <div class="req-actions">
+                    @if (req.status === 'pendente') {
+                      <button class="btn btn-secondary" (click)="cancelRequest(req.id)">🚫 Cancelar Solicitação</button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Aba 4: Transferência & Histórico -->
+    @if (activeTab() === 'transfer') {
+      <div class="tab-card">
+        <div class="transfer-box">
+          <h3>Mudança de Vínculo Hierárquico (Transferência Administrativa Direta)</h3>
+          <p class="text-muted">
+            Altere a instituição superior a qual esta unidade pertence.
+          </p>
+
+          <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Nova Instituição Superior</label>
+                <select formControlName="new_parent_id">
+                  <option [ngValue]="null">Nenhuma (Tornar Nó Raiz)</option>
+                  @for (p of parentOptions(); track p.id) {
+                    @if (p.id !== institutionId()) {
+                      <option [value]="p.id">{{ p.name }} ({{ formatType(p.type) }})</option>
+                    }
+                  }
+                </select>
+              </div>
+
+              <div class="form-group full-width">
+                <label>Motivo da Alteração de Vínculo *</label>
+                <textarea formControlName="reason" rows="3" placeholder="Descreva a razão da mudança hierárquica..."></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" [disabled]="saving() || transferForm.invalid">
+              Confirmar Transferência
+            </button>
+          </form>
+        </div>
+
+        <div class="history-section">
+          <h3>Histórico de Alterações & Eventos Institucionais</h3>
+          <ul class="timeline">
+            @for (evt of historyList(); track evt.id) {
+              <li class="timeline-item">
+                <div class="time">{{ evt.created_at | date:'dd/MM/yyyy HH:mm' }}</div>
+                <div class="content">
+                  <strong>{{ evt.title }}</strong>
+                  <p>{{ evt.description }}</p>
+                  @if (evt.user) {
+                    <span class="user-info">Por: {{ evt.user.name }}</span>
+                  }
+                </div>
+              </li>
+            } @empty {
+              <p class="text-muted">Nenhum histórico registrado.</p>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+  }
+</div>
+

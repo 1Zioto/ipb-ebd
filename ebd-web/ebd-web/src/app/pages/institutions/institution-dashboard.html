@@ -1,0 +1,199 @@
+<div class="page-container">
+  <app-institution-breadcrumb [institutionId]="institutionId()"></app-institution-breadcrumb>
+
+  <header class="page-header">
+    <div>
+      <h1>Painel Institucional — {{ institutionData()?.name }}</h1>
+      <p class="subtitle">Indicadores estatísticos, membresia, EBD e acompanhamento financeiro</p>
+    </div>
+    
+    <!-- Chaveador Visão Somente Esta vs Consolidada -->
+    <div class="view-toggle">
+      <button [class.active]="!consolidated()" (click)="toggleConsolidated(false)">
+        Somente Esta Instituição
+      </button>
+      <button [class.active]="consolidated()" (click)="toggleConsolidated(true)">
+        Toda a Estrutura Subordinada (Consolidado)
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Carregando indicadores...</p>
+    </div>
+  } @else {
+    <!-- Cards de Indicadores Principais -->
+    <div class="stats-grid">
+      <div class="stat-card clickable" (click)="openDrilldown('members', 'Membros Cadastrados')">
+        <div class="stat-ic blue">👤</div>
+        <div class="stat-info">
+          <span class="stat-label">Total de Membros</span>
+          <span class="stat-value">{{ stats()?.members?.total | number }}</span>
+          <span class="stat-sub">Clique para ver por instituição</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-ic emerald">🤝</div>
+        <div class="stat-info">
+          <span class="stat-label">Membros Dizimistas</span>
+          <span class="stat-value">{{ stats()?.members?.tithers | number }}</span>
+          <span class="stat-sub">Cadastrados como dizimistas</span>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" (click)="openDrilldown('ebd_students', 'Alunos da EBD')">
+        <div class="stat-ic amber">📚</div>
+        <div class="stat-info">
+          <span class="stat-label">Alunos EBD</span>
+          <span class="stat-value">{{ stats()?.ebd?.students_count | number }}</span>
+          <span class="stat-sub">Matriculados em {{ stats()?.ebd?.classes_count }} classes</span>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" (click)="openDrilldown('revenue', 'Arrecadação Total')">
+        <div class="stat-ic green">💰</div>
+        <div class="stat-info">
+          <span class="stat-label">Total Arrecadado</span>
+          <span class="stat-value">{{ stats()?.financial?.total_revenue | currency:'BRL' }}</span>
+          <span class="stat-sub">{{ stats()?.financial?.coletas_count }} coletas registradas</span>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" (click)="openDrilldown('subordinates', 'Instituições Subordinadas')">
+        <div class="stat-ic purple">🏢</div>
+        <div class="stat-info">
+          <span class="stat-label">Instituições Subordinadas</span>
+          <span class="stat-value">{{ stats()?.subordinates_total_count }}</span>
+          <span class="stat-sub">{{ stats()?.subordinates_direct_count }} filhas diretas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evolução da Arrecadação Culto a Culto -->
+    <div class="section-card">
+      <div class="card-header">
+        <h3>📈 Arrecadação Domingo a Domingo (Culto a Culto)</h3>
+        <span class="badge">{{ consolidated() ? 'Consolidado da Árvore' : 'Apenas esta unidade' }}</span>
+      </div>
+
+      <div class="cults-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Culto / Reunião</th>
+              <th>Envelopes</th>
+              <th>Total Arrecadado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of cultsData(); track c.date + c.service_meeting) {
+              <tr>
+                <td><strong>{{ c.date | date:'dd/MM/yyyy' }}</strong></td>
+                <td>{{ c.service_meeting }}</td>
+                <td>{{ c.entries_count }}</td>
+                <td><strong class="text-green">{{ c.total_amount | currency:'BRL' }}</strong></td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="text-center py-4">Nenhum culto com coleta encerrada no período.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Comparativo entre Instituições Subordinadas -->
+    @if (subordinates().length > 0) {
+      <div class="section-card">
+        <div class="card-header">
+          <h3>📊 Comparativo entre Instituições Vinculadas</h3>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Instituição</th>
+              <th>Tipo</th>
+              <th>Membros</th>
+              <th>Subordinadas</th>
+              <th>Total Arrecadado</th>
+              <th class="text-right">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sub of subordinates(); track sub.id) {
+              <tr>
+                <td>
+                  <strong>{{ sub.name }}</strong>
+                  <span class="text-muted block">{{ sub.city }}/{{ sub.state }}</span>
+                </td>
+                <td><span class="type-tag">{{ sub.type }}</span></td>
+                <td><strong>{{ sub.members_count }}</strong></td>
+                <td>{{ sub.subordinates_count }}</td>
+                <td>
+                  @if (sub.revenue_total !== null && sub.revenue_total !== undefined) {
+                    <strong class="text-green">{{ sub.revenue_total | currency:'BRL' }}</strong>
+                  } @else {
+                    <span class="badge-private" title="A instituição optou por não compartilhar valores de arrecadação">🔒 Privado</span>
+                  }
+                </td>
+                <td class="text-right">
+                  <a [routerLink]="['/instituicoes', sub.id, 'dashboard']" class="btn-sm">Aprofundar ➔</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>
+
+<!-- Modal de Drilldown (Detalhamento Progressivo) -->
+@if (showDrilldown()) {
+  <div class="modal-overlay" (click)="closeDrilldown()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🔍 Detalhamento: {{ drilldownTitle() }}</h3>
+        <button class="close-btn" (click)="closeDrilldown()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-sub">Visualizando distribuição por unidade subordinada:</p>
+
+        <ul class="drilldown-list">
+          @for (item of drilldownData()?.items; track item.institution_id) {
+            <li class="drilldown-item">
+              <div class="item-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-type">{{ item.type }}</span>
+              </div>
+              <div class="item-val">
+                @if (drilldownData()?.metric === 'revenue') {
+                  <strong>{{ item.value | currency:'BRL' }}</strong>
+                } @else {
+                  <strong>{{ item.value }}</strong>
+                }
+
+                @if (item.has_children && item.institution_id !== currentDrilldownInstId()) {
+                  <button class="btn-deeper" (click)="drilldownDeeper(item.institution_id)">
+                    Detalhar ➔
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDrilldown()">Fechar</button>
+      </div>
+    </div>
+  </div>
+}

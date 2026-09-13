@@ -1,0 +1,110 @@
+<div class="page-container">
+  <header class="page-header">
+    <div>
+      <h1>Estrutura Institucional</h1>
+      <p class="subtitle">Visão em árvore completa da hierarquia organizacional denominacional</p>
+    </div>
+    <div class="actions">
+      <a routerLink="/instituicoes" class="btn btn-secondary">📋 Lista de Instituições</a>
+      <a routerLink="/instituicoes/nova" class="btn btn-primary">➕ Nova Instituição</a>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-ic">🔍</span>
+      <input
+        type="text"
+        placeholder="Pesquisar instituição por nome, tipo ou cidade..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </div>
+    <button class="btn btn-ghost" (click)="loadTree()">🔄 Recarregar</button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Carregando estrutura organizacional da denominação...</p>
+    </div>
+  } @else {
+    <div class="tree-wrapper">
+      @if (treeData().length === 0) {
+        <div class="empty-state">
+          <p>Nenhuma instituição cadastrada na estrutura hierárquica.</p>
+        </div>
+      } @else {
+        <div class="tree-root">
+          @for (node of treeData(); track node.id) {
+            <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: node }"></ng-container>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Template Recursivo para Nós da Árvore -->
+<ng-template #nodeTemplate let-node>
+  @if (matchesSearch(node)) {
+    <div class="tree-node-item" [class.has-children]="node.children?.length > 0">
+      <div class="node-card">
+        <div class="node-main">
+          @if (node.children?.length > 0) {
+            <button class="btn-toggle" (click)="toggleNode(node, $event)">
+              {{ node.expanded ? '▼' : '▶' }}
+            </button>
+          } @else {
+            <span class="bullet">•</span>
+          }
+          <div class="node-title">
+            @if (canEdit(node)) {
+              <a [routerLink]="['/instituicoes', node.id]" class="node-name">{{ node.name }}</a>
+            } @else {
+              <span class="node-name static">{{ node.name }}</span>
+            }
+            @if (node.short_name && node.short_name !== node.name) {
+              <span class="short-name">({{ node.short_name }})</span>
+            }
+          </div>
+          <span class="badge" [ngClass]="getTypeBadgeClass(node.type)">
+            {{ getTypeLabel(node.type) }}
+          </span>
+          <span class="status-pill" [class.active]="node.status === 'ativa'">
+            {{ node.status }}
+          </span>
+        </div>
+
+        <div class="node-meta">
+          @if (node.city) {
+            <span class="meta-item">📍 {{ node.city }}/{{ node.state }}</span>
+          }
+          <span class="meta-item">👤 <strong>{{ node.members_count }}</strong> membros</span>
+          @if (node.children?.length > 0) {
+            <span class="meta-item">🏢 <strong>{{ node.children.length }}</strong> subordinadas</span>
+          }
+        </div>
+
+        <div class="node-actions">
+          <a [routerLink]="['/instituicoes', node.id, 'dashboard']" class="btn-dash" title="Dashboard">
+            📊 {{ isSelf(node) ? 'Dashboard' : 'Ver Métricas' }}
+          </a>
+          @if (canEdit(node)) {
+            <a [routerLink]="['/instituicoes', node.id]" class="btn-edit" title="Editar">
+              ✏️ Editar
+            </a>
+          }
+        </div>
+      </div>
+
+      @if (node.children?.length > 0 && node.expanded) {
+        <div class="node-children">
+          @for (child of node.children; track child.id) {
+            <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child }"></ng-container>
+          }
+        </div>
+      }
+    </div>
+  }
+</ng-template>

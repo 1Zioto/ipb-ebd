@@ -1,0 +1,43 @@
+# Environment Variables
+**/.env*
+!**/.env.example
+
+# Dependencies
+**/vendor/
+**/node_modules/
+**/.pnpm-store/
+
+# Build & Deployments
+**/.vercel/
+**/dist/
+**/out-tsc/
+**/.angular/
+**/public/build/
+**/public/hot/
+**/public/storage/
+
+# Logs & Framework caches
+**/*.log
+**/storage/logs/*.log
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+**/storage/*.key
+**/.phpunit.result.cache
+**/.phpunit.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backups & Archives
+**/*.tgz
+**/*.tar.gz
+**/*.zip
+**/_ui_backup*
+**/scratch/
+
+# IDE & OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

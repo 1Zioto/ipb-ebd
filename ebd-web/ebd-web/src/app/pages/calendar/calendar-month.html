@@ -1,0 +1,71 @@
+<div class="page">
+  <div class="head">
+    <h1>Calendário</h1>
+    <div class="head-actions">
+      @if (canAdhoc()) { <button class="btn-ghost" (click)="openAdhoc()">+ Chamada avulsa</button> }
+      @if (canGenerate()) { <button class="btn-primary" (click)="generate()">Gerar mês</button> }
+    </div>
+  </div>
+
+  <div class="monthbar">
+    <button class="nav" (click)="prevMonth()">‹</button>
+    <div class="label">{{ monthNames[month()-1] }} {{ year() }}</div>
+    <button class="nav" (click)="nextMonth()">›</button>
+  </div>
+
+  @if (msg()) { <div class="ok">{{ msg() }}</div> }
+  @if (error()) { <div class="alert">{{ error() }}</div> }
+
+  @if (loading()) { <div class="empty">Carregando...</div> }
+  @else if (events().length === 0) {
+    <div class="empty">Nenhum encontro neste mês. @if (canGenerate()) { Use "Gerar mês" para criar os domingos. }</div>
+  }
+  @else {
+    <div class="list">
+      @for (e of events(); track e.id) {
+        <a class="row" [routerLink]="['/eventos', e.id]">
+          <div class="date-badge">
+            <span class="d">{{ e.event_date.slice(8,10) }}</span>
+            <span class="m">{{ monthNames[month()-1].slice(0,3) }}</span>
+          </div>
+          <div class="info">
+            <div class="name">
+              {{ typeLabel(e.type) }}
+              <span class="tag" [class]="'st-' + e.status">{{ statusLabel(e.status) }}</span>
+              @if (!e.is_auto_generated) { <span class="tag muted">avulso</span> }
+            </div>
+            <div class="meta">
+              {{ e.sessions_count ?? 0 }} classes
+              @if (e.superintendent_name) { · Super: {{ e.superintendent_name }} }
+            </div>
+          </div>
+          <span class="chev">›</span>
+        </a>
+      }
+    </div>
+  }
+</div>
+
+@if (showAdhoc()) {
+  <div class="overlay" (click)="showAdhoc.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Nova chamada avulsa</h2>
+      <label>Data</label>
+      <input type="date" [ngModel]="adhoc().event_date" (ngModelChange)="patchAdhoc('event_date', $event)" />
+      <label>Tipo</label>
+      <select [ngModel]="adhoc().type" (ngModelChange)="patchAdhoc('type', $event)">
+        <option value="especial">Especial</option>
+        <option value="evento">Evento</option>
+        <option value="outro">Outro</option>
+        <option value="regular">Regular</option>
+      </select>
+      <label>Observações</label>
+      <textarea rows="2" [ngModel]="adhoc().notes" (ngModelChange)="patchAdhoc('notes', $event)"></textarea>
+      <p class="hint">Serão preparadas as sessões de todas as classes ativas.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="showAdhoc.set(false)">Cancelar</button>
+        <button class="btn-primary" [disabled]="savingAdhoc()" (click)="saveAdhoc()">{{ savingAdhoc() ? 'Salvando...' : 'Criar' }}</button>
+      </div>
+    </div>
+  </div>
+}

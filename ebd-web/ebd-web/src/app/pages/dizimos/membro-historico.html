@@ -1,0 +1,98 @@
+<div class="page-container">
+  <div class="back-link">
+    <a (click)="goBack()" style="cursor:pointer">← Voltar</a>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-box">Carregando histórico do membro com verificação de autorização...</div>
+  } @else if (errorMsg()) {
+    <div class="error-box">
+      <h3>🔒 Acesso Restrito</h3>
+      <p>{{ errorMsg() }}</p>
+    </div>
+  } @else if (history()) {
+    <!-- Member Header Profile -->
+    <header class="member-header">
+      <div class="profile-title">
+        <h1>{{ history()?.person?.full_name }}</h1>
+        @if (history()?.person?.envelope_number) {
+          <span class="envelope-badge">Envelope #{{ history()?.person?.envelope_number }}</span>
+        }
+        <span class="tither-badge" [class.active]="history()?.person?.is_tither">
+          {{ history()?.person?.is_tither ? 'Dizimista Ativo' : 'Não dizimista' }}
+        </span>
+      </div>
+
+      <div class="trend-section">
+        <span class="lbl">Tendência Histórica:</span>
+        <span class="badge" [ngClass]="getTrendBadgeClass(history()?.metrics?.trend || '')">
+          {{ history()?.metrics?.trend }}
+        </span>
+      </div>
+    </header>
+
+    <!-- Stat Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="lbl">Média Histórica</span>
+        <strong class="val">{{ history()?.metrics?.historical_average | currency: 'BRL' }}</strong>
+      </div>
+      <div class="metric-card">
+        <span class="lbl">Média Recente (3 Meses)</span>
+        <strong class="val">{{ history()?.metrics?.recent_average | currency: 'BRL' }}</strong>
+      </div>
+      <div class="metric-card">
+        <span class="lbl">Variação Recente</span>
+        <strong class="val" [class.negative]="(history()?.metrics?.variation_percentage || 0) < 0">
+          {{ history()?.metrics?.variation_percentage }}%
+        </strong>
+      </div>
+      <div class="metric-card">
+        <span class="lbl">Meses Registrados</span>
+        <strong class="val">{{ history()?.metrics?.months_recorded }} meses</strong>
+      </div>
+    </div>
+
+    <!-- Monthly Bar Chart -->
+    <section class="chart-section">
+      <div class="card-box">
+        <h3>Evolução Mensal das Contribuições</h3>
+        <p class="chart-sub">Total consolidado por mês de contribuição</p>
+
+        <div class="bar-chart-wrapper">
+          <div class="bar-chart">
+            @for (m of history()?.chart_data; track m.label) {
+              <div class="chart-col">
+                <div class="bar-wrapper" [title]="m.label + ': ' + (m.total_amount | currency: 'BRL')">
+                  <div
+                    class="bar-fill"
+                    [style.height.%]="getBarHeightPercentage(m.total_amount)"
+                  ></div>
+                </div>
+                <span class="bar-amount">{{ m.total_amount | currency: 'BRL' : 'symbol' : '1.0-0' }}</span>
+                <span class="bar-label">{{ m.label }}</span>
+              </div>
+            } @empty {
+              <div class="empty-chart">Nenhum dado mensal consolidado disponível.</div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Context & Family Background (Sem somar dízimos) -->
+    <section class="info-section">
+      <div class="card-box">
+        <h3>Informações Cadastrais e Núcleo Familiar</h3>
+        <p class="info-note">
+          ℹ️ <strong>Princípio Pastoral:</strong> Cada membro possui seu próprio histórico. As contribuições não são somadas automaticamente por família.
+        </p>
+
+        <div class="info-content">
+          <div><strong>Dizimista desde:</strong> {{ history()?.person?.tither_since ? (history()?.person?.tither_since | date: 'dd/MM/yyyy') : 'Não informado' }}</div>
+          <div><strong>Observações Cadastrais:</strong> {{ history()?.person?.notes || 'Nenhuma observação cadastrada.' }}</div>
+        </div>
+      </div>
+    </section>
+  }
+</div>

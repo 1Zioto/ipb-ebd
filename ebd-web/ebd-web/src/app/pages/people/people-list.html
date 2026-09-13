@@ -1,0 +1,89 @@
+<div class="page">
+  <div class="head">
+    <div>
+      <h1>Pessoas</h1>
+      <span class="count">{{ total() }} cadastradas</span>
+    </div>
+    @if (canManage()) {
+      <button class="btn-primary" (click)="openCreate()">+ Nova pessoa</button>
+    }
+  </div>
+
+  <div class="toolbar">
+    <input class="search" type="search" placeholder="Buscar por nome..."
+           [ngModel]="search()" (ngModelChange)="search.set($event)"
+           (keyup.enter)="load()" />
+    <button class="btn-ghost" (click)="load()">Buscar</button>
+  </div>
+
+  @if (error()) { <div class="alert">{{ error() }}</div> }
+
+  @if (loading()) {
+    <div class="empty">Carregando...</div>
+  } @else if (people().length === 0) {
+    <div class="empty">Nenhuma pessoa encontrada.</div>
+  } @else {
+    <div class="list">
+      @for (p of people(); track p.id) {
+        <div class="row" [class.inactive]="!p.is_active">
+          <div class="info">
+            <div class="name">
+              {{ p.full_name }}
+              @if (!p.is_active) { <span class="tag muted">inativo</span> }
+              @if (p.can_teach) { <span class="tag">professor</span> }
+              @if (p.can_superintend) { <span class="tag alt">superintendente</span> }
+              @if (p.family) { <span class="tag family">🏡 {{ p.family.name }}</span> }
+            </div>
+            <div class="meta">
+              @if (p.age !== null) { {{ p.age }} anos · }
+              {{ p.birth_date || 'sem data de nascimento' }}
+            </div>
+          </div>
+          @if (canManage()) {
+            <div class="actions">
+              <button class="btn-ghost small" (click)="openEdit(p)">Editar</button>
+              <button class="btn-ghost small danger" (click)="remove(p)">Inativar</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal criar/editar -->
+@if (showForm()) {
+  <div class="overlay" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ editing() ? 'Editar pessoa' : 'Nova pessoa' }}</h2>
+
+      <label>Nome completo *</label>
+      <input type="text" [ngModel]="form().full_name" (ngModelChange)="patch('full_name', $event)" />
+
+      <label>Data de nascimento</label>
+      <input type="date" [ngModel]="form().birth_date" (ngModelChange)="patch('birth_date', $event)" />
+
+      <div class="switches">
+        <label class="switch">
+          <input type="checkbox" [ngModel]="form().is_active" (ngModelChange)="patch('is_active', $event)" /> Ativo
+        </label>
+        <label class="switch">
+          <input type="checkbox" [ngModel]="form().can_teach" (ngModelChange)="patch('can_teach', $event)" /> Pode dar aula
+        </label>
+        <label class="switch">
+          <input type="checkbox" [ngModel]="form().can_superintend" (ngModelChange)="patch('can_superintend', $event)" /> Pode superintender
+        </label>
+      </div>
+
+      <label>Observações</label>
+      <textarea rows="2" [ngModel]="form().notes" (ngModelChange)="patch('notes', $event)"></textarea>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="closeForm()">Cancelar</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

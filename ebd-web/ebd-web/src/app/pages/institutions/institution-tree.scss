@@ -1,0 +1,261 @@
+.page-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    font-size: 1.75rem;
+    color: var(--text);
+    margin: 0 0 4px 0;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+  }
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  .search-box {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .search-ic {
+      position: absolute;
+      left: 12px;
+      color: var(--muted-2);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px 10px 38px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+      }
+    }
+  }
+}
+
+.tree-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tree-node-item {
+  margin-bottom: 12px;
+
+  .node-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--surface-2);
+      border-color: var(--border);
+    }
+  }
+
+  .node-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .btn-toggle {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 4px;
+      border-radius: 4px;
+
+      &:hover {
+        background: var(--border);
+      }
+    }
+
+    .bullet {
+      color: var(--muted-2);
+      font-size: 1.2rem;
+      width: 16px;
+      text-align: center;
+    }
+
+    .node-title {
+      .node-name {
+        font-weight: 600;
+        color: var(--text);
+        text-decoration: none;
+
+        &.static {
+          color: var(--text-2);
+          cursor: default;
+          &:hover {
+            text-decoration: none;
+            color: var(--text-2);
+          }
+        }
+
+        &:hover {
+          color: var(--primary);
+          text-decoration: underline;
+        }
+      }
+
+      .short-name {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-left: 6px;
+      }
+    }
+  }
+
+  .node-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.85rem;
+    color: var(--text-2);
+  }
+
+  .node-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    button, a {
+      font-size: 0.775rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-ctx {
+      background: var(--primary-soft);
+      color: var(--primary-600);
+      border: 1px solid var(--primary-soft);
+
+      &:hover {
+        background: var(--primary-soft);
+      }
+    }
+
+    .btn-dash {
+      background: var(--success-tint);
+      color: var(--success-ink);
+      border: 1px solid var(--success-border);
+
+      &:hover {
+        background: var(--success-border);
+      }
+    }
+
+    .btn-edit {
+      background: var(--surface-2);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+
+      &:hover {
+        background: var(--border);
+      }
+    }
+  }
+
+  .node-children {
+    margin-left: 28px;
+    padding-left: 16px;
+    border-left: 2px dashed var(--border);
+    margin-top: 8px;
+  }
+}
+
+// Badges
+.badge {
+  font-size: 0.725rem;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.badge-purple { background: var(--violet-bg); color: var(--violet-ink); }
+  &.badge-indigo { background: var(--primary-soft); color: var(--primary-600); }
+  &.badge-blue   { background: var(--primary-soft); color: var(--primary-700); }
+  &.badge-emerald{ background: var(--success-bg); color: var(--success-ink); }
+  &.badge-amber  { background: var(--warn-bg); color: var(--warn-ink); }
+  &.badge-gray   { background: var(--surface-2); color: var(--text-2); }
+}
+
+.status-pill {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+
+  &.active {
+    background: var(--success-bg);
+    color: var(--success-ink);
+  }
+}
+
+.loading-state, .empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+
+  &.btn-primary { background: var(--primary); color: var(--on-primary); &:hover { background: var(--primary-600); } }
+  &.btn-secondary { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); &:hover { background: var(--border); } }
+  &.btn-ghost { background: transparent; color: var(--muted); &:hover { background: var(--surface-2); } }
+}
+
+@media (max-width: 768px) {
+  .page-container { padding: 0; }.tree-wrapper { padding: 10px; overflow: hidden; }.tree-node-item .node-card { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
+  .tree-node-item .node-main { align-items: flex-start; min-width: 0; }.tree-node-item .node-title { min-width: 0; }.tree-node-item .node-title .node-name { display: block; overflow-wrap: anywhere; }.tree-node-item .node-title .short-name { display: block; margin: 3px 0 0; }
+  .tree-node-item .node-meta { flex-wrap: wrap; gap: 6px 12px; padding-left: 34px; }.tree-node-item .node-actions { display: grid; grid-template-columns: 1fr; }.tree-node-item .node-actions a, .tree-node-item .node-actions button { min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .tree-node-item .node-children { margin-left: 8px; padding-left: 8px; }.toolbar .search-box { width: 100%; }
+}

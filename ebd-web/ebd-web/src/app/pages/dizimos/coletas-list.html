@@ -1,0 +1,92 @@
+<div class="page-container">
+  <header class="page-header">
+    <div>
+      <h1>Dízimos — Coletas</h1>
+      <p class="subtitle">Gestão semanal de coletas e apuração geral de dízimos</p>
+    </div>
+    @if (auth.can('dizimos.coleta.operar')) {
+      <button class="btn btn-primary" (click)="openNewModal()">
+        <span>➕</span> Nova Coleta do Domingo
+      </button>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">Carregando coletas...</div>
+  } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Culto / Reunião</th>
+            <th>Lançamentos</th>
+            <th>Não Identificados</th>
+            <th>Total Arrecadado</th>
+            <th>Responsável Abertura</th>
+            <th>Status</th>
+            <th class="actions-col">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of coletas(); track c.id) {
+            <tr>
+              <td><strong>{{ c.date | date: 'dd/MM/yyyy' }}</strong></td>
+              <td>{{ c.service_meeting || 'Culto de Domingo' }}</td>
+              <td>{{ c.entry_count }} envelopes</td>
+              <td>{{ c.unidentified_count }}</td>
+              <td><strong class="amount">{{ c.total_amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong></td>
+              <td>{{ c.creator?.name || 'Sistema' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatusBadgeClass(c.status)">
+                  {{ c.status }}
+                </span>
+              </td>
+              <td class="actions-col">
+                <a [routerLink]="['/dizimos/coletas', c.id]" class="btn btn-sm btn-outline">
+                  {{ c.status === 'Aberta' || c.status === 'Reaberta para correção' ? ' Lançar / Ver' : ' Ver Resumo' }}
+                </a>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">
+                Nenhuma coleta registrada até o momento.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Modal Nova Coleta -->
+  @if (showModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <h3>Abrir Nova Coleta</h3>
+        <div class="form-group">
+          <label>Data da Coleta</label>
+          <input type="date" [(ngModel)]="newDate" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Culto / Reunião</label>
+          <input type="text" [(ngModel)]="newMeeting" class="form-input" placeholder="ex: Culto da Manhã" />
+        </div>
+        <div class="form-group">
+          <label>Descrição / Observações (opcional)</label>
+          <textarea [(ngModel)]="newDesc" class="form-input" rows="2"></textarea>
+        </div>
+        @if (createError()) {
+          <div class="form-error" role="alert">{{ createError() }}</div>
+        }
+        <div class="modal-actions">
+          <button class="btn btn-secondary" [disabled]="creating()" (click)="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" [disabled]="creating() || !newDate" (click)="createColeta()">
+            {{ creating() ? 'Abrindo...' : 'Abrir Coleta' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

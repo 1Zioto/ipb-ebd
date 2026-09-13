@@ -1,0 +1,100 @@
+<div class="page">
+  <div class="head">
+    <div><h1>Famílias</h1><p>Núcleos familiares vinculados ao cadastro central de pessoas.</p></div>
+    @if (canManage()) { <button class="btn-primary" (click)="openCreate()">+ Nova família</button> }
+  </div>
+
+  <div class="toolbar">
+    <input type="search" placeholder="Buscar por família ou pessoa..." [(ngModel)]="search" (keyup.enter)="load()" />
+    <button class="btn-ghost" (click)="load()">Buscar</button>
+  </div>
+
+  @if (error()) { <div class="alert">{{ error() }}</div> }
+  @if (loading()) { <div class="empty">Carregando...</div> }
+  @else if (!families().length) { <div class="empty"><strong>Nenhuma família cadastrada.</strong><span>Crie um núcleo e vincule as pessoas que já estão no sistema.</span></div> }
+  @else {
+    <div class="grid">
+      @for (family of families(); track family.id) {
+        <article class="card" [class.inactive]="!family.is_active">
+          <div class="card-head">
+            <div><span class="eyebrow">Núcleo familiar</span><h2>{{ family.name }}</h2></div>
+            <span class="member-count">{{ family.members_count || family.members?.length || 0 }} membros</span>
+          </div>
+          @if (family.members?.length) {
+            <div class="members-preview">
+              @for (member of family.members; track member.id) {
+                <span [class.head-member]="member.is_head">{{ member.full_name }}<small>{{ member.relationship }}</small></span>
+              }
+            </div>
+          } @else { <p class="muted">Nenhuma pessoa vinculada.</p> }
+          @if (address(family)) { <p class="detail">📍 {{ address(family) }}</p> }
+          @if (family.whatsapp || family.phone) { <p class="detail">📱 {{ family.whatsapp || family.phone }}</p> }
+          <div class="card-actions">
+            @if (canManage()) {
+              <button class="btn-ghost small" (click)="openEdit(family)">Editar e gerir membros</button>
+              <button class="btn-ghost small danger" (click)="remove(family)">Inativar</button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+@if (showForm()) {
+  <div class="overlay" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-title"><div><span class="eyebrow">Cadastro familiar</span><h2>{{ editing() ? 'Editar família' : 'Nova família' }}</h2></div><button class="close" (click)="closeForm()">×</button></div>
+
+      <section>
+        <h3>Identificação e contato</h3>
+        <div class="fields two">
+          <label class="wide">Nome da família *<input type="text" placeholder="Ex.: Família Silva" [ngModel]="form().name" (ngModelChange)="patch('name', $event)" /></label>
+          <label>Telefone<input type="text" [ngModel]="form().phone" (ngModelChange)="patch('phone', $event)" /></label>
+          <label>WhatsApp<input type="text" [ngModel]="form().whatsapp" (ngModelChange)="patch('whatsapp', $event)" /></label>
+          <label class="wide">E-mail<input type="email" [ngModel]="form().email" (ngModelChange)="patch('email', $event)" /></label>
+        </div>
+      </section>
+
+      <section>
+        <h3>Endereço familiar</h3>
+        <div class="fields address-grid">
+          <label>CEP<input type="text" [ngModel]="form().zipcode" (ngModelChange)="patch('zipcode', $event)" /></label>
+          <label class="street">Logradouro<input type="text" [ngModel]="form().street" (ngModelChange)="patch('street', $event)" /></label>
+          <label>Número<input type="text" [ngModel]="form().number" (ngModelChange)="patch('number', $event)" /></label>
+          <label>Complemento<input type="text" [ngModel]="form().complement" (ngModelChange)="patch('complement', $event)" /></label>
+          <label>Bairro<input type="text" [ngModel]="form().district" (ngModelChange)="patch('district', $event)" /></label>
+          <label>Cidade<input type="text" [ngModel]="form().city" (ngModelChange)="patch('city', $event)" /></label>
+          <label>UF<input type="text" maxlength="2" [ngModel]="form().state" (ngModelChange)="patch('state', $event)" /></label>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head"><div><h3>Membros da família</h3><p>Uma pessoa pode pertencer a somente um núcleo familiar.</p></div><span>{{ members().length }} vinculados</span></div>
+        <div class="person-picker">
+          <input type="search" placeholder="Digite o nome de uma pessoa para adicionar" [(ngModel)]="personSearch" />
+          @if (personSearch.trim()) {
+            <div class="suggestions">
+              @for (person of availablePeople(); track person.id) { <button (click)="addMember(person)"><strong>{{ person.full_name }}</strong><small>{{ person.age !== null ? person.age + ' anos' : 'idade não informada' }}</small></button> }
+              @if (!availablePeople().length) { <span>Nenhuma pessoa disponível encontrada.</span> }
+            </div>
+          }
+        </div>
+        <div class="member-list">
+          @for (member of members(); track member.id) {
+            <div class="member-row">
+              <button class="head-toggle" [class.selected]="member.is_head" title="Definir responsável principal" (click)="setHead(member.id)">★</button>
+              <div class="member-name"><strong>{{ member.full_name }}</strong><small>{{ member.is_head ? 'Responsável principal' : (member.age !== null ? member.age + ' anos' : '') }}</small></div>
+              <select [ngModel]="member.relationship" (ngModelChange)="setRelationship(member.id, $event)">@for (relationship of relationships; track relationship.value) { <option [value]="relationship.value">{{ relationship.label }}</option> }</select>
+              <button class="remove" (click)="removeMember(member.id)">Remover</button>
+            </div>
+          } @empty { <div class="member-empty">Pesquise acima para vincular o responsável, cônjuge, filhos ou outros membros.</div> }
+        </div>
+      </section>
+
+      <section><label>Observações<textarea rows="3" [ngModel]="form().notes" (ngModelChange)="patch('notes', $event)"></textarea></label><label class="active-check"><input type="checkbox" [ngModel]="form().is_active" (ngModelChange)="patch('is_active', $event)" /> Família ativa</label></section>
+      <div class="privacy">🔒 O vínculo familiar não soma nem compartilha automaticamente históricos individuais de dízimos.</div>
+      <div class="modal-actions"><button class="btn-ghost" (click)="closeForm()">Cancelar</button><button class="btn-primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Salvando...' : 'Salvar família' }}</button></div>
+    </div>
+  </div>
+}

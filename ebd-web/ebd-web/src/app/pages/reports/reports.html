@@ -1,0 +1,175 @@
+<div class="page-container">
+  <header class="page-header">
+    <div>
+      <h1>Relatórios da EBD</h1>
+      <p class="subtitle">Análise histórica de frequência, classes, alunos e contagem de materiais</p>
+    </div>
+    <button class="btn btn-primary no-print" (click)="exportPdf()">🖨️ Imprimir / Salvar em PDF</button>
+  </header>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-bar">
+    <button class="tab-btn" [class.active]="activeReport === 'monthly'" (click)="activeReport = 'monthly'">
+      📊 Relatório Mensal Geral
+    </button>
+    <button class="tab-btn" [class.active]="activeReport === 'class'" (click)="activeReport = 'class'">
+      📚 Frequência por Classe
+    </button>
+    <button class="tab-btn" [class.active]="activeReport === 'student'" (click)="activeReport = 'student'">
+      👤 Histórico por Aluno
+    </button>
+  </div>
+
+  <!-- Relatório Mensal Geral -->
+  @if (activeReport === 'monthly') {
+    <div class="filter-card">
+      <div class="filter-row">
+        <div class="form-group">
+          <label>Mês</label>
+          <select [(ngModel)]="selectedMonth" class="form-input">
+            <option [value]="1">Janeiro</option>
+            <option [value]="2">Fevereiro</option>
+            <option [value]="3">Março</option>
+            <option [value]="4">Abril</option>
+            <option [value]="5">Maio</option>
+            <option [value]="6">Junho</option>
+            <option [value]="7">Julho</option>
+            <option [value]="8">Agosto</option>
+            <option [value]="9">Setembro</option>
+            <option [value]="10">Outubro</option>
+            <option [value]="11">Novembro</option>
+            <option [value]="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ano</label>
+          <input type="number" [(ngModel)]="selectedYear" class="form-input" />
+        </div>
+        <button class="btn btn-primary" (click)="fetchMonthlyReport()">Gerar Relatório</button>
+      </div>
+    </div>
+
+    @if (monthlyData(); as m) {
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="lbl">Encontros no Mês</span>
+          <strong class="val">{{ m.events_count }} domingos</strong>
+        </div>
+        <div class="metric-card success">
+          <span class="lbl">Total Presentes</span>
+          <strong class="val">{{ m.total_present }}</strong>
+        </div>
+        <div class="metric-card danger">
+          <span class="lbl">Total Ausentes</span>
+          <strong class="val">{{ m.total_absent }}</strong>
+        </div>
+        <div class="metric-card info">
+          <span class="lbl">Bíblias e Revistas</span>
+          <strong class="val">{{ m.total_bibles }} Bíblias / {{ m.total_magazines }} Revistas</strong>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Frequência por Classe -->
+  @if (activeReport === 'class') {
+    <div class="filter-card">
+      <div class="filter-row">
+        <div class="form-group flex-1">
+          <label>Selecione a Classe</label>
+          <select [(ngModel)]="selectedClassId" class="form-input" (change)="fetchClassReport()">
+            <option [value]="null">Selecione uma classe...</option>
+            @for (c of classes(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    @if (classData(); as cd) {
+      <div class="table-card">
+        <h3>Histórico de Chamadas — {{ cd.class?.name }}</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Professor do Dia</th>
+              <th>Status</th>
+              <th>Presentes</th>
+              <th>Ausentes</th>
+              <th>Bíblias</th>
+              <th>Revistas</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of cd.sessions; track s.session_id) {
+              <tr>
+                <td><strong>{{ s.date | date: 'dd/MM/yyyy' }}</strong></td>
+                <td>{{ s.teacher || 'Não informado' }}</td>
+                <td><span class="status-tag">{{ s.status }}</span></td>
+                <td><strong class="text-green">{{ s.present }}</strong></td>
+                <td><strong class="text-red">{{ s.absent }}</strong></td>
+                <td>{{ s.bibles }}</td>
+                <td>{{ s.magazines }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Histórico por Aluno -->
+  @if (activeReport === 'student') {
+    <div class="filter-card">
+      <div class="filter-row">
+        <div class="form-group flex-1">
+          <label>Selecione a Pessoa</label>
+          <select [(ngModel)]="selectedPersonId" class="form-input" (change)="fetchStudentReport()">
+            <option [value]="null">Selecione um aluno...</option>
+            @for (p of people(); track p.id) {
+              <option [value]="p.id">{{ p.full_name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    @if (studentData(); as sd) {
+      <div class="summary-card-box">
+        <h3>{{ sd.person?.full_name }} — Frequência Geral: <strong>{{ sd.summary?.attendance_percentage }}%</strong></h3>
+        <p>Total de chamadas: {{ sd.summary?.total_events }} | Presenças: {{ sd.summary?.present }} | Ausências: {{ sd.summary?.absent }}</p>
+      </div>
+
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Classe</th>
+              <th>Presença</th>
+              <th>Bíblia</th>
+              <th>Revista</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of sd.history; track h.date) {
+              <tr>
+                <td><strong>{{ h.date | date: 'dd/MM/yyyy' }}</strong></td>
+                <td>{{ h.class_name }}</td>
+                <td>
+                  <span class="badge" [class.badge-success]="h.present" [class.badge-danger]="!h.present">
+                    {{ h.present ? 'Presente' : 'Ausente' }}
+                  </span>
+                </td>
+                <td>{{ h.brought_bible ? 'Sim' : 'Não' }}</td>
+                <td>{{ h.brought_magazine ? 'Sim' : 'Não' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

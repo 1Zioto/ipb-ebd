@@ -1,0 +1,12 @@
+@if (contextService.isContextSwitched()) {
+  <div class="context-banner">
+    <div class="banner-info">
+      <span class="ic">👁️</span>
+      <span>
+        Você está visualizando como: <strong>{{ contextService.activeInstitution()?.name }}</strong>
+        <span class="origin"> (Acesso através de: {{ contextService.originInstitution()?.name }})</span>
+      </span>
+    </div>
+    <button class="btn-restore" (click)="reset()">Restaurar Visão Original</button>
+  </div>
+}
