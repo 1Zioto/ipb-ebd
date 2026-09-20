@@ -1,15 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { DizimosService } from '../../core/dizimos.service';
 import { SolicitacaoDiaconato } from '../../core/models';
 
 @Component({
   selector: 'app-diaconato-solicitacoes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule, TagModule],
   templateUrl: './diaconato-solicitacoes.html',
-  styleUrl: './diaconato-solicitacoes.scss',
 })
 export class DiaconatoSolicitacoesPage implements OnInit {
   private dizimosService = inject(DizimosService);

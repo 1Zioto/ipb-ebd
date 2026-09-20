@@ -1,125 +1,82 @@
-<div class="page-container">
-  <header class="page-header">
-    <div>
-      <h1>Cadastro de Instituições</h1>
-      <p class="subtitle">Gerenciamento de congregações, igrejas, presbitérios, sínodos e concílio</p>
-    </div>
-    <div class="actions">
-      <a routerLink="/instituicoes/arvore" class="btn btn-secondary">🌳 Árvore Organizacional</a>
-      <a routerLink="/instituicoes/nova" class="btn btn-primary">➕ Cadastrar Instituição</a>
-    </div>
-  </header>
-
-  <div class="filter-card">
-    <div class="filter-group">
-      <input
-        type="text"
-        placeholder="Pesquisar por nome, código, CNPJ, cidade ou estado..."
-        [ngModel]="search()"
-        (ngModelChange)="search.set($event)"
-        (keyup.enter)="onSearch()"
-      />
-      
-      <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event); onSearch()">
-        <option value="">Todos os Tipos</option>
-        <option value="supremo_concilio">Supremo Concílio</option>
-        <option value="sinodo">Sínodo</option>
-        <option value="presbiterio">Presbitério</option>
-        <option value="igreja">Igreja</option>
-        <option value="congregacao">Congregação</option>
-      </select>
-
-      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); onSearch()">
-        <option value="">Todos os Status</option>
-        <option value="ativa">Ativa</option>
-        <option value="inativa">Inativa</option>
-        <option value="em_organizacao">Em Organização</option>
-      </select>
-
-      <button class="btn btn-primary" (click)="onSearch()">Buscar</button>
-    </div>
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+  <div>
+    <h1 class="m-0 text-2xl font-semibold">Cadastro de Instituições</h1>
+    <p class="text-muted-color mb-0">Gerenciamento de congregações, igrejas, presbitérios, sínodos e concílio</p>
   </div>
+  <div class="flex gap-2">
+    <p-button label="Árvore Organizacional" icon="pi pi-sitemap" severity="secondary" routerLink="/instituicoes/arvore" />
+    <p-button label="Cadastrar Instituição" icon="pi pi-plus" routerLink="/instituicoes/nova" />
+  </div>
+</div>
 
-  @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Carregando instituições...</p>
-    </div>
-  } @else {
-    <div class="table-card">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Instituição</th>
-            <th>Código</th>
-            <th>Tipo</th>
-            <th>Instituição Superior</th>
-            <th>Cidade/UF</th>
-            <th>CNPJ</th>
-            <th>Status</th>
-            <th class="text-right">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of institutions(); track item.id) {
-            <tr>
-              <td>
-                <div class="inst-name">
-                  <a [routerLink]="['/instituicoes', item.id]">{{ item.name }}</a>
-                  @if (item.short_name && item.short_name !== item.name) {
-                    <span class="short-code">({{ item.short_name }})</span>
-                  }
-                </div>
-              </td>
-              <td><code>{{ item.code || '—' }}</code></td>
-              <td>
-                <span class="type-tag">{{ getTypeLabel(item.type) }}</span>
-              </td>
-              <td>
-                @if (item.parent) {
-                  <a [routerLink]="['/instituicoes', item.parent.id]" class="parent-link">
-                    {{ item.parent.name }}
-                  </a>
-                } @else {
-                  <span class="text-muted">—</span>
-                }
-              </td>
-              <td>
-                @if (item.city) {
-                  {{ item.city }}/{{ item.state }}
-                } @else {
-                  <span class="text-muted">—</span>
-                }
-              </td>
-              <td>{{ item.cnpj || '—' }}</td>
-              <td>
-                <span class="status-badge" [class.ativa]="item.status === 'ativa'">
-                  {{ item.status }}
-                </span>
-              </td>
-              <td class="text-right actions-cell">
-                <a [routerLink]="['/instituicoes', item.id]" [queryParams]="{ tab: 'link_requests' }" class="btn-sm btn-link" title="Solicitar Vínculo / Aprovações">🔗</a>
-                <a [routerLink]="['/instituicoes', item.id, 'dashboard']" class="btn-sm btn-dash" title="Dashboard">📊</a>
-                <a [routerLink]="['/instituicoes', item.id]" class="btn-sm btn-edit" title="Editar">✏️</a>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="text-center py-4">Nenhuma instituição encontrada com os filtros aplicados.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+<div class="card mb-4">
+  <div class="flex flex-col lg:flex-row gap-2">
+    <input pInputText class="flex-1" placeholder="Pesquisar por nome, código, CNPJ, cidade ou estado..." [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="onSearch()" />
+    <select class="p-inputtext p-component" [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event); onSearch()">
+      <option value="">Todos os Tipos</option>
+      <option value="supremo_concilio">Supremo Concílio</option>
+      <option value="sinodo">Sínodo</option>
+      <option value="presbiterio">Presbitério</option>
+      <option value="igreja">Igreja</option>
+      <option value="congregacao">Congregação</option>
+    </select>
+    <select class="p-inputtext p-component" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); onSearch()">
+      <option value="">Todos os Status</option>
+      <option value="ativa">Ativa</option>
+      <option value="inativa">Inativa</option>
+      <option value="em_organizacao">Em Organização</option>
+    </select>
+    <p-button label="Buscar" icon="pi pi-search" (onClick)="onSearch()" />
+  </div>
+</div>
 
-      @if (meta() && meta()!.last_page > 1) {
-        <div class="pagination">
-          <span>Página {{ meta()!.current_page }} de {{ meta()!.last_page }}</span>
-          <div class="pg-buttons">
-            <button [disabled]="meta()!.current_page === 1" (click)="setPage(meta()!.current_page - 1)">Anterior</button>
-            <button [disabled]="meta()!.current_page === meta()!.last_page" (click)="setPage(meta()!.current_page + 1)">Próxima</button>
-          </div>
-        </div>
-      }
+<div class="card">
+  <p-table [value]="institutions()" [loading]="loading()" dataKey="id">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Instituição</th>
+        <th>Código</th>
+        <th>Tipo</th>
+        <th>Superior</th>
+        <th>Cidade/UF</th>
+        <th>CNPJ</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-item>
+      <tr>
+        <td>
+          <a [routerLink]="['/instituicoes', item.id]" class="font-medium text-primary">{{ item.name }}</a>
+          @if (item.short_name && item.short_name !== item.name) { <span class="text-muted-color"> ({{ item.short_name }})</span> }
+        </td>
+        <td><code>{{ item.code || '—' }}</code></td>
+        <td><p-tag [value]="getTypeLabel(item.type)" /></td>
+        <td>
+          @if (item.parent) { <a [routerLink]="['/instituicoes', item.parent.id]" class="text-primary">{{ item.parent.name }}</a> }
+          @else { <span class="text-muted-color">—</span> }
+        </td>
+        <td>@if (item.city) { {{ item.city }}/{{ item.state }} } @else { <span class="text-muted-color">—</span> }</td>
+        <td>{{ item.cnpj || '—' }}</td>
+        <td><p-tag [value]="item.status" [severity]="item.status === 'ativa' ? 'success' : 'secondary'" /></td>
+        <td class="whitespace-nowrap text-right">
+          <p-button icon="pi pi-link" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id]" [queryParams]="{ tab: 'link_requests' }" />
+          <p-button icon="pi pi-chart-bar" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id, 'dashboard']" />
+          <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id]" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="8">Nenhuma instituição encontrada com os filtros aplicados.</td></tr>
+    </ng-template>
+  </p-table>
+  @if (meta() && meta()!.last_page > 1) {
+    <div class="flex justify-between items-center mt-3">
+      <span class="text-muted-color">Página {{ meta()!.current_page }} de {{ meta()!.last_page }}</span>
+      <div class="flex gap-2">
+        <p-button label="Anterior" [disabled]="meta()!.current_page === 1" (onClick)="setPage(meta()!.current_page - 1)" severity="secondary" />
+        <p-button label="Próxima" [disabled]="meta()!.current_page === meta()!.last_page" (onClick)="setPage(meta()!.current_page + 1)" severity="secondary" />
+      </div>
     </div>
   }
 </div>

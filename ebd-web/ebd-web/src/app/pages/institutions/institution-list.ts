@@ -2,6 +2,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
 import { Institution, Paginated } from '../../core/models';
 import { InstitutionService } from '../../core/institution.service';
 import { InstitutionContextService } from '../../core/institution-context.service';
@@ -10,9 +14,8 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-institution-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, TableModule, InputTextModule, TagModule],
   templateUrl: './institution-list.html',
-  styleUrl: './institution-list.scss',
 })
 export class InstitutionListPage implements OnInit {
   private instService = inject(InstitutionService);

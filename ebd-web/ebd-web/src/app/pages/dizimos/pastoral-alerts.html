@@ -1,229 +1,87 @@
-<div class="page-container">
-  <header class="page-header">
-    <div>
-      <h1>Acompanhamento Pastoral — Dízimos</h1>
-      <p class="subtitle">Painel de cuidado pastoral e análise estatística de variações de contribuição</p>
-    </div>
-    <button class="btn btn-outline" (click)="runEngine()">
-      🔄 Executar Análise Mensal
-    </button>
-  </header>
-
-  <!-- Dashboard Stats Cards (Nenhum valor individual exposto nos cards) -->
-  @if (stats()) {
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="lbl">Pessoas Acompanhadas</span>
-        <strong class="val">{{ stats()?.people_followed }}</strong>
-      </div>
-      <div class="stat-card primary">
-        <span class="lbl">Alertas Ativos</span>
-        <strong class="val">{{ stats()?.active_alerts }}</strong>
-      </div>
-      <div class="stat-card danger">
-        <span class="lbl">Alertas Novos</span>
-        <strong class="val">{{ stats()?.new_alerts }}</strong>
-      </div>
-      <div class="stat-card warning">
-        <span class="lbl">Em Acompanhamento</span>
-        <strong class="val">{{ stats()?.in_progress_alerts }}</strong>
-      </div>
-      <div class="stat-card success">
-        <span class="lbl">Alertas Encerrados</span>
-        <strong class="val">{{ stats()?.resolved_alerts }}</strong>
-      </div>
-    </div>
-  }
-
-  <!-- Tabela de Alertas Pastorais -->
-  @if (loading()) {
-    <div class="loading">Carregando alertas pastorais...</div>
-  } @else {
-    <div class="table-card">
-      <div class="card-header">
-        <h3>Alertas de Acompanhamento Pastoral</h3>
-
-        <!-- Filtro de Status por Abas -->
-        <div class="filter-tabs">
-          <button
-            class="filter-tab"
-            [class.active]="filterStatus() === ''"
-            (click)="filterStatus.set('')"
-          >Todos ({{ alerts().length }})</button>
-          <button
-            class="filter-tab"
-            [class.active]="filterStatus() === 'Novo'"
-            (click)="filterStatus.set('Novo')"
-          >Novos ({{ countByStatus('Novo') }})</button>
-          <button
-            class="filter-tab"
-            [class.active]="filterStatus() === 'Em análise'"
-            (click)="filterStatus.set('Em análise')"
-          >Em análise ({{ countByStatus('Em análise') }})</button>
-          <button
-            class="filter-tab"
-            [class.active]="filterStatus() === 'Em acompanhamento'"
-            (click)="filterStatus.set('Em acompanhamento')"
-          >Acompanhamento ({{ countByStatus('Em acompanhamento') }})</button>
-          <button
-            class="filter-tab"
-            [class.active]="filterStatus() === 'Resolvido'"
-            (click)="filterStatus.set('Resolvido')"
-          >Resolvidos ({{ countByStatus('Resolvido') }})</button>
-        </div>
-      </div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Membro</th>
-            <th>Tipo do Alerta</th>
-            <th>Referência Estatística</th>
-            <th>Variação</th>
-            <th>Detecção</th>
-            <th>Status</th>
-            <th class="actions-col">Ações Pastorais</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (a of filteredAlerts(); track a.id) {
-            <tr>
-              <td>
-                <strong>{{ a.person?.full_name }}</strong>
-                @if (a.person?.envelope_number) {
-                  <span class="env-tag">Env: #{{ a.person?.envelope_number }}</span>
-                }
-              </td>
-              <td>
-                @if (a.alert_type === 'queda_relevante') {
-                  <span class="alert-tag drop">📉 Queda significativa</span>
-                } @else if (a.alert_type === 'interrupcao_contribuicao') {
-                  <span class="alert-tag stop">⚠️ Possível interrupção</span>
-                } @else {
-                  <span class="alert-tag info">ℹ️ Histórico recente</span>
-                }
-              </td>
-              <td>
-                <span class="ref-text">
-                  Média 3 meses ant: {{ a.reference_calculation?.reference_average | currency: 'BRL' }}
-                </span>
-              </td>
-              <td>
-                <strong [class.negative]="(a.variation_percentage || 0) < 0">
-                  {{ a.variation_percentage }}%
-                </strong>
-              </td>
-              <td>{{ a.detection_date | date: 'dd/MM/yyyy' }}</td>
-              <td>
-                <span class="status-badge" [ngClass]="a.status">
-                  {{ a.status }}
-                </span>
-              </td>
-              <td class="actions-col">
-                <div class="btn-group">
-                  <a [routerLink]="['/dizimos/membros', a.person_id, 'historico']" class="btn btn-sm btn-outline">
-                    📊 Ver Ficha
-                  </a>
-                  <button class="btn btn-sm btn-primary" (click)="openAcompModal(a)">
-                    📝 Registrar Cuidado
-                  </button>
-                  <button class="btn btn-sm btn-secondary" (click)="openDiaconatoModal(a)" title="Encaminhar ao Diaconato sem dados financeiros">
-                    🤝 Diaconato
-                  </button>
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="empty-state">
-                @if (filterStatus()) {
-                  Nenhum alerta com status "{{ filterStatus() }}" no momento.
-                } @else {
-                  Nenhum alerta de acompanhamento pastoral ativo no momento.
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
-
-  <!-- Modal Registrar Acompanhamento -->
-  @if (showAcompModal()) {
-    <div class="modal-backdrop">
-      <div class="modal-card">
-        <h3>Registrar Acompanhamento Pastoral — {{ selectedAlert()?.person?.full_name }}</h3>
-
-        <div class="form-group">
-          <label>Situação do Alerta</label>
-          <select [(ngModel)]="alertaStatus" class="form-input">
-            <option value="Em análise">Em análise</option>
-            <option value="Em acompanhamento">Em acompanhamento</option>
-            <option value="Resolvido">Resolvido</option>
-            <option value="Descartado">Descartado</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Observação Pastoral (Confidencial)</label>
-          <textarea [(ngModel)]="notes" class="form-input" rows="3" placeholder="Anotações sobre a visita ou contato..."></textarea>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>Próxima Ação</label>
-            <input type="text" [(ngModel)]="nextAction" class="form-input" placeholder="ex: Agendar conversa" />
-          </div>
-          <div class="form-group flex-1">
-            <label>Data de Revisão</label>
-            <input type="date" [(ngModel)]="reviewDate" class="form-input" />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Conclusão (Opcional)</label>
-          <select [(ngModel)]="conclusion" class="form-input">
-            <option value="">Selecione...</option>
-            <option value="Acompanhamento realizado">Acompanhamento realizado</option>
-            <option value="Não necessita acompanhamento">Não necessita acompanhamento</option>
-            <option value="Alteração normal de contribuição">Alteração normal de contribuição</option>
-            <option value="Alteração na forma de contribuição">Alteração na forma de contribuição</option>
-            <option value="Necessita apoio assistencial">Necessita apoio assistencial</option>
-            <option value="Outro">Outro</option>
-          </select>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-secondary" (click)="closeAcompModal()" [disabled]="savingAcomp()">Cancelar</button>
-          <button class="btn btn-primary" (click)="saveAcompanhamento()" [disabled]="!notes.trim() || savingAcomp()">
-            {{ savingAcomp() ? 'Salvando...' : 'Salvar Registro' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Modal Encaminhar ao Diaconato (Regra 20: Sem dados financeiros) -->
-  @if (showDiaconatoModal()) {
-    <div class="modal-backdrop">
-      <div class="modal-card">
-        <h3>🤝 Encaminhar ao Diaconato — {{ selectedAlert()?.person?.full_name }}</h3>
-        <p class="privacy-note">
-          🔒 <strong>Nota de Sigilo:</strong> O diácono receberá apenas o nome do membro, contato e a sua instrução escrita. Os valores financeiros e o histórico de dízimos <u>não serão compartilhados</u>.
-        </p>
-
-        <div class="form-group">
-          <label>Instrução / Nota Pastoral para o Diácono</label>
-          <textarea [(ngModel)]="pastorNotesDiaconato" class="form-input" rows="4"></textarea>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-secondary" (click)="showDiaconatoModal.set(false)" [disabled]="savingDiaconato()">Cancelar</button>
-          <button class="btn btn-primary" (click)="sendToDiaconato()" [disabled]="savingDiaconato()">
-            {{ savingDiaconato() ? 'Enviando...' : 'Encaminhar Solicitação' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+  <div>
+    <h1 class="m-0 text-2xl font-semibold">Acompanhamento Pastoral</h1>
+    <p class="text-muted-color mb-0">Painel de cuidado pastoral e análise de variações de contribuição</p>
+  </div>
+  <p-button label="Executar análise mensal" icon="pi pi-refresh" severity="secondary" (onClick)="runEngine()" />
 </div>
+@if (stats()) {
+  <div class="grid grid-cols-12 gap-4 mb-4">
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Pessoas acompanhadas</span><div class="text-2xl font-semibold">{{ stats()?.people_followed }}</div></div></div>
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Alertas ativos</span><div class="text-2xl font-semibold">{{ stats()?.active_alerts }}</div></div></div>
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Novos</span><div class="text-2xl font-semibold">{{ stats()?.new_alerts }}</div></div></div>
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Encerrados</span><div class="text-2xl font-semibold">{{ stats()?.resolved_alerts }}</div></div></div>
+  </div>
+}
+<div class="card">
+  <div class="flex flex-wrap gap-2 mb-4">
+    <p-button label="Todos ({{ alerts().length }})" [outlined]="filterStatus() !== ''" size="small" (onClick)="filterStatus.set('')" />
+    <p-button label="Novos ({{ countByStatus('Novo') }})" [outlined]="filterStatus() !== 'Novo'" size="small" (onClick)="filterStatus.set('Novo')" />
+    <p-button label="Em análise ({{ countByStatus('Em análise') }})" [outlined]="filterStatus() !== 'Em análise'" size="small" (onClick)="filterStatus.set('Em análise')" />
+    <p-button label="Acompanhamento ({{ countByStatus('Em acompanhamento') }})" [outlined]="filterStatus() !== 'Em acompanhamento'" size="small" (onClick)="filterStatus.set('Em acompanhamento')" />
+    <p-button label="Resolvidos ({{ countByStatus('Resolvido') }})" [outlined]="filterStatus() !== 'Resolvido'" size="small" (onClick)="filterStatus.set('Resolvido')" />
+  </div>
+  <p-table [value]="filteredAlerts()" [loading]="loading()">
+    <ng-template pTemplate="header"><tr><th>Membro</th><th>Tipo</th><th>Referência</th><th>Variação</th><th>Detecção</th><th>Status</th><th></th></tr></ng-template>
+    <ng-template pTemplate="body" let-a>
+      <tr>
+        <td>{{ a.person?.full_name }}</td>
+        <td>
+          @if (a.alert_type === 'queda_relevante') { <p-tag value="Queda significativa" severity="danger" /> }
+          @else if (a.alert_type === 'interrupcao_contribuicao') { <p-tag value="Possível interrupção" severity="warn" /> }
+          @else { <p-tag value="Histórico recente" severity="info" /> }
+        </td>
+        <td>{{ a.reference_calculation?.reference_average | currency: 'BRL' }}</td>
+        <td>{{ a.variation_percentage }}%</td>
+        <td>{{ a.detection_date | date: 'dd/MM/yyyy' }}</td>
+        <td><p-tag [value]="a.status" /></td>
+        <td class="whitespace-nowrap">
+          <p-button label="Ficha" size="small" [text]="true" [routerLink]="['/dizimos/membros', a.person_id, 'historico']" />
+          <p-button label="Cuidado" size="small" (onClick)="openAcompModal(a)" />
+          <p-button label="Diaconato" size="small" severity="secondary" (onClick)="openDiaconatoModal(a)" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="7">Nenhum alerta no momento.</td></tr></ng-template>
+  </p-table>
+</div>
+<p-dialog header="Registrar acompanhamento — {{ selectedAlert()?.person?.full_name }}" [visible]="showAcompModal()" (visibleChange)="showAcompModal.set($event)" [modal]="true" [style]="{width:'36rem'}">
+  <div class="flex flex-col gap-3">
+    <div>
+      <label class="block mb-2">Situação</label>
+      <select class="w-full p-inputtext p-component" [(ngModel)]="alertaStatus">
+        <option>Em análise</option><option>Em acompanhamento</option><option>Resolvido</option><option>Descartado</option>
+      </select>
+    </div>
+    <div><label class="block mb-2">Observação pastoral</label><textarea pTextarea class="w-full" rows="3" [(ngModel)]="notes"></textarea></div>
+    <div class="grid grid-cols-2 gap-3">
+      <div><label class="block mb-2">Próxima ação</label><input pInputText class="w-full" [(ngModel)]="nextAction" /></div>
+      <div><label class="block mb-2">Data de revisão</label><input pInputText class="w-full" type="date" [(ngModel)]="reviewDate" /></div>
+    </div>
+    <div>
+      <label class="block mb-2">Conclusão</label>
+      <select class="w-full p-inputtext p-component" [(ngModel)]="conclusion">
+        <option value="">Selecione...</option>
+        <option>Acompanhamento realizado</option>
+        <option>Não necessita acompanhamento</option>
+        <option>Alteração normal de contribuição</option>
+        <option>Alteração na forma de contribuição</option>
+        <option>Necessita apoio assistencial</option>
+        <option>Outro</option>
+      </select>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [disabled]="savingAcomp()" (onClick)="closeAcompModal()" />
+    <p-button label="Salvar" [loading]="savingAcomp()" [disabled]="!notes.trim()" (onClick)="saveAcompanhamento()" />
+  </ng-template>
+</p-dialog>
+<p-dialog header="Encaminhar ao diaconato — {{ selectedAlert()?.person?.full_name }}" [visible]="showDiaconatoModal()" (visibleChange)="showDiaconatoModal.set($event)" [modal]="true" [style]="{width:'32rem'}">
+  <p-message severity="info" styleClass="mb-3 w-full">O diácono receberá apenas o nome, contato e a instrução. Valores financeiros não serão compartilhados.</p-message>
+  <label class="block mb-2">Instrução para o diácono</label>
+  <textarea pTextarea class="w-full" rows="4" [(ngModel)]="pastorNotesDiaconato"></textarea>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [disabled]="savingDiaconato()" (onClick)="showDiaconatoModal.set(false)" />
+    <p-button label="Encaminhar" [loading]="savingDiaconato()" (onClick)="sendToDiaconato()" />
+  </ng-template>
+</p-dialog>

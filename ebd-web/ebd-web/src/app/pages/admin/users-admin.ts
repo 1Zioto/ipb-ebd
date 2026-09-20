@@ -1,10 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { CheckboxModule } from 'primeng/checkbox';
+import { MessageModule } from 'primeng/message';
 import { AdminService, PermissionAdmin, RoleAdmin } from '../../core/admin.service';
 import { AuthUser } from '../../core/models';
 
-@Component({ selector: 'app-users-admin', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './users-admin.html', styleUrl: './users-admin.scss' })
+@Component({ selector: 'app-users-admin', standalone: true, imports: [CommonModule, FormsModule, ButtonModule, TableModule, DialogModule, InputTextModule, CheckboxModule, MessageModule], templateUrl: './users-admin.html' })
 export class UsersAdminPage implements OnInit {
   private service = inject(AdminService);
   users = signal<AuthUser[]>([]); roles = signal<RoleAdmin[]>([]); permissions = signal<PermissionAdmin[]>([]);

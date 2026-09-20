@@ -4,6 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { DizimosService } from '../../core/dizimos.service';
 import { PeopleService } from '../../core/people.service';
 import { ColetaDizimo, LancamentoDizimo, Person } from '../../core/models';
@@ -13,9 +21,8 @@ import { ToastService } from '../../core/toast.service';
 @Component({
   selector: 'app-coleta-lancamento',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, TableModule, DialogModule, InputTextModule, TextareaModule, CheckboxModule, TagModule, MessageModule],
   templateUrl: './coleta-lancamento.html',
-  styleUrl: './coleta-lancamento.scss',
 })
 export class ColetaLancamentoPage implements OnInit {
   private route = inject(ActivatedRoute);

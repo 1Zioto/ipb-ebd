@@ -1,14 +1,21 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TextareaModule } from 'primeng/textarea';
+import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../core/auth.service';
 import { PeopleService } from '../../core/people.service';
 import { Person } from '../../core/models';
 
 @Component({
   selector: 'app-people-list',
-  imports: [FormsModule],
+  imports: [FormsModule, ButtonModule, TableModule, DialogModule, InputTextModule, TagModule, CheckboxModule, TextareaModule, MessageModule],
   templateUrl: './people-list.html',
-  styleUrl: './people-list.scss',
 })
 export class PeopleListPage implements OnInit {
   private peopleSvc = inject(PeopleService);

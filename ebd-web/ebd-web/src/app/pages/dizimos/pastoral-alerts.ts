@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { DizimosService } from '../../core/dizimos.service';
 import { ToastService } from '../../core/toast.service';
 import { AlertaDizimo, PastoralDashboardStats } from '../../core/models';
@@ -10,9 +17,8 @@ import { AlertaDizimo, PastoralDashboardStats } from '../../core/models';
 @Component({
   selector: 'app-pastoral-alerts',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, TableModule, DialogModule, InputTextModule, TextareaModule, TagModule, MessageModule],
   templateUrl: './pastoral-alerts.html',
-  styleUrl: './pastoral-alerts.scss',
 })
 export class PastoralAlertsPage implements OnInit {
   private dizimosService = inject(DizimosService);

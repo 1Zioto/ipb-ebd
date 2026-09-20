@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { DizimosService } from '../../core/dizimos.service';
 import { ColetaDizimo } from '../../core/models';
 import { AuthService } from '../../core/auth.service';
@@ -10,9 +17,8 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-coletas-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, TableModule, DialogModule, InputTextModule, TextareaModule, TagModule, MessageModule],
   templateUrl: './coletas-list.html',
-  styleUrl: './coletas-list.scss',
 })
 export class ColetasListPage implements OnInit {
   private dizimosService = inject(DizimosService);

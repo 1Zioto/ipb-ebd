@@ -1,6 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
 import { EbdService, ScheduleItem } from '../../core/ebd.service';
 import { ClassesService } from '../../core/classes.service';
 import { PeopleService } from '../../core/people.service';
@@ -10,9 +14,8 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-schedules',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ButtonModule, TableModule, DialogModule, InputTextModule],
   templateUrl: './schedules.html',
-  styleUrl: './schedules.scss',
 })
 export class SchedulesPage implements OnInit {
   private ebdService = inject(EbdService);

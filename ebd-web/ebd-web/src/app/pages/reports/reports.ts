@@ -1,6 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
 import { ClassReport, EbdService, MonthlyReport, StudentReport } from '../../core/ebd.service';
 import { ClassesService } from '../../core/classes.service';
 import { PeopleService } from '../../core/people.service';
@@ -9,9 +13,8 @@ import { ClassRoom, Person } from '../../core/models';
 @Component({
   selector: 'app-ebd-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ButtonModule, TableModule, InputTextModule, TagModule],
   templateUrl: './reports.html',
-  styleUrl: './reports.scss',
 })
 export class EbdReportsPage implements OnInit {
   private ebdService = inject(EbdService);

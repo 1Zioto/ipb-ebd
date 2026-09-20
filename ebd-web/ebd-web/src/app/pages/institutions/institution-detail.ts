@@ -2,6 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { MessageModule } from 'primeng/message';
+import { CheckboxModule } from 'primeng/checkbox';
 import { Institution, InstitutionBreadcrumb, InstitutionLinkRequest, InstitutionSubordinateSummary } from '../../core/models';
 import { InstitutionService } from '../../core/institution.service';
 import { InstitutionBreadcrumbComponent } from '../../layout/institution-breadcrumb';
@@ -10,9 +17,8 @@ import { InstitutionContextService } from '../../core/institution-context.servic
 @Component({
   selector: 'app-institution-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, InstitutionBreadcrumbComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, InstitutionBreadcrumbComponent, ButtonModule, TableModule, TagModule, InputTextModule, TextareaModule, MessageModule, CheckboxModule],
   templateUrl: './institution-detail.html',
-  styleUrl: './institution-detail.scss',
 })
 export class InstitutionDetailPage implements OnInit {
   private route = inject(ActivatedRoute);

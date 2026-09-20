@@ -2,6 +2,9 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
 import { InstitutionTreeNode } from '../../core/models';
 import { InstitutionService } from '../../core/institution.service';
 import { AuthService } from '../../core/auth.service';
@@ -9,9 +12,8 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-institution-tree',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, InputTextModule, TagModule],
   templateUrl: './institution-tree.html',
-  styleUrl: './institution-tree.scss',
 })
 export class InstitutionTreePage implements OnInit {
   private instService = inject(InstitutionService);

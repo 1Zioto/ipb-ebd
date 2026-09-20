@@ -2,26 +2,27 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
+import { SelectModule } from 'primeng/select';
+import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../core/auth.service';
+import { AppFloatingConfigurator } from '../../layout/component/app.floatingconfigurator';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, PasswordModule, SelectModule, MessageModule, AppFloatingConfigurator],
   templateUrl: './login.html',
-  styleUrl: './login.scss',
 })
 export class LoginPage {
   private auth = inject(AuthService);
   private router = inject(Router);
 
   isRegisterMode = signal(false);
-
-  // Campos de Login
   username = signal('');
   password = signal('');
-
-  // Campos de Cadastro da Nova Igreja
   churchName = signal('');
   shortName = signal('');
   type = signal('igreja');
@@ -33,10 +34,16 @@ export class LoginPage {
   adminEmail = signal('');
   regPassword = signal('');
   confirmPassword = signal('');
-
   loading = signal(false);
   error = signal<string | null>(null);
   successMsg = signal<string | null>(null);
+
+  typeOptions = [
+    { label: 'Igreja', value: 'igreja' },
+    { label: 'Congregação', value: 'congregacao' },
+    { label: 'Presbitério', value: 'presbiterio' },
+    { label: 'Sínodo', value: 'sinodo' },
+  ];
 
   toggleMode(): void {
     this.isRegisterMode.set(!this.isRegisterMode());
@@ -60,12 +67,10 @@ export class LoginPage {
 
   async submitRegister() {
     this.error.set(null);
-
     if (this.regPassword() !== this.confirmPassword()) {
       this.error.set('As senhas digitadas não coincidem.');
       return;
     }
-
     this.loading.set(true);
     try {
       const payload = {
@@ -80,14 +85,9 @@ export class LoginPage {
         admin_email: this.adminEmail(),
         password: this.regPassword(),
       };
-
       const res = await this.auth.registerChurch(payload);
       this.successMsg.set(`Igreja "${res.institution.name}" cadastrada com sucesso! Código gerado: ${res.institution.code}`);
-      
-      // Redireciona automaticamente após cadastrar
-      setTimeout(() => {
-        this.router.navigate(['/']);
-      }, 1500);
+      setTimeout(() => this.router.navigate(['/']), 1500);
     } catch (e: any) {
       const msg = e?.error?.message || e?.error?.errors?.admin_username?.[0] || 'Erro ao cadastrar igreja.';
       this.error.set(msg);

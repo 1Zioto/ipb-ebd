@@ -14,6 +14,6 @@ export const permissionGuard = (permission: string): CanActivateFn => () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   if (auth.can(permission)) return true;
-  router.navigate(['/']);
+  router.navigate(['/acesso-negado']);
   return false;
 };
