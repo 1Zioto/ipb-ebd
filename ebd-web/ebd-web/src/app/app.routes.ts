@@ -8,7 +8,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    loadComponent: () => import('./layout/shell').then((m) => m.Shell),
+    loadComponent: () => import('./layout/component/app.layout').then((m) => m.AppLayout),
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -116,6 +116,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dizimos/dizimos-config').then((m) => m.DizimosConfigPage),
       },
     ],
+  },
+  {
+    path: 'acesso-negado',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/auth/access-denied').then((m) => m.AccessDeniedPage),
   },
   { path: '**', redirectTo: '' },
 ];

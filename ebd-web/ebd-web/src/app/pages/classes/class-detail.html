@@ -1,149 +1,101 @@
-<div class="page">
-  <a class="back" routerLink="/classes">← Classes</a>
-  <div class="head">
-    <div>
-      <h1>{{ classInfo()?.name }}</h1>
-      <span class="count">
-        @if (classInfo()?.age_range) { {{ classInfo()?.age_range }} · }
-        {{ students().length }} alunos · {{ teachers().length }} professores
-      </span>
-    </div>
-  </div>
+<p-button label="Classes" icon="pi pi-arrow-left" [text]="true" routerLink="/classes" styleClass="mb-3" />
+<div class="card mb-4">
+  <h1 class="m-0 text-2xl">{{ classInfo()?.name }}</h1>
+  <p class="text-muted-color mb-0">@if (classInfo()?.age_range) { {{ classInfo()?.age_range }} · } {{ students().length }} alunos · {{ teachers().length }} professores</p>
+</div>
+<div class="flex gap-2 mb-4">
+  <p-button label="Alunos" [outlined]="tab()!=='alunos'" (onClick)="tab.set('alunos')" />
+  <p-button label="Professores" [outlined]="tab()!=='professores'" (onClick)="tab.set('professores')" />
+  @if (canViewCalls()) { <p-button label="Chamadas" [outlined]="tab()!=='chamadas'" (onClick)="tab.set('chamadas')" /> }
+</div>
+@if (error()) { <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message> }
 
-  <div class="tabs">
-    <button [class.active]="tab()==='alunos'" (click)="tab.set('alunos')">Alunos</button>
-    <button [class.active]="tab()==='professores'" (click)="tab.set('professores')">Professores</button>
-    @if (canViewCalls()) {
-      <button [class.active]="tab()==='chamadas'" (click)="tab.set('chamadas')">Chamadas</button>
-    }
-  </div>
-
-  @if (error()) { <div class="alert">{{ error() }}</div> }
-
-  @if (tab() === 'alunos') {
+@if (tab() === 'alunos') {
+  <div class="card">
     @if (canEnroll()) {
-      <div class="enrollment-picker">
-        <div class="picker-toolbar">
-          <input
-            type="search"
-            placeholder="Pesquisar pessoa pelo nome..."
-            [ngModel]="studentSearch()"
-            (ngModelChange)="studentSearch.set($event)"
-          />
-          <button
-            class="btn-primary"
-            [disabled]="selectedStudentIds().size === 0 || enrolling()"
-            (click)="enrollSelected()"
-          >
-            {{ enrolling() ? 'Matriculando...' : 'Matricular selecionados (' + selectedStudentIds().size + ')' }}
-          </button>
-        </div>
-
-        <label class="select-all">
-          <input
-            type="checkbox"
-            [checked]="allVisibleSelected()"
-            (change)="toggleAllVisible($any($event.target).checked)"
-          />
-          Selecionar todas as pessoas exibidas
-        </label>
-
-        <div class="checkbox-list">
-          @for (p of availableStudents(); track p.id) {
-            <label class="person-check" [class.selected]="isStudentSelected(p.id)">
-              <input
-                type="checkbox"
-                [checked]="isStudentSelected(p.id)"
-                (change)="toggleStudent(p.id, $any($event.target).checked)"
-              />
-              <span>{{ p.full_name }}</span>
-              @if (p.age !== null) { <small>{{ p.age }} anos</small> }
-            </label>
-          } @empty {
-            <div class="picker-empty">Nenhuma pessoa disponível encontrada.</div>
-          }
-        </div>
+      <div class="flex flex-col sm:flex-row gap-2 mb-3">
+        <input pInputText class="flex-1" type="search" placeholder="Pesquisar pessoa pelo nome..." [ngModel]="studentSearch()" (ngModelChange)="studentSearch.set($event)" />
+        <p-button [label]="'Matricular selecionados (' + selectedStudentIds().size + ')'" [disabled]="selectedStudentIds().size === 0" [loading]="enrolling()" (onClick)="enrollSelected()" />
+      </div>
+      <div class="flex items-center gap-2 mb-3">
+        <p-checkbox [binary]="true" [ngModel]="allVisibleSelected()" (ngModelChange)="toggleAllVisible($event)" inputId="all-vis" />
+        <label for="all-vis">Selecionar todas as pessoas exibidas</label>
+      </div>
+      <div class="grid grid-cols-12 gap-2 mb-4">
+        @for (p of availableStudents(); track p.id) {
+          <label class="col-span-12 md:col-span-6 flex items-center gap-2 p-2 border border-surface rounded-border cursor-pointer">
+            <input type="checkbox" [checked]="isStudentSelected(p.id)" (change)="toggleStudent(p.id, $any($event.target).checked)" />
+            <span>{{ p.full_name }}</span>
+            @if (p.age !== null) { <small class="text-muted-color">{{ p.age }} anos</small> }
+          </label>
+        } @empty { <div class="col-span-12 text-muted-color">Nenhuma pessoa disponível encontrada.</div> }
       </div>
     }
-    @if (students().length === 0) { <div class="empty">Nenhum aluno matriculado.</div> }
-    @else {
-      <div class="list">
-        @for (e of students(); track e.id) {
-          <div class="row">
-            <div class="info">
-              <div class="name">{{ e.person_name }}</div>
-              <div class="meta">@if (e.age !== null && e.age !== undefined) { {{ e.age }} anos · } desde {{ e.enrolled_at }}</div>
-            </div>
-            @if (canEnroll()) { <div class="actions"><button class="btn-ghost small danger" (click)="unenroll(e)">Encerrar</button></div> }
-          </div>
-        }
-      </div>
-    }
-  }
+    <p-table [value]="students()">
+      <ng-template pTemplate="header"><tr><th>Aluno</th><th>Desde</th>@if (canEnroll()) { <th></th> }</tr></ng-template>
+      <ng-template pTemplate="body" let-e>
+        <tr>
+          <td>{{ e.person_name }} @if (e.age !== null && e.age !== undefined) { <span class="text-muted-color">· {{ e.age }} anos</span> }</td>
+          <td>{{ e.enrolled_at }}</td>
+          @if (canEnroll()) { <td><p-button label="Encerrar" size="small" severity="danger" [text]="true" (onClick)="unenroll(e)" /></td> }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage"><tr><td colspan="3">Nenhum aluno matriculado.</td></tr></ng-template>
+    </p-table>
+  </div>
+}
 
-  @if (tab() === 'professores') {
+@if (tab() === 'professores') {
+  <div class="card">
     @if (canManage()) {
-      <div class="add-row">
-        <select [ngModel]="selectedTeacherId()" (ngModelChange)="selectedTeacherId.set($event)">
+      <div class="flex gap-2 mb-3">
+        <select class="flex-1 p-inputtext p-component" [ngModel]="selectedTeacherId()" (ngModelChange)="selectedTeacherId.set($event)">
           <option [ngValue]="null">Selecione um professor habilitado...</option>
           @for (p of availableTeachers(); track p.id) { <option [ngValue]="p.id">{{ p.full_name }}</option> }
         </select>
-        <button class="btn-primary" [disabled]="!selectedTeacherId()" (click)="addTeacher()">Adicionar</button>
+        <p-button label="Adicionar" [disabled]="!selectedTeacherId()" (onClick)="addTeacher()" />
       </div>
-      <p class="hint">Apenas pessoas habilitadas como professoras (can_teach) aparecem aqui.</p>
+      <p class="text-muted-color">Apenas pessoas habilitadas como professoras aparecem aqui.</p>
     }
-    @if (teachers().length === 0) { <div class="empty">Nenhum professor vinculado.</div> }
-    @else {
-      <div class="list">
-        @for (t of teachers(); track t.id) {
-          <div class="row">
-            <div class="info"><div class="name">{{ t.person_name }}</div></div>
-            @if (canManage()) { <div class="actions"><button class="btn-ghost small danger" (click)="removeTeacher(t)">Remover</button></div> }
+    <p-table [value]="teachers()">
+      <ng-template pTemplate="header"><tr><th>Professor</th>@if (canManage()) { <th></th> }</tr></ng-template>
+      <ng-template pTemplate="body" let-t>
+        <tr>
+          <td>{{ t.person_name }}</td>
+          @if (canManage()) { <td><p-button label="Remover" size="small" severity="danger" [text]="true" (onClick)="removeTeacher(t)" /></td> }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage"><tr><td colspan="2">Nenhum professor vinculado.</td></tr></ng-template>
+    </p-table>
+  </div>
+}
+
+@if (tab() === 'chamadas' && canViewCalls()) {
+  <div class="card">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h2 class="m-0">Chamadas da classe</h2>
+        <p class="text-muted-color mb-0">Abra a chamada do domingo ou consulte as já finalizadas.</p>
+      </div>
+      <p-button label="Ver calendário" severity="secondary" routerLink="/calendario" />
+    </div>
+    @if (loadingSessions()) { <div class="flex justify-center p-4"><i class="pi pi-spin pi-spinner"></i></div> }
+    @else if (sessions().length === 0) {
+      <p class="text-muted-color">Nenhuma chamada criada para esta classe.</p>
+      <p-button label="Abrir calendário" routerLink="/calendario" />
+    } @else {
+      <div class="flex flex-col gap-3">
+        @for (session of sessions(); track session.id) {
+          <div class="p-3 border border-surface rounded-border flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <strong>{{ formatDate(session.event_date) }}</strong>
+              <p-tag class="ml-2" [value]="statusLabel(session.status)" [severity]="session.status === 'finalizada' ? 'success' : 'info'" />
+              <div class="text-muted-color text-sm">Professor: {{ session.teacher_name || 'Não definido' }}</div>
+            </div>
+            <p-button [label]="session.status === 'finalizada' ? 'Ver chamada' : session.status === 'em_andamento' ? 'Continuar chamada' : 'Abrir chamada'" [routerLink]="['/chamada', session.id]" />
           </div>
         }
       </div>
     }
-  }
-
-  @if (tab() === 'chamadas' && canViewCalls()) {
-    <div class="calls-heading">
-      <div>
-        <h2>Chamadas da classe</h2>
-        <p>Abra a chamada do domingo ou consulte as chamadas já finalizadas.</p>
-      </div>
-      <a class="btn-ghost call-calendar" routerLink="/eventos">Ver calendário</a>
-    </div>
-
-    @if (loadingSessions()) {
-      <div class="empty">Carregando chamadas...</div>
-    } @else if (sessions().length === 0) {
-      <div class="empty call-empty">
-        <strong>Nenhuma chamada criada para esta classe.</strong>
-        <span>Crie ou abra o evento da EBD no calendário para gerar a chamada de cada classe.</span>
-        <a class="btn-primary call-empty-action" routerLink="/eventos">Abrir calendário</a>
-      </div>
-    } @else {
-      <div class="call-list">
-        @for (session of sessions(); track session.id; let first = $first) {
-          <article class="call-card" [class.current]="first && session.status !== 'finalizada'">
-            <div class="call-date">
-              <strong>{{ formatDate(session.event_date) }}</strong>
-              <span [class]="'call-status ' + session.status">{{ statusLabel(session.status) }}</span>
-            </div>
-            <div class="call-details">
-              <span>Professor: <strong>{{ session.teacher_name || 'Não definido' }}</strong></span>
-              @if (session.total > 0 || session.status === 'finalizada') {
-                <span><strong>{{ session.present }}</strong> presentes · <strong>{{ session.absent }}</strong> ausentes</span>
-              } @else {
-                <span>A chamada ainda não foi iniciada.</span>
-              }
-            </div>
-            <a class="btn-primary call-action" [routerLink]="['/chamada', session.id]">
-              {{ session.status === 'finalizada' ? 'Ver chamada' : session.status === 'em_andamento' ? 'Continuar chamada' : 'Abrir chamada' }}
-            </a>
-          </article>
-        }
-      </div>
-    }
-  }
-</div>
+  </div>
+}

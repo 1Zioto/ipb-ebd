@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ThemeService } from './core/theme.service';
+import { LayoutService } from './layout/service/layout.service';
 
 @Component({
   selector: 'app-root',
@@ -8,6 +8,5 @@ import { ThemeService } from './core/theme.service';
   template: '<router-outlet />',
 })
 export class App {
-  // Instancia o tema no bootstrap para valer em qualquer rota (inclusive login).
-  private theme = inject(ThemeService);
+  private layout = inject(LayoutService);
 }

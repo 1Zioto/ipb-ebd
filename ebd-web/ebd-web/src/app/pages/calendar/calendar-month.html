@@ -1,71 +1,45 @@
-<div class="page">
-  <div class="head">
-    <h1>Calendário</h1>
-    <div class="head-actions">
-      @if (canAdhoc()) { <button class="btn-ghost" (click)="openAdhoc()">+ Chamada avulsa</button> }
-      @if (canGenerate()) { <button class="btn-primary" (click)="generate()">Gerar mês</button> }
+<div class="card">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+    <h1 class="m-0 text-2xl font-semibold">Calendário</h1>
+    <div class="flex gap-2">
+      @if (canAdhoc()) { <p-button label="Chamada avulsa" icon="pi pi-plus" severity="secondary" (onClick)="openAdhoc()" /> }
+      @if (canGenerate()) { <p-button label="Gerar mês" icon="pi pi-calendar-plus" (onClick)="generate()" /> }
     </div>
   </div>
-
-  <div class="monthbar">
-    <button class="nav" (click)="prevMonth()">‹</button>
-    <div class="label">{{ monthNames[month()-1] }} {{ year() }}</div>
-    <button class="nav" (click)="nextMonth()">›</button>
+  <div class="flex items-center justify-center gap-4 mb-4">
+    <p-button icon="pi pi-chevron-left" [rounded]="true" [text]="true" (onClick)="prevMonth()" />
+    <strong class="text-xl">{{ monthNames[month()-1] }} {{ year() }}</strong>
+    <p-button icon="pi pi-chevron-right" [rounded]="true" [text]="true" (onClick)="nextMonth()" />
   </div>
-
-  @if (msg()) { <div class="ok">{{ msg() }}</div> }
-  @if (error()) { <div class="alert">{{ error() }}</div> }
-
-  @if (loading()) { <div class="empty">Carregando...</div> }
-  @else if (events().length === 0) {
-    <div class="empty">Nenhum encontro neste mês. @if (canGenerate()) { Use "Gerar mês" para criar os domingos. }</div>
-  }
-  @else {
-    <div class="list">
-      @for (e of events(); track e.id) {
-        <a class="row" [routerLink]="['/eventos', e.id]">
-          <div class="date-badge">
-            <span class="d">{{ e.event_date.slice(8,10) }}</span>
-            <span class="m">{{ monthNames[month()-1].slice(0,3) }}</span>
-          </div>
-          <div class="info">
-            <div class="name">
-              {{ typeLabel(e.type) }}
-              <span class="tag" [class]="'st-' + e.status">{{ statusLabel(e.status) }}</span>
-              @if (!e.is_auto_generated) { <span class="tag muted">avulso</span> }
-            </div>
-            <div class="meta">
-              {{ e.sessions_count ?? 0 }} classes
-              @if (e.superintendent_name) { · Super: {{ e.superintendent_name }} }
-            </div>
-          </div>
-          <span class="chev">›</span>
-        </a>
-      }
-    </div>
-  }
+  @if (msg()) { <p-message severity="success" styleClass="mb-3 w-full">{{ msg() }}</p-message> }
+  @if (error()) { <p-message severity="error" styleClass="mb-3 w-full">{{ error() }}</p-message> }
+  <p-table [value]="events()" [loading]="loading()">
+    <ng-template pTemplate="header"><tr><th>Data</th><th>Tipo</th><th>Status</th><th>Classes</th><th></th></tr></ng-template>
+    <ng-template pTemplate="body" let-e>
+      <tr>
+        <td>{{ e.event_date }}</td>
+        <td>{{ typeLabel(e.type) }} @if (!e.is_auto_generated) { <p-tag value="avulso" severity="secondary" /> }</td>
+        <td><p-tag [value]="statusLabel(e.status)" /></td>
+        <td>{{ e.sessions_count ?? 0 }} @if (e.superintendent_name) { · Super: {{ e.superintendent_name }} }</td>
+        <td><p-button icon="pi pi-arrow-right" [rounded]="true" [text]="true" [routerLink]="['/eventos', e.id]" /></td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="5">Nenhum encontro neste mês.@if (canGenerate()) { Use "Gerar mês" para criar os domingos. }</td></tr></ng-template>
+  </p-table>
 </div>
-
-@if (showAdhoc()) {
-  <div class="overlay" (click)="showAdhoc.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <h2>Nova chamada avulsa</h2>
-      <label>Data</label>
-      <input type="date" [ngModel]="adhoc().event_date" (ngModelChange)="patchAdhoc('event_date', $event)" />
-      <label>Tipo</label>
-      <select [ngModel]="adhoc().type" (ngModelChange)="patchAdhoc('type', $event)">
-        <option value="especial">Especial</option>
-        <option value="evento">Evento</option>
-        <option value="outro">Outro</option>
-        <option value="regular">Regular</option>
+<p-dialog header="Nova chamada avulsa" [visible]="showAdhoc()" (visibleChange)="showAdhoc.set($event)" [modal]="true" [style]="{width:'28rem'}">
+  <div class="flex flex-col gap-3">
+    <div><label class="block mb-2">Data</label><input pInputText class="w-full" type="date" [ngModel]="adhoc().event_date" (ngModelChange)="patchAdhoc('event_date', $event)" /></div>
+    <div>
+      <label class="block mb-2">Tipo</label>
+      <select class="w-full p-inputtext p-component" [ngModel]="adhoc().type" (ngModelChange)="patchAdhoc('type', $event)">
+        <option value="especial">Especial</option><option value="evento">Evento</option><option value="outro">Outro</option><option value="regular">Regular</option>
       </select>
-      <label>Observações</label>
-      <textarea rows="2" [ngModel]="adhoc().notes" (ngModelChange)="patchAdhoc('notes', $event)"></textarea>
-      <p class="hint">Serão preparadas as sessões de todas as classes ativas.</p>
-      <div class="modal-actions">
-        <button class="btn-ghost" (click)="showAdhoc.set(false)">Cancelar</button>
-        <button class="btn-primary" [disabled]="savingAdhoc()" (click)="saveAdhoc()">{{ savingAdhoc() ? 'Salvando...' : 'Criar' }}</button>
-      </div>
     </div>
+    <div><label class="block mb-2">Observações</label><textarea pTextarea class="w-full" rows="2" [ngModel]="adhoc().notes" (ngModelChange)="patchAdhoc('notes', $event)"></textarea></div>
   </div>
-}
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showAdhoc.set(false)" />
+    <p-button label="Criar" [loading]="savingAdhoc()" (onClick)="saveAdhoc()" />
+  </ng-template>
+</p-dialog>

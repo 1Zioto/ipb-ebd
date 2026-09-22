@@ -1,15 +1,13 @@
 @if (breadcrumbs().length > 0) {
-  <nav class="inst-breadcrumbs">
+  <nav class="flex flex-wrap items-center gap-2 mb-4 text-sm">
     @for (item of breadcrumbs(); track item.id; let last = $last) {
-      <span class="crumb-item" [class.last]="last">
-        @if (!last) {
-          <span class="crumb-parent-name" title="Instituição Superior Vincular">{{ item.short_name || item.name }}</span>
-          <span class="sep">›</span>
-        } @else {
-          <span class="current">{{ item.short_name || item.name }}</span>
-          <span class="badge">{{ formatType(item.type) }}</span>
-        }
-      </span>
+      @if (!last) {
+        <span class="text-muted-color">{{ item.short_name || item.name }}</span>
+        <i class="pi pi-chevron-right text-xs text-muted-color"></i>
+      } @else {
+        <span class="font-medium">{{ item.short_name || item.name }}</span>
+        <p-tag [value]="formatType(item.type)" />
+      }
     }
   </nav>
 }

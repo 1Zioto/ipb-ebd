@@ -1,13 +1,13 @@
 import { Component, Input, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
+import { TagModule } from 'primeng/tag';
 import { InstitutionBreadcrumb } from '../core/models';
 import { InstitutionService } from '../core/institution.service';
 
 @Component({
   selector: 'app-institution-breadcrumb',
   standalone: true,
-  imports: [],
+  imports: [TagModule],
   templateUrl: './institution-breadcrumb.html',
-  styleUrl: './institution-breadcrumb.scss',
 })
 export class InstitutionBreadcrumbComponent implements OnChanges {
   @Input() institutionId?: number | null;

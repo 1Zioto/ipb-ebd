@@ -1,1 +1,26 @@
-<div class="page"><h1>Auditoria do Sistema</h1><p>Histórico de operações e alterações importantes</p><div class="filters"><input placeholder="Filtrar ação" [(ngModel)]="action"><input placeholder="Filtrar entidade" [(ngModel)]="entity"><button (click)="load()">Filtrar</button></div>@if(error()){<div class="alert">{{error()}}</div>}@if(loading()){<div>Carregando...</div>}@else{<div class="table"><table><thead><tr><th>Data/hora</th><th>Usuário</th><th>Ação</th><th>Entidade</th><th>ID</th><th>Alterações</th></tr></thead><tbody>@for(l of logs();track l.id){<tr><td>{{l.created_at|date:'dd/MM/yyyy HH:mm:ss'}}</td><td>{{l.user?.name||'Sistema'}}</td><td>{{l.action}}</td><td>{{l.entity_type||'—'}}</td><td>{{l.entity_id||'—'}}</td><td><details><summary>Visualizar</summary><pre>{{ {antes:l.old_values,depois:l.new_values}|json }}</pre></details></td></tr>}@empty{<tr><td colspan="6">Nenhum registro encontrado.</td></tr>}</tbody></table></div>}</div>
+<div class="mb-4">
+  <h1 class="m-0 text-2xl font-semibold">Auditoria do Sistema</h1>
+  <p class="text-muted-color">Histórico de operações e alterações importantes</p>
+</div>
+<div class="card mb-4 flex flex-col md:flex-row gap-2">
+  <input pInputText class="flex-1" placeholder="Filtrar ação" [(ngModel)]="action" />
+  <input pInputText class="flex-1" placeholder="Filtrar entidade" [(ngModel)]="entity" />
+  <p-button label="Filtrar" icon="pi pi-search" (onClick)="load()" />
+</div>
+@if (error()) { <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message> }
+<div class="card">
+  <p-table [value]="logs()" [loading]="loading()">
+    <ng-template pTemplate="header"><tr><th>Data/hora</th><th>Usuário</th><th>Ação</th><th>Entidade</th><th>ID</th><th>Alterações</th></tr></ng-template>
+    <ng-template pTemplate="body" let-l>
+      <tr>
+        <td>{{ l.created_at | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+        <td>{{ l.user?.name || 'Sistema' }}</td>
+        <td>{{ l.action }}</td>
+        <td>{{ l.entity_type || '—' }}</td>
+        <td>{{ l.entity_id || '—' }}</td>
+        <td><details><summary>Visualizar</summary><pre class="text-xs whitespace-pre-wrap">{{ {antes:l.old_values,depois:l.new_values} | json }}</pre></details></td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="6">Nenhum registro encontrado.</td></tr></ng-template>
+  </p-table>
+</div>

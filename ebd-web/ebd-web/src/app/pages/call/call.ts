@@ -1,6 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../core/auth.service';
 import { CallService } from '../../core/call.service';
 import { ClassesService } from '../../core/classes.service';
@@ -8,9 +12,8 @@ import { AttendanceRecord, ClassTeacher, EbdSession } from '../../core/models';
 
 @Component({
   selector: 'app-call',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ButtonModule, InputTextModule, TagModule, MessageModule],
   templateUrl: './call.html',
-  styleUrl: './call.scss',
 })
 export class CallPage implements OnInit {
   private route = inject(ActivatedRoute);

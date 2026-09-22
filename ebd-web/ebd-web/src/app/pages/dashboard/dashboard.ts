@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
 import { EbdDashboardSummary, EbdService, SuperintendentLiveMonitor } from '../../core/ebd.service';
 import { ResponsiveService } from '../../core/responsive.service';
 import { AuthService } from '../../core/auth.service';
@@ -8,9 +10,8 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-ebd-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ButtonModule, TagModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
 })
 export class EbdDashboardPage implements OnInit {
   private ebdService = inject(EbdService);

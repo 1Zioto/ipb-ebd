@@ -1,5 +1,12 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TextareaModule } from 'primeng/textarea';
+import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../core/auth.service';
 import { FamiliesService } from '../../core/families.service';
 import { PeopleService } from '../../core/people.service';
@@ -9,9 +16,8 @@ type MemberDraft = Pick<FamilyMember, 'id' | 'full_name' | 'birth_date' | 'age' 
 
 @Component({
   selector: 'app-families-list',
-  imports: [FormsModule],
+  imports: [FormsModule, ButtonModule, DialogModule, InputTextModule, TagModule, CheckboxModule, TextareaModule, MessageModule],
   templateUrl: './families-list.html',
-  styleUrl: './families-list.scss',
 })
 export class FamiliesListPage implements OnInit {
   private familiesSvc = inject(FamiliesService);

@@ -1,98 +1,39 @@
-<div class="page-container">
-  <div class="back-link">
-    <a (click)="goBack()" style="cursor:pointer">← Voltar</a>
+<p-button label="Voltar" icon="pi pi-arrow-left" [text]="true" (onClick)="goBack()" styleClass="mb-3" />
+@if (loading()) {
+  <div class="card flex justify-center p-8"><i class="pi pi-spin pi-spinner text-2xl"></i></div>
+} @else if (errorMsg()) {
+  <p-message severity="error">{{ errorMsg() }}</p-message>
+} @else if (history()) {
+  <div class="card mb-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="m-0 text-2xl">{{ history()?.person?.full_name }}</h1>
+      @if (history()?.person?.envelope_number) { <p-tag [value]="'Envelope #' + history()?.person?.envelope_number" /> }
+      <p-tag [value]="history()?.person?.is_tither ? 'Dizimista ativo' : 'Não dizimista'" [severity]="history()?.person?.is_tither ? 'success' : 'secondary'" />
+      <p-tag [value]="history()?.metrics?.trend || ''" />
+    </div>
   </div>
-
-  @if (loading()) {
-    <div class="loading-box">Carregando histórico do membro com verificação de autorização...</div>
-  } @else if (errorMsg()) {
-    <div class="error-box">
-      <h3>🔒 Acesso Restrito</h3>
-      <p>{{ errorMsg() }}</p>
-    </div>
-  } @else if (history()) {
-    <!-- Member Header Profile -->
-    <header class="member-header">
-      <div class="profile-title">
-        <h1>{{ history()?.person?.full_name }}</h1>
-        @if (history()?.person?.envelope_number) {
-          <span class="envelope-badge">Envelope #{{ history()?.person?.envelope_number }}</span>
-        }
-        <span class="tither-badge" [class.active]="history()?.person?.is_tither">
-          {{ history()?.person?.is_tither ? 'Dizimista Ativo' : 'Não dizimista' }}
-        </span>
-      </div>
-
-      <div class="trend-section">
-        <span class="lbl">Tendência Histórica:</span>
-        <span class="badge" [ngClass]="getTrendBadgeClass(history()?.metrics?.trend || '')">
-          {{ history()?.metrics?.trend }}
-        </span>
-      </div>
-    </header>
-
-    <!-- Stat Metrics -->
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <span class="lbl">Média Histórica</span>
-        <strong class="val">{{ history()?.metrics?.historical_average | currency: 'BRL' }}</strong>
-      </div>
-      <div class="metric-card">
-        <span class="lbl">Média Recente (3 Meses)</span>
-        <strong class="val">{{ history()?.metrics?.recent_average | currency: 'BRL' }}</strong>
-      </div>
-      <div class="metric-card">
-        <span class="lbl">Variação Recente</span>
-        <strong class="val" [class.negative]="(history()?.metrics?.variation_percentage || 0) < 0">
-          {{ history()?.metrics?.variation_percentage }}%
-        </strong>
-      </div>
-      <div class="metric-card">
-        <span class="lbl">Meses Registrados</span>
-        <strong class="val">{{ history()?.metrics?.months_recorded }} meses</strong>
-      </div>
-    </div>
-
-    <!-- Monthly Bar Chart -->
-    <section class="chart-section">
-      <div class="card-box">
-        <h3>Evolução Mensal das Contribuições</h3>
-        <p class="chart-sub">Total consolidado por mês de contribuição</p>
-
-        <div class="bar-chart-wrapper">
-          <div class="bar-chart">
-            @for (m of history()?.chart_data; track m.label) {
-              <div class="chart-col">
-                <div class="bar-wrapper" [title]="m.label + ': ' + (m.total_amount | currency: 'BRL')">
-                  <div
-                    class="bar-fill"
-                    [style.height.%]="getBarHeightPercentage(m.total_amount)"
-                  ></div>
-                </div>
-                <span class="bar-amount">{{ m.total_amount | currency: 'BRL' : 'symbol' : '1.0-0' }}</span>
-                <span class="bar-label">{{ m.label }}</span>
-              </div>
-            } @empty {
-              <div class="empty-chart">Nenhum dado mensal consolidado disponível.</div>
-            }
-          </div>
+  <div class="grid grid-cols-12 gap-4 mb-4">
+    <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Média histórica</span><div class="text-xl font-semibold">{{ history()?.metrics?.historical_average | currency: 'BRL' }}</div></div></div>
+    <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Média recente</span><div class="text-xl font-semibold">{{ history()?.metrics?.recent_average | currency: 'BRL' }}</div></div></div>
+    <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Variação</span><div class="text-xl font-semibold">{{ history()?.metrics?.variation_percentage }}%</div></div></div>
+    <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Meses</span><div class="text-xl font-semibold">{{ history()?.metrics?.months_recorded }}</div></div></div>
+  </div>
+  <div class="card mb-4">
+    <h3 class="mt-0">Evolução mensal</h3>
+    <div class="flex items-end gap-3 overflow-x-auto min-h-40">
+      @for (m of history()?.chart_data; track m.label) {
+        <div class="flex flex-col items-center gap-1 min-w-16">
+          <div class="w-8 bg-primary rounded-t" [style.height.%]="getBarHeightPercentage(m.total_amount)"></div>
+          <span class="text-xs">{{ m.total_amount | currency: 'BRL' : 'symbol' : '1.0-0' }}</span>
+          <span class="text-muted-color text-xs">{{ m.label }}</span>
         </div>
-      </div>
-    </section>
-
-    <!-- Context & Family Background (Sem somar dízimos) -->
-    <section class="info-section">
-      <div class="card-box">
-        <h3>Informações Cadastrais e Núcleo Familiar</h3>
-        <p class="info-note">
-          ℹ️ <strong>Princípio Pastoral:</strong> Cada membro possui seu próprio histórico. As contribuições não são somadas automaticamente por família.
-        </p>
-
-        <div class="info-content">
-          <div><strong>Dizimista desde:</strong> {{ history()?.person?.tither_since ? (history()?.person?.tither_since | date: 'dd/MM/yyyy') : 'Não informado' }}</div>
-          <div><strong>Observações Cadastrais:</strong> {{ history()?.person?.notes || 'Nenhuma observação cadastrada.' }}</div>
-        </div>
-      </div>
-    </section>
-  }
-</div>
+      } @empty { <p class="text-muted-color">Nenhum dado mensal consolidado.</p> }
+    </div>
+  </div>
+  <div class="card">
+    <h3 class="mt-0">Cadastro e núcleo familiar</h3>
+    <p class="text-muted-color">Cada membro possui seu próprio histórico. As contribuições não são somadas por família.</p>
+    <p><strong>Dizimista desde:</strong> {{ history()?.person?.tither_since ? (history()?.person?.tither_since | date: 'dd/MM/yyyy') : 'Não informado' }}</p>
+    <p class="mb-0"><strong>Observações:</strong> {{ history()?.person?.notes || 'Nenhuma observação cadastrada.' }}</p>
+  </div>
+}

@@ -1,15 +1,17 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { DizimosService } from '../../core/dizimos.service';
 import { TithesSettings } from '../../core/models';
 
 @Component({
   selector: 'app-dizimos-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, MessageModule],
   templateUrl: './dizimos-config.html',
-  styleUrl: './dizimos-config.scss',
 })
 export class DizimosConfigPage implements OnInit {
   private dizimosService = inject(DizimosService);

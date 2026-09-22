@@ -2,6 +2,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { DialogModule } from 'primeng/dialog';
 import { ConsolidatedStats, CultRevenueItem, DrilldownStats, Institution, InstitutionSubordinateSummary } from '../../core/models';
 import { InstitutionService } from '../../core/institution.service';
 import { InstitutionBreadcrumbComponent } from '../../layout/institution-breadcrumb';
@@ -9,9 +13,8 @@ import { InstitutionBreadcrumbComponent } from '../../layout/institution-breadcr
 @Component({
   selector: 'app-institution-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, InstitutionBreadcrumbComponent],
+  imports: [CommonModule, FormsModule, RouterLink, InstitutionBreadcrumbComponent, ButtonModule, TableModule, TagModule, DialogModule],
   templateUrl: './institution-dashboard.html',
-  styleUrl: './institution-dashboard.scss',
 })
 export class InstitutionDashboardPage implements OnInit {
   private route = inject(ActivatedRoute);

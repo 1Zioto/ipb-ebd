@@ -1,71 +1,27 @@
-<div class="page-container">
-  <header class="page-header">
-    <div>
-      <h1>Solicitações de Acompanhamento — Diaconato</h1>
-      <p class="subtitle">Fila de atendimento de solicitações de apoio e visitas encaminhadas pelo pastor</p>
-    </div>
-  </header>
-
-  @if (loading()) {
-    <div class="loading">Carregando solicitações do diaconato...</div>
-  } @else {
-    <div class="table-card">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Membro / Família</th>
-            <th>Solicitado Por</th>
-            <th>Instruções do Pastor</th>
-            <th>Data</th>
-            <th>Status</th>
-            <th class="actions-col">Atualizar Atendimento</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (r of requests(); track r.id) {
-            <tr>
-              <td>
-                <strong>{{ r.person?.full_name }}</strong>
-                @if (r.person?.envelope_number) {
-                  <span class="env-tag">Env #{{ r.person?.envelope_number }}</span>
-                }
-                @if (r.person?.families?.length) {
-                  <div class="notes-subtext">Família: {{ r.person?.families?.[0]?.name }}</div>
-                }
-                @if (r.person?.notes) {
-                  <div class="notes-subtext">{{ r.person?.notes }}</div>
-                }
-              </td>
-              <td>{{ r.pastor?.name || 'Pastor' }}</td>
-              <td>
-                <div class="pastor-instruction">
-                  "{{ r.pastor_notes }}"
-                </div>
-              </td>
-              <td>{{ r.created_at | date: 'dd/MM/yyyy' }}</td>
-              <td>
-                <span class="badge" [ngClass]="getStatusBadgeClass(r.status)">
-                  {{ r.status }}
-                </span>
-              </td>
-              <td class="actions-col">
-                <select [ngModel]="r.status" (ngModelChange)="updateStatus(r, $event)" class="status-select">
-                  <option value="Pendente">Pendente</option>
-                  <option value="Em atendimento">Em atendimento</option>
-                  <option value="Concluído">Concluído</option>
-                  <option value="Cancelado">Cancelado</option>
-                </select>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="6" class="empty-state">
-                Nenhuma solicitação de acompanhamento no diaconato no momento.
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
+<div class="mb-4">
+  <h1 class="m-0 text-2xl font-semibold">Solicitações — Diaconato</h1>
+  <p class="text-muted-color">Fila de atendimento encaminhada pelo pastor</p>
+</div>
+<div class="card">
+  <p-table [value]="requests()" [loading]="loading()">
+    <ng-template pTemplate="header"><tr><th>Membro / Família</th><th>Solicitado por</th><th>Instruções</th><th>Data</th><th>Status</th><th>Atualizar</th></tr></ng-template>
+    <ng-template pTemplate="body" let-r>
+      <tr>
+        <td>
+          <strong>{{ r.person?.full_name }}</strong>
+          @if (r.person?.families?.length) { <div class="text-muted-color text-sm">Família: {{ r.person?.families?.[0]?.name }}</div> }
+        </td>
+        <td>{{ r.pastor?.name || 'Pastor' }}</td>
+        <td>{{ r.pastor_notes }}</td>
+        <td>{{ r.created_at | date: 'dd/MM/yyyy' }}</td>
+        <td><p-tag [value]="r.status" /></td>
+        <td>
+          <select class="p-inputtext p-component" [ngModel]="r.status" (ngModelChange)="updateStatus(r, $event)">
+            <option>Pendente</option><option>Em atendimento</option><option>Concluído</option><option>Cancelado</option>
+          </select>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="6">Nenhuma solicitação no momento.</td></tr></ng-template>
+  </p-table>
 </div>

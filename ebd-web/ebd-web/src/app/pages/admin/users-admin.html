@@ -1,8 +1,75 @@
-<div class="page"><header><div><h1>Usuários e Permissões</h1><p>Controle de acesso ao sistema</p></div><button class="primary" (click)="openNew()">Novo usuário</button></header>
-@if(error()){<div class="alert">{{error()}}</div>}
-@if(loading()){<div class="empty">Carregando...</div>}@else{
-<section><h2>Usuários</h2><div class="cards">@for(u of users();track u.id){<article><div><strong>{{u.name}}</strong><small>{{u.username}} · {{u.roles.join(', ')}}</small></div><button class="ghost" [class.danger]="u.is_active" (click)="toggleActive(u)">{{u.is_active?'Desativar':'Ativar'}}</button></article>}</div></section>
-<section><h2>Papéis</h2><div class="cards">@for(r of roles();track r.id){<article><div><strong>{{r.name}}</strong><small>{{r.permissions.length}} permissões · {{r.description}}</small></div><button class="ghost" [disabled]="r.slug==='programador'" (click)="editRole(r)">Permissões</button></article>}</div></section>}
-@if(showForm()){<div class="overlay"><div class="modal"><h2>Novo usuário</h2><label>Nome<input [(ngModel)]="form.name"></label><label>Usuário<input [(ngModel)]="form.username"></label><label>E-mail<input type="email" [(ngModel)]="form.email"></label><label>Senha (mínimo 8 caracteres)<input type="password" [(ngModel)]="form.password"></label><fieldset><legend>Papéis</legend>@for(r of roles();track r.id){<label class="check"><input type="checkbox" [checked]="form.role_ids.includes(r.id)" (change)="toggleRole(r.id)">{{r.name}}</label>}</fieldset><div class="actions"><button class="ghost" (click)="showForm.set(false)">Cancelar</button><button class="primary" [disabled]="saving()" (click)="saveUser()">Salvar</button></div></div></div>}
-@if(roleEditing();as role){<div class="overlay"><div class="modal wide"><h2>Permissões — {{role.name}}</h2><div class="permission-grid">@for(p of permissions();track p.id){<label class="check"><input type="checkbox" [checked]="rolePermissionIds.has(p.id)" (change)="togglePermission(p.id)"><span>{{p.name}}<small>{{p.slug}}</small></span></label>}</div><div class="actions"><button class="ghost" (click)="roleEditing.set(null)">Cancelar</button><button class="primary" [disabled]="saving()" (click)="saveRole()">Salvar permissões</button></div></div></div>}
+<div class="flex justify-between items-center mb-4">
+  <div>
+    <h1 class="m-0 text-2xl font-semibold">Usuários e Permissões</h1>
+    <p class="text-muted-color mb-0">Controle de acesso ao sistema</p>
+  </div>
+  <p-button label="Novo usuário" icon="pi pi-plus" (onClick)="openNew()" />
 </div>
+@if (error()) { <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message> }
+@if (loading()) { <div class="card flex justify-center p-8"><i class="pi pi-spin pi-spinner text-2xl"></i></div> }
+@else {
+  <div class="card mb-4">
+    <h2 class="mt-0">Usuários</h2>
+    <p-table [value]="users()">
+      <ng-template pTemplate="header"><tr><th>Nome</th><th>Usuário</th><th>Papéis</th><th></th></tr></ng-template>
+      <ng-template pTemplate="body" let-u>
+        <tr>
+          <td>{{ u.name }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.roles.join(', ') }}</td>
+          <td><p-button [label]="u.is_active ? 'Desativar' : 'Ativar'" size="small" [severity]="u.is_active ? 'danger' : 'success'" (onClick)="toggleActive(u)" /></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  <div class="card">
+    <h2 class="mt-0">Papéis</h2>
+    <p-table [value]="roles()">
+      <ng-template pTemplate="header"><tr><th>Papel</th><th>Permissões</th><th></th></tr></ng-template>
+      <ng-template pTemplate="body" let-r>
+        <tr>
+          <td>{{ r.name }}<div class="text-muted-color text-sm">{{ r.description }}</div></td>
+          <td>{{ r.permissions.length }}</td>
+          <td><p-button label="Permissões" size="small" [disabled]="r.slug==='programador'" (onClick)="editRole(r)" /></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+}
+<p-dialog header="Novo usuário" [visible]="showForm()" (visibleChange)="showForm.set($event)" [modal]="true" [style]="{width:'32rem'}">
+  <div class="flex flex-col gap-3">
+    <div><label class="block mb-2">Nome</label><input pInputText class="w-full" [(ngModel)]="form.name" /></div>
+    <div><label class="block mb-2">Usuário</label><input pInputText class="w-full" [(ngModel)]="form.username" /></div>
+    <div><label class="block mb-2">E-mail</label><input pInputText class="w-full" type="email" [(ngModel)]="form.email" /></div>
+    <div><label class="block mb-2">Senha</label><input pInputText class="w-full" type="password" [(ngModel)]="form.password" /></div>
+    <fieldset class="border border-surface rounded-border p-3">
+      <legend>Papéis</legend>
+      @for (r of roles(); track r.id) {
+        <div class="flex items-center gap-2 mb-2">
+          <p-checkbox [binary]="true" [ngModel]="form.role_ids.includes(r.id)" (ngModelChange)="toggleRole(r.id)" [inputId]="'role-'+r.id" />
+          <label [for]="'role-'+r.id">{{ r.name }}</label>
+        </div>
+      }
+    </fieldset>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" (onClick)="showForm.set(false)" />
+    <p-button label="Salvar" [loading]="saving()" (onClick)="saveUser()" />
+  </ng-template>
+</p-dialog>
+@if (roleEditing(); as role) {
+  <p-dialog header="Permissões — {{ role.name }}" [visible]="true" (visibleChange)="!$event && roleEditing.set(null)" [modal]="true" [style]="{width:'40rem'}">
+    <div class="grid grid-cols-12 gap-2">
+      @for (p of permissions(); track p.id) {
+        <div class="col-span-12 md:col-span-6 flex items-start gap-2">
+          <p-checkbox [binary]="true" [ngModel]="rolePermissionIds.has(p.id)" (ngModelChange)="togglePermission(p.id)" [inputId]="'perm-'+p.id" />
+          <label [for]="'perm-'+p.id">{{ p.name }}<div class="text-muted-color text-xs">{{ p.slug }}</div></label>
+        </div>
+      }
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button label="Cancelar" severity="secondary" (onClick)="roleEditing.set(null)" />
+      <p-button label="Salvar permissões" [loading]="saving()" (onClick)="saveRole()" />
+    </ng-template>
+  </p-dialog>
+}

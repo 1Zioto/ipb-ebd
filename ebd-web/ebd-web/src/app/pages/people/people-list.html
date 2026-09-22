@@ -1,89 +1,83 @@
-<div class="page">
-  <div class="head">
+<div class="card">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
     <div>
-      <h1>Pessoas</h1>
-      <span class="count">{{ total() }} cadastradas</span>
+      <h1 class="m-0 text-2xl font-semibold">Pessoas</h1>
+      <span class="text-muted-color">{{ total() }} cadastradas</span>
     </div>
     @if (canManage()) {
-      <button class="btn-primary" (click)="openCreate()">+ Nova pessoa</button>
+      <p-button label="Nova pessoa" icon="pi pi-plus" (onClick)="openCreate()" />
     }
   </div>
 
-  <div class="toolbar">
-    <input class="search" type="search" placeholder="Buscar por nome..."
-           [ngModel]="search()" (ngModelChange)="search.set($event)"
-           (keyup.enter)="load()" />
-    <button class="btn-ghost" (click)="load()">Buscar</button>
+  <div class="flex flex-col sm:flex-row gap-2 mb-4">
+    <input pInputText class="flex-1" type="search" placeholder="Buscar por nome..." [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="load()" />
+    <p-button label="Buscar" icon="pi pi-search" severity="secondary" (onClick)="load()" />
   </div>
 
-  @if (error()) { <div class="alert">{{ error() }}</div> }
-
-  @if (loading()) {
-    <div class="empty">Carregando...</div>
-  } @else if (people().length === 0) {
-    <div class="empty">Nenhuma pessoa encontrada.</div>
-  } @else {
-    <div class="list">
-      @for (p of people(); track p.id) {
-        <div class="row" [class.inactive]="!p.is_active">
-          <div class="info">
-            <div class="name">
-              {{ p.full_name }}
-              @if (!p.is_active) { <span class="tag muted">inativo</span> }
-              @if (p.can_teach) { <span class="tag">professor</span> }
-              @if (p.can_superintend) { <span class="tag alt">superintendente</span> }
-              @if (p.family) { <span class="tag family">🏡 {{ p.family.name }}</span> }
-            </div>
-            <div class="meta">
-              @if (p.age !== null) { {{ p.age }} anos · }
-              {{ p.birth_date || 'sem data de nascimento' }}
-            </div>
-          </div>
-          @if (canManage()) {
-            <div class="actions">
-              <button class="btn-ghost small" (click)="openEdit(p)">Editar</button>
-              <button class="btn-ghost small danger" (click)="remove(p)">Inativar</button>
-            </div>
-          }
-        </div>
-      }
-    </div>
+  @if (error()) {
+    <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
   }
+
+  <p-table [value]="people()" [loading]="loading()" dataKey="id" [paginator]="people().length > 10" [rows]="10">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Nome</th>
+        <th>Idade</th>
+        <th>Nascimento</th>
+        <th>Situação</th>
+        @if (canManage()) { <th></th> }
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-p>
+      <tr [class.opacity-60]="!p.is_active">
+        <td>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-medium">{{ p.full_name }}</span>
+            @if (!p.is_active) { <p-tag value="inativo" severity="secondary" /> }
+            @if (p.can_teach) { <p-tag value="professor" /> }
+            @if (p.can_superintend) { <p-tag value="superintendente" severity="info" /> }
+            @if (p.family) { <p-tag [value]="p.family.name" severity="warn" icon="pi pi-home" /> }
+          </div>
+        </td>
+        <td>{{ p.age !== null ? p.age + ' anos' : '—' }}</td>
+        <td>{{ p.birth_date || 'sem data' }}</td>
+        <td>{{ p.is_active ? 'Ativo' : 'Inativo' }}</td>
+        @if (canManage()) {
+          <td class="text-right whitespace-nowrap">
+            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" (onClick)="openEdit(p)" />
+            <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger" (onClick)="remove(p)" />
+          </td>
+        }
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td [attr.colspan]="canManage() ? 5 : 4">Nenhuma pessoa encontrada.</td></tr>
+    </ng-template>
+  </p-table>
 </div>
 
-<!-- Modal criar/editar -->
-@if (showForm()) {
-  <div class="overlay" (click)="closeForm()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <h2>{{ editing() ? 'Editar pessoa' : 'Nova pessoa' }}</h2>
-
-      <label>Nome completo *</label>
-      <input type="text" [ngModel]="form().full_name" (ngModelChange)="patch('full_name', $event)" />
-
-      <label>Data de nascimento</label>
-      <input type="date" [ngModel]="form().birth_date" (ngModelChange)="patch('birth_date', $event)" />
-
-      <div class="switches">
-        <label class="switch">
-          <input type="checkbox" [ngModel]="form().is_active" (ngModelChange)="patch('is_active', $event)" /> Ativo
-        </label>
-        <label class="switch">
-          <input type="checkbox" [ngModel]="form().can_teach" (ngModelChange)="patch('can_teach', $event)" /> Pode dar aula
-        </label>
-        <label class="switch">
-          <input type="checkbox" [ngModel]="form().can_superintend" (ngModelChange)="patch('can_superintend', $event)" /> Pode superintender
-        </label>
-      </div>
-
-      <label>Observações</label>
-      <textarea rows="2" [ngModel]="form().notes" (ngModelChange)="patch('notes', $event)"></textarea>
-
-      <div class="modal-actions">
-        <button class="btn-ghost" (click)="closeForm()">Cancelar</button>
-        <button class="btn-primary" [disabled]="saving()" (click)="save()">
-          {{ saving() ? 'Salvando...' : 'Salvar' }}
-        </button>
-      </div>
+<p-dialog [header]="editing() ? 'Editar pessoa' : 'Nova pessoa'" [visible]="showForm()" (visibleChange)="showForm.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+  <div class="flex flex-col gap-3">
+    <div>
+      <label class="block font-medium mb-2">Nome completo *</label>
+      <input pInputText class="w-full" [ngModel]="form().full_name" (ngModelChange)="patch('full_name', $event)" />
+    </div>
+    <div>
+      <label class="block font-medium mb-2">Data de nascimento</label>
+      <input pInputText class="w-full" type="date" [ngModel]="form().birth_date" (ngModelChange)="patch('birth_date', $event)" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2"><p-checkbox [binary]="true" [ngModel]="form().is_active" (ngModelChange)="patch('is_active', $event)" inputId="active" /><label for="active">Ativo</label></div>
+      <div class="flex items-center gap-2"><p-checkbox [binary]="true" [ngModel]="form().can_teach" (ngModelChange)="patch('can_teach', $event)" inputId="teach" /><label for="teach">Pode dar aula</label></div>
+      <div class="flex items-center gap-2"><p-checkbox [binary]="true" [ngModel]="form().can_superintend" (ngModelChange)="patch('can_superintend', $event)" inputId="super" /><label for="super">Pode superintender</label></div>
+    </div>
+    <div>
+      <label class="block font-medium mb-2">Observações</label>
+      <textarea pTextarea rows="2" class="w-full" [ngModel]="form().notes" (ngModelChange)="patch('notes', $event)"></textarea>
     </div>
   </div>
-}
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="closeForm()" />
+    <p-button label="Salvar" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+  </ng-template>
+</p-dialog>

@@ -1,15 +1,22 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../core/auth.service';
 import { ClassesService } from '../../core/classes.service';
 import { ClassRoom } from '../../core/models';
 
 @Component({
   selector: 'app-classes-list',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ButtonModule, TableModule, DialogModule, InputTextModule, TextareaModule, CheckboxModule, TagModule, MessageModule],
   templateUrl: './classes-list.html',
-  styleUrl: './classes.scss',
 })
 export class ClassesListPage implements OnInit {
   private svc = inject(ClassesService);

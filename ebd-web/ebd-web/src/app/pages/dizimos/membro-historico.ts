@@ -1,15 +1,17 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { DizimosService } from '../../core/dizimos.service';
 import { MemberFinancialHistory } from '../../core/models';
 
 @Component({
   selector: 'app-membro-historico',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ButtonModule, TagModule, MessageModule],
   templateUrl: './membro-historico.html',
-  styleUrl: './membro-historico.scss',
 })
 export class MembroHistoricoPage implements OnInit {
   private route = inject(ActivatedRoute);
