@@ -1,27 +1,243 @@
-<div class="mb-4">
-  <h1 class="m-0 text-2xl font-semibold">Solicitações — Diaconato</h1>
-  <p class="text-muted-color">Fila de atendimento encaminhada pelo pastor</p>
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+  <div>
+    <h1 class="m-0 text-2xl font-semibold flex items-center gap-2">
+      <i class="pi pi-inbox text-primary"></i>
+      Solicitações — Diaconato
+    </h1>
+    <p class="text-muted-color mb-0">Fila de assistência, visitas e apoio fraterno da Junta Diaconal</p>
+  </div>
+  <p-button label="Nova Solicitação" icon="pi pi-plus" (onClick)="openCreateModal()" />
 </div>
+
+<!-- Cards de Métricas -->
+<div class="grid grid-cols-12 gap-4 mb-4">
+  <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+    <div class="card mb-0">
+      <span class="text-muted-color">Total de Casos</span>
+      <div class="text-2xl font-semibold">{{ totalCount() }}</div>
+    </div>
+  </div>
+  <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+    <div class="card mb-0">
+      <span class="text-muted-color">Pendentes</span>
+      <div class="text-2xl font-semibold text-amber-500">{{ pendenteCount() }}</div>
+    </div>
+  </div>
+  <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+    <div class="card mb-0">
+      <span class="text-muted-color">Em Atendimento</span>
+      <div class="text-2xl font-semibold text-blue-500">{{ emAtendimentoCount() }}</div>
+    </div>
+  </div>
+  <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+    <div class="card mb-0">
+      <span class="text-muted-color">Concluídas</span>
+      <div class="text-2xl font-semibold text-green-500">{{ concluidoCount() }}</div>
+    </div>
+  </div>
+</div>
+
 <div class="card">
-  <p-table [value]="requests()" [loading]="loading()">
-    <ng-template pTemplate="header"><tr><th>Membro / Família</th><th>Solicitado por</th><th>Instruções</th><th>Data</th><th>Status</th><th>Atualizar</th></tr></ng-template>
+  <!-- Filtros por Status -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <p-button label="Todas ({{ totalCount() }})" [outlined]="statusFilter() !== ''" size="small" (onClick)="statusFilter.set('')" />
+    <p-button label="Pendentes ({{ pendenteCount() }})" [outlined]="statusFilter() !== 'Pendente'" size="small" severity="warn" (onClick)="statusFilter.set('Pendente')" />
+    <p-button label="Em atendimento ({{ emAtendimentoCount() }})" [outlined]="statusFilter() !== 'Em atendimento'" size="small" severity="info" (onClick)="statusFilter.set('Em atendimento')" />
+    <p-button label="Concluídas ({{ concluidoCount() }})" [outlined]="statusFilter() !== 'Concluído'" size="small" severity="success" (onClick)="statusFilter.set('Concluído')" />
+    <p-button label="Canceladas" [outlined]="statusFilter() !== 'Cancelado'" size="small" severity="secondary" (onClick)="statusFilter.set('Cancelado')" />
+  </div>
+
+  <p-table [value]="filteredRequests()" [loading]="loading()">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Membro / Família</th>
+        <th>Solicitado por</th>
+        <th>Instrução Pastoral</th>
+        <th>Diácono Designado</th>
+        <th>Data</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
     <ng-template pTemplate="body" let-r>
       <tr>
         <td>
-          <strong>{{ r.person?.full_name }}</strong>
-          @if (r.person?.families?.length) { <div class="text-muted-color text-sm">Família: {{ r.person?.families?.[0]?.name }}</div> }
+          <div class="font-semibold text-surface-900 dark:text-surface-0">{{ r.person?.full_name }}</div>
+          @if (r.person?.families?.length) {
+            <div class="text-muted-color text-xs flex items-center gap-1 mt-0.5">
+              <i class="pi pi-home text-xs"></i>
+              Família: {{ r.person?.families?.[0]?.name }}
+            </div>
+          }
         </td>
-        <td>{{ r.pastor?.name || 'Pastor' }}</td>
-        <td>{{ r.pastor_notes }}</td>
-        <td>{{ r.created_at | date: 'dd/MM/yyyy' }}</td>
-        <td><p-tag [value]="r.status" /></td>
         <td>
-          <select class="p-inputtext p-component" [ngModel]="r.status" (ngModelChange)="updateStatus(r, $event)">
-            <option>Pendente</option><option>Em atendimento</option><option>Concluído</option><option>Cancelado</option>
-          </select>
+          <div class="text-sm">{{ r.pastor?.name || 'Pastor' }}</div>
+        </td>
+        <td class="max-w-xs">
+          <p class="text-sm m-0 line-clamp-2 text-surface-700 dark:text-surface-200" [title]="r.pastor_notes">
+            {{ r.pastor_notes }}
+          </p>
+        </td>
+        <td>
+          @if (r.diacono?.name) {
+            <span class="text-sm font-medium text-surface-800 dark:text-surface-200 flex items-center gap-1">
+              <i class="pi pi-user text-xs text-primary"></i>
+              {{ r.diacono?.name }}
+            </span>
+          } @else {
+            <span class="text-xs text-muted-color italic">Não atribuído</span>
+          }
+        </td>
+        <td class="whitespace-nowrap text-sm text-muted-color">
+          {{ r.created_at | date: 'dd/MM/yyyy' }}
+        </td>
+        <td>
+          <p-tag [value]="r.status" [severity]="getStatusSeverity(r.status)" />
+        </td>
+        <td class="whitespace-nowrap">
+          <div class="flex items-center gap-2">
+            <p-button icon="pi pi-eye" size="small" [text]="true" title="Ver Detalhes" (onClick)="openDetailModal(r)" />
+            <select
+              class="p-inputtext p-component text-xs py-1 px-2 border rounded"
+              [ngModel]="r.status"
+              (ngModelChange)="updateStatus(r, $event)"
+            >
+              <option value="Pendente">Pendente</option>
+              <option value="Em atendimento">Em atendimento</option>
+              <option value="Concluído">Concluído</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
         </td>
       </tr>
     </ng-template>
-    <ng-template pTemplate="emptymessage"><tr><td colspan="6">Nenhuma solicitação no momento.</td></tr></ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center py-6 text-muted-color">
+          <i class="pi pi-inbox text-3xl mb-2 block"></i>
+          Nenhuma solicitação encontrada no momento.
+        </td>
+      </tr>
+    </ng-template>
   </p-table>
 </div>
+
+<!-- Modal Detalhes da Solicitação -->
+<p-dialog
+  header="Detalhes da Solicitação Diaconal"
+  [visible]="showDetailModal()"
+  (visibleChange)="showDetailModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '38rem', maxWidth: '95vw' }"
+>
+  @if (selectedRequest(); as req) {
+    <div class="flex flex-col gap-4">
+      <div class="p-3 bg-surface-50 dark:bg-surface-800 rounded border border-surface-200 dark:border-surface-700">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-base font-semibold">{{ req.person?.full_name }}</span>
+          <p-tag [value]="req.status" [severity]="getStatusSeverity(req.status)" />
+        </div>
+        @if (req.person?.families?.length) {
+          <div class="text-xs text-muted-color">
+            <strong>Família:</strong> {{ req.person?.families?.[0]?.name }}
+            @if (req.person?.families?.[0]?.phone || req.person?.families?.[0]?.whatsapp) {
+              <span class="ml-2">
+                <strong>Telefone:</strong> {{ req.person?.families?.[0]?.phone || req.person?.families?.[0]?.whatsapp }}
+              </span>
+            }
+          </div>
+        }
+        <div class="text-xs text-muted-color mt-1">
+          <strong>Solicitado em:</strong> {{ req.created_at | date: 'dd/MM/yyyy HH:mm' }} por {{ req.pastor?.name || 'Pastor' }}
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-sm mb-1 text-surface-700 dark:text-surface-300">Instrução Pastoral para o Diaconato</label>
+        <div class="p-3 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded text-sm leading-relaxed whitespace-pre-line">
+          {{ req.pastor_notes }}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-sm mb-1">Diácono Responsável</label>
+          <div class="text-sm p-2 bg-surface-50 dark:bg-surface-800 rounded border border-surface-200 dark:border-surface-700">
+            {{ req.diacono?.name || 'Aguardando atribuição' }}
+          </div>
+        </div>
+        <div>
+          <label class="block font-medium text-sm mb-1">Atualizar Status</label>
+          <select
+            class="w-full p-inputtext p-component"
+            [ngModel]="req.status"
+            (ngModelChange)="updateStatus(req, $event); showDetailModal.set(false)"
+          >
+            <option value="Pendente">Pendente</option>
+            <option value="Em atendimento">Em atendimento</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  }
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" severity="secondary" (onClick)="showDetailModal.set(false)" />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Nova Solicitação ao Diaconato -->
+<p-dialog
+  header="Nova Solicitação — Junta Diaconal"
+  [visible]="showCreateModal()"
+  (visibleChange)="showCreateModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '38rem', maxWidth: '95vw' }"
+>
+  <div class="flex flex-col gap-3">
+    <p-message severity="info" styleClass="w-full">
+      O diácono receberá o nome, contatos e as instruções abaixo. Dados e históricos financeiros permanecem confidenciais.
+    </p-message>
+
+    <div>
+      <label class="block mb-2 font-medium text-sm">Membro / Pessoa Atendida *</label>
+      <select class="w-full p-inputtext p-component" [(ngModel)]="selectedPersonId">
+        <option [ngValue]="null">Selecione o membro...</option>
+        @for (person of peopleList(); track person.id) {
+          <option [ngValue]="person.id">{{ person.full_name }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block mb-2 font-medium text-sm">Instrução / Necessidade Diaconal *</label>
+      <textarea
+        pTextarea
+        class="w-full"
+        rows="4"
+        [(ngModel)]="newPastorNotes"
+        placeholder="Descreva a situação, necessidades materiais, visita de apoio ou auxílio fraterno..."
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block mb-2 font-medium text-sm">Status Inicial</label>
+      <select class="w-full p-inputtext p-component" [(ngModel)]="newInitialStatus">
+        <option value="Pendente">Pendente</option>
+        <option value="Em atendimento">Em atendimento</option>
+      </select>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [disabled]="savingCreate()" (onClick)="showCreateModal.set(false)" />
+    <p-button
+      label="Encaminhar ao Diaconato"
+      icon="pi pi-send"
+      [loading]="savingCreate()"
+      [disabled]="!selectedPersonId || !newPastorNotes.trim()"
+      (onClick)="saveNewRequest()"
+    />
+  </ng-template>
+</p-dialog>

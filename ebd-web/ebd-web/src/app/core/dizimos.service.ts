@@ -120,6 +120,10 @@ export class DizimosService {
     return this.http.put<SolicitacaoDiaconato>(`${this.baseUrl}/diaconato/solicitacoes/${id}`, { status });
   }
 
+  createDirectDiaconatoRequest(data: { person_id: number; pastor_notes: string; status?: string; diacono_id?: number | null }): Observable<SolicitacaoDiaconato> {
+    return this.http.post<SolicitacaoDiaconato>(`${this.baseUrl}/diaconato/solicitacoes`, data);
+  }
+
   // --- Relatórios Agregados ---
   getGeneralReport(year?: number, month?: number): Observable<unknown> {
     let p = new HttpParams();

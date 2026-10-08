@@ -58,7 +58,7 @@ export class AppMenu implements OnInit {
                 items: [
                     { label: 'Coletas', icon: 'pi pi-fw pi-inbox', routerLink: ['/dizimos/coletas'], visible: this.can('dizimos.coleta.operar') },
                     { label: 'Acompanhamento Pastoral', icon: 'pi pi-fw pi-heart', routerLink: ['/dizimos/alertas'], visible: this.can('dizimos.alertas.manage') },
-                    { label: 'Fila Diaconato', icon: 'pi pi-fw pi-heart', routerLink: ['/dizimos/diaconato'], visible: this.can('dizimos.diaconato.atender') },
+                    { label: 'Solicitações — Diaconato', icon: 'pi pi-fw pi-inbox', routerLink: ['/dizimos/diaconato'], visible: this.can('dizimos.diaconato.atender') },
                     { label: 'Config. Dízimos', icon: 'pi pi-fw pi-cog', routerLink: ['/dizimos/config'], visible: this.can('dizimos.config.manage') },
                 ],
             },

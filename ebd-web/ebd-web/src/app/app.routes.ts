@@ -121,6 +121,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dizimos/diaconato-solicitacoes').then((m) => m.DiaconatoSolicitacoesPage),
       },
       {
+        path: 'diaconato/solicitacoes',
+        redirectTo: 'dizimos/diaconato',
+        pathMatch: 'full',
+      },
+      {
         path: 'dizimos/config',
         canActivate: [permissionGuard('dizimos.config.manage')],
         loadComponent: () => import('./pages/dizimos/dizimos-config').then((m) => m.DizimosConfigPage),

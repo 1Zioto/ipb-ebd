@@ -174,6 +174,7 @@ Route::prefix('v1')->group(function () {
 
             // Fila de Atendimento do Diaconato (Sem dados financeiros)
             Route::get('diaconato/solicitacoes', [DiaconatoController::class, 'index'])->middleware('permission:dizimos.diaconato.atender');
+            Route::post('diaconato/solicitacoes', [DiaconatoController::class, 'store'])->middleware('permission:dizimos.diaconato.atender');
             Route::put('diaconato/solicitacoes/{solicitacao}', [DiaconatoController::class, 'update'])->middleware('permission:dizimos.diaconato.atender');
 
             // Relatórios Agregados & Exportação

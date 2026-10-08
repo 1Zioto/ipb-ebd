@@ -13,6 +13,7 @@ class SolicitacaoDiaconato extends Model
     protected $table = 'solicitacoes_diaconato';
 
     protected $fillable = [
+        'institution_id',
         'person_id',
         'pastor_id',
         'diacono_id',
