@@ -15,6 +15,11 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\InstitutionController;
 use App\Http\Controllers\Api\PersonController;
 use App\Http\Controllers\Api\FamilyController;
+use App\Http\Controllers\Api\Financial\FinancialAccountController;
+use App\Http\Controllers\Api\Financial\FinancialAccountingController;
+use App\Http\Controllers\Api\Financial\FinancialCategoryController;
+use App\Http\Controllers\Api\Financial\FinancialCostCenterController;
+use App\Http\Controllers\Api\Financial\FinancialTransactionController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SystemAdminController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +30,8 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/register-church', [AuthController::class, 'registerChurch']);
 
+
+
     // ---- Autenticado ----
     Route::middleware('auth:sanctum')->group(function () {
 
@@ -34,6 +41,7 @@ Route::prefix('v1')->group(function () {
         Route::get('admin/users', [SystemAdminController::class, 'users'])->middleware('permission:user.manage');
         Route::post('admin/users', [SystemAdminController::class, 'storeUser'])->middleware('permission:user.manage');
         Route::match(['put', 'patch'], 'admin/users/{user}', [SystemAdminController::class, 'updateUser'])->middleware('permission:user.manage');
+        Route::delete('admin/users/{user}', [SystemAdminController::class, 'destroyUser'])->middleware('permission:user.manage');
         Route::get('admin/roles', [SystemAdminController::class, 'roles'])->middleware('permission:role.manage');
         Route::put('admin/roles/{role}', [SystemAdminController::class, 'updateRole'])->middleware('permission:role.manage');
         Route::get('admin/permissions', [SystemAdminController::class, 'permissions'])->middleware('permission:role.manage');
@@ -105,10 +113,11 @@ Route::prefix('v1')->group(function () {
         Route::get('dashboard/summary', [\App\Http\Controllers\Api\EbdDashboardController::class, 'summary']);
         Route::get('dashboard/superintendent-live/{eventId?}', [\App\Http\Controllers\Api\EbdDashboardController::class, 'superintendentLive'])->middleware('permission:call.view');
 
-        // ---- Fase 7: Relatórios EBD ----
+        // ---- Fase 7: Relatórios EBD & Assembleia Geral ----
         Route::get('reports/ebd/monthly', [\App\Http\Controllers\Api\EbdReportController::class, 'monthly'])->middleware('permission:report.view');
         Route::get('reports/ebd/class/{class}', [\App\Http\Controllers\Api\EbdReportController::class, 'byClass'])->middleware('permission:report.view');
         Route::get('reports/ebd/student/{person}', [\App\Http\Controllers\Api\EbdReportController::class, 'byStudent'])->middleware('permission:report.view');
+        Route::get('reports/annual', [\App\Http\Controllers\Api\AnnualReportController::class, 'summary'])->middleware('permission:report.view');
 
         // ---- Fase 8: Auditoria Geral EBD ----
         Route::get('audit/logs', [\App\Http\Controllers\Api\EbdAuditController::class, 'index'])->middleware('permission:audit.view');
@@ -176,6 +185,46 @@ Route::prefix('v1')->group(function () {
 
             // Auditoria
             Route::get('auditoria', [AuditoriaController::class, 'index'])->middleware('permission:audit.view');
+        });
+
+        // ---- Módulo Financeiro & Contábil ----
+        Route::prefix('financial')->group(function () {
+            // Lançamentos / Livro Caixa
+            Route::get('transactions/summary', [FinancialTransactionController::class, 'summary'])->middleware('permission:financial.view');
+            Route::get('transactions', [FinancialTransactionController::class, 'index'])->middleware('permission:financial.view');
+            Route::post('transactions', [FinancialTransactionController::class, 'store'])->middleware('permission:financial.manage');
+            Route::get('transactions/{transaction}', [FinancialTransactionController::class, 'show'])->middleware('permission:financial.view');
+            Route::match(['put', 'patch'], 'transactions/{transaction}', [FinancialTransactionController::class, 'update'])->middleware('permission:financial.manage');
+            Route::delete('transactions/{transaction}', [FinancialTransactionController::class, 'destroy'])->middleware('permission:financial.manage');
+
+            // Contas Bancárias & Caixas
+            Route::get('accounts', [FinancialAccountController::class, 'index'])->middleware('permission:financial.view');
+            Route::post('accounts', [FinancialAccountController::class, 'store'])->middleware('permission:financial.accounts.manage');
+            Route::get('accounts/{account}', [FinancialAccountController::class, 'show'])->middleware('permission:financial.view');
+            Route::match(['put', 'patch'], 'accounts/{account}', [FinancialAccountController::class, 'update'])->middleware('permission:financial.accounts.manage');
+            Route::delete('accounts/{account}', [FinancialAccountController::class, 'destroy'])->middleware('permission:financial.accounts.manage');
+            Route::post('accounts/{account}/recalculate', [FinancialAccountController::class, 'recalculate'])->middleware('permission:financial.accounts.manage');
+
+            // Categorias / Plano de Contas
+            Route::get('categories', [FinancialCategoryController::class, 'index'])->middleware('permission:financial.view');
+            Route::post('categories', [FinancialCategoryController::class, 'store'])->middleware('permission:financial.categories.manage');
+            Route::get('categories/{category}', [FinancialCategoryController::class, 'show'])->middleware('permission:financial.view');
+            Route::match(['put', 'patch'], 'categories/{category}', [FinancialCategoryController::class, 'update'])->middleware('permission:financial.categories.manage');
+            Route::delete('categories/{category}', [FinancialCategoryController::class, 'destroy'])->middleware('permission:financial.categories.manage');
+
+            // Centros de Custo
+            Route::get('cost-centers', [FinancialCostCenterController::class, 'index'])->middleware('permission:financial.view');
+            Route::post('cost-centers', [FinancialCostCenterController::class, 'store'])->middleware('permission:financial.categories.manage');
+            Route::get('cost-centers/{costCenter}', [FinancialCostCenterController::class, 'show'])->middleware('permission:financial.view');
+            Route::match(['put', 'patch'], 'cost-centers/{costCenter}', [FinancialCostCenterController::class, 'update'])->middleware('permission:financial.categories.manage');
+            Route::delete('cost-centers/{costCenter}', [FinancialCostCenterController::class, 'destroy'])->middleware('permission:financial.categories.manage');
+
+            // Contabilidade & Fechamento
+            Route::get('accounting/ledger', [FinancialAccountingController::class, 'ledger'])->middleware('permission:financial.accounting.view');
+            Route::get('accounting/trial-balance', [FinancialAccountingController::class, 'trialBalance'])->middleware('permission:financial.accounting.view');
+            Route::get('accounting/export-csv', [FinancialAccountingController::class, 'exportCsv'])->middleware('permission:financial.accounting.view');
+            Route::post('accounting/close-month', [FinancialAccountingController::class, 'closeMonth'])->middleware('permission:financial.accounting.close');
+            Route::post('accounting/reopen-month', [FinancialAccountingController::class, 'reopenMonth'])->middleware('permission:financial.accounting.close');
         });
     });
 });

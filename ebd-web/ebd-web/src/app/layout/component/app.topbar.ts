@@ -12,7 +12,12 @@ import { AuthService } from '@/app/core/auth.service';
     imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator],
     template: ` <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
-            <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
+            <button 
+                class="layout-menu-button layout-topbar-action" 
+                (click)="layoutService.onMenuToggle()"
+                [title]="layoutService.isSidebarCollapsed() ? 'Expandir menu lateral' : 'Recolher menu lateral'"
+                aria-label="Alternar menu retrátil"
+            >
                 <i class="pi pi-bars"></i>
             </button>
             <a class="layout-topbar-logo" routerLink="/">

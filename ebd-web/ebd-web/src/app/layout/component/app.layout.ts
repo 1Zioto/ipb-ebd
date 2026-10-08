@@ -47,6 +47,7 @@ export class AppLayout {
             'layout-overlay': config.menuMode === 'overlay',
             'layout-static': config.menuMode === 'static',
             'layout-static-inactive': state.staticMenuDesktopInactive && config.menuMode === 'static',
+            'layout-sidebar-collapsed': state.sidebarCollapsed && config.menuMode === 'static',
             'layout-overlay-active': state.overlayMenuActive,
             'layout-mobile-active': state.mobileMenuActive,
         };

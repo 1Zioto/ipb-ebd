@@ -15,6 +15,7 @@ interface LayoutState {
     mobileMenuActive: boolean;
     menuHoverActive: boolean;
     activePath: string | null;
+    sidebarCollapsed: boolean;
 }
 
 @Injectable({
@@ -30,12 +31,13 @@ export class LayoutService {
     });
 
     layoutState = signal<LayoutState>({
-        staticMenuDesktopInactive: false,
+        staticMenuDesktopInactive: this.readStoredSidebarCollapsed(),
         overlayMenuActive: false,
         configSidebarVisible: false,
         mobileMenuActive: false,
         menuHoverActive: false,
-        activePath: null
+        activePath: null,
+        sidebarCollapsed: this.readStoredSidebarCollapsed(),
     });
 
     theme = computed(() => (this.layoutConfig().darkTheme ? 'light' : 'dark'));
@@ -69,12 +71,25 @@ export class LayoutService {
         });
     }
 
+    isSidebarCollapsed = computed(() => this.layoutState().sidebarCollapsed);
+
     private readStoredDark(): boolean {
         if (typeof localStorage === 'undefined') return false;
         const stored = localStorage.getItem('ebd_theme');
         if (stored === 'dark') return true;
         if (stored === 'light') return false;
         return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+    }
+
+    private readStoredSidebarCollapsed(): boolean {
+        if (typeof localStorage === 'undefined') return false;
+        return localStorage.getItem('ebd_sidebar_collapsed') === 'true';
+    }
+
+    private saveStoredSidebarCollapsed(collapsed: boolean): void {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('ebd_sidebar_collapsed', String(collapsed));
+        }
     }
 
     private handleDarkModeTransition(config: LayoutConfig): void {
@@ -107,13 +122,32 @@ export class LayoutService {
 
     onMenuToggle() {
         if (this.isOverlay()) {
-            this.layoutState.update((prev) => ({ ...prev, overlayMenuActive: !this.layoutState().overlayMenuActive }));
+            this.layoutState.update((prev) => ({ ...prev, overlayMenuActive: !prev.overlayMenuActive }));
+            return;
         }
 
         if (this.isDesktop()) {
-            this.layoutState.update((prev) => ({ ...prev, staticMenuDesktopInactive: !this.layoutState().staticMenuDesktopInactive }));
+            const nextCollapsed = !this.layoutState().sidebarCollapsed;
+            this.layoutState.update((prev) => ({
+                ...prev,
+                sidebarCollapsed: nextCollapsed,
+                staticMenuDesktopInactive: nextCollapsed,
+            }));
+            this.saveStoredSidebarCollapsed(nextCollapsed);
         } else {
-            this.layoutState.update((prev) => ({ ...prev, mobileMenuActive: !this.layoutState().mobileMenuActive }));
+            this.layoutState.update((prev) => ({ ...prev, mobileMenuActive: !prev.mobileMenuActive }));
+        }
+    }
+
+    toggleSidebarCollapse() {
+        if (this.isDesktop()) {
+            const nextCollapsed = !this.layoutState().sidebarCollapsed;
+            this.layoutState.update((prev) => ({
+                ...prev,
+                sidebarCollapsed: nextCollapsed,
+                staticMenuDesktopInactive: nextCollapsed,
+            }));
+            this.saveStoredSidebarCollapsed(nextCollapsed);
         }
     }
 

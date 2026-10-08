@@ -51,6 +51,14 @@ class Permissions
         'institution.subordinate.view' => 'Ver instituições subordinadas',
         'institution.consolidated.view' => 'Ver indicadores e relatórios consolidados',
         'institution.transfer' => 'Transferir vínculo de instituição superior',
+
+        // Módulo Financeiro & Contábil
+        'financial.view' => 'Ver lançamentos e livro caixa',
+        'financial.manage' => 'Gerir movimentações financeiras',
+        'financial.accounts.manage' => 'Gerir contas bancárias e caixas',
+        'financial.categories.manage' => 'Gerir categorias e centros de custo',
+        'financial.accounting.view' => 'Ver balancete e relatórios contábeis',
+        'financial.accounting.close' => 'Realizar fechamento mensal contábil',
     ];
 
     /** Matriz papel => permissões. 'programador' recebe todas via Gate::before. */
@@ -64,6 +72,8 @@ class Permissions
             'dizimos.relatorios.export', 'dizimos.config.manage',
             'institution.view', 'institution.tree.view', 'institution.subordinate.view',
             'institution.consolidated.view',
+            'financial.view', 'financial.manage', 'financial.accounts.manage',
+            'financial.categories.manage', 'financial.accounting.view', 'financial.accounting.close',
         ],
         'superintendencia' => [
             'person.view', 'person.manage', 'family.view', 'family.manage', 'class.view', 'class.manage', 'enrollment.manage',
@@ -74,12 +84,14 @@ class Permissions
             'dizimos.coleta.operar', 'dizimos.coleta.fechar',
             'institution.view', 'institution.manage', 'institution.tree.view',
             'institution.subordinate.view', 'institution.consolidated.view', 'institution.transfer',
+            'financial.view', 'financial.manage', 'financial.accounting.view',
         ],
         'diacono' => [
             'person.view', 'family.view',
             'dizimos.coleta.operar', 'dizimos.coleta.fechar', 'dizimos.coleta.conferir',
             'dizimos.diaconato.atender', 'dizimos.relatorios.view',
             'institution.view', 'institution.tree.view',
+            'financial.view',
         ],
         'professor' => [
             'person.view', 'family.view', 'class.view', 'event.view',

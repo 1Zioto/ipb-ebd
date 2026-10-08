@@ -1,0 +1,222 @@
+<div class="space-y-6">
+  <!-- Top Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+        <i class="pi pi-building text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Contas Bancárias & Caixas</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Gerencie contas correntes, caixas físicos e conciliação de saldos da tesouraria</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a routerLink="/financeiro/transacoes" class="px-3.5 py-2 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+        <i class="pi pi-arrow-left mr-1"></i> Livro Caixa
+      </a>
+
+      @if (auth.can('financial.accounts.manage')) {
+        <button
+          type="button"
+          (click)="openCreateModal()"
+          class="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition"
+        >
+          <i class="pi pi-plus mr-1"></i> Nova Conta ou Caixa
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="p-12 text-center text-slate-400">
+      <i class="pi pi-spin pi-spinner text-3xl mb-2"></i>
+      <p class="text-sm">Carregando contas bancárias...</p>
+    </div>
+  } @else {
+    <!-- Grid de Contas (Cartões Bancários) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (acc of accounts(); track acc.id) {
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-blue-200 transition">
+          <!-- Background decoration -->
+          <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-50/50 dark:bg-blue-950/20 rounded-full pointer-events-none group-hover:scale-125 transition"></div>
+
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 mb-1.5">
+                  {{ acc.account_type === 'caixa' ? 'Caixa Físico' : acc.account_type }}
+                </span>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ acc.name }}</h3>
+                @if (acc.bank_name) {
+                  <p class="text-xs text-slate-400">{{ acc.bank_name }}</p>
+                }
+              </div>
+
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" [ngClass]="acc.account_type === 'caixa' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'">
+                <i class="pi text-lg" [ngClass]="acc.account_type === 'caixa' ? 'pi-wallet' : 'pi-building'"></i>
+              </div>
+            </div>
+
+            <!-- Dados Bancários se existirem -->
+            @if (acc.account_number || acc.agency) {
+              <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 space-y-1 font-mono">
+                @if (acc.agency) { <div>Agência: <strong>{{ acc.agency }}</strong></div> }
+                @if (acc.account_number) { <div>Conta: <strong>{{ acc.account_number }}</strong></div> }
+              </div>
+            }
+
+            <!-- Saldo Atual -->
+            <div class="mt-5">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Saldo Conciliado</span>
+              <div class="text-2xl font-black mt-0.5" [ngClass]="acc.current_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                R$ {{ acc.current_balance | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Ações do Cartão -->
+          <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-400">{{ acc.transactions_count || 0 }} lançamentos</span>
+
+            @if (auth.can('financial.accounts.manage')) {
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  (click)="recalculate(acc)"
+                  title="Recalcular saldo a partir dos lançamentos"
+                  class="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <i class="pi pi-refresh"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="openEditModal(acc)"
+                  title="Editar conta"
+                  class="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="deleteAccount(acc)"
+                  title="Desativar conta"
+                  class="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal Conta -->
+<p-dialog
+  [(visible)]="showModal"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '520px' }"
+  [header]="isEditing() ? 'Editar Conta / Caixa' : 'Nova Conta ou Caixa'"
+  [closable]="true"
+>
+  <form (ngSubmit)="saveAccount()" class="space-y-4">
+    <div>
+      <label class="block text-xs font-semibold text-slate-600 mb-1">Nome da Conta / Caixa *</label>
+      <input
+        type="text"
+        [(ngModel)]="form.name"
+        name="name"
+        required
+        placeholder="Ex: Caixa Tesouraria, Banco do Brasil..."
+        class="w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl"
+      />
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Conta *</label>
+        <select
+          [(ngModel)]="form.account_type"
+          name="account_type"
+          class="w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl"
+        >
+          <option value="caixa">Caixa Físico</option>
+          <option value="corrente">Conta Corrente</option>
+          <option value="poupanca">Poupança</option>
+          <option value="aplicacao">Aplicação Financeira</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Saldo Inicial (R$) *</label>
+        <input
+          type="number"
+          step="0.01"
+          [(ngModel)]="form.initial_balance"
+          name="initial_balance"
+          required
+          class="w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl font-bold"
+        />
+      </div>
+    </div>
+
+    @if (form.account_type !== 'caixa') {
+      <div class="space-y-3 p-3 bg-slate-50 rounded-xl">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Banco</label>
+          <input
+            type="text"
+            [(ngModel)]="form.bank_name"
+            name="bank_name"
+            placeholder="Ex: Banco do Brasil, Santander, Bradesco..."
+            class="w-full px-3 py-2 text-sm bg-white border rounded-xl"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Agência</label>
+            <input
+              type="text"
+              [(ngModel)]="form.agency"
+              name="agency"
+              placeholder="Ex: 1234-5"
+              class="w-full px-3 py-2 text-sm bg-white border rounded-xl"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nº Conta</label>
+            <input
+              type="text"
+              [(ngModel)]="form.account_number"
+              name="account_number"
+              placeholder="Ex: 98765-4"
+              class="w-full px-3 py-2 text-sm bg-white border rounded-xl"
+            />
+          </div>
+        </div>
+      </div>
+    }
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-600 mb-1">Observações</label>
+      <input
+        type="text"
+        [(ngModel)]="form.notes"
+        name="notes"
+        placeholder="Anotações internas sobre esta conta..."
+        class="w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl"
+      />
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2 border-t">
+      <button type="button" (click)="showModal.set(false)" class="px-4 py-2 text-sm text-slate-600">Cancelar</button>
+      <button type="submit" class="px-5 py-2 text-sm font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700">
+        Salvar Conta
+      </button>
+    </div>
+  </form>
+</p-dialog>

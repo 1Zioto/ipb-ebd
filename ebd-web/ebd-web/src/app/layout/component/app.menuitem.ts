@@ -13,7 +13,7 @@ import { filter } from 'rxjs/operators';
             <div class="layout-menuitem-root-text">{{ item().label }}</div>
         }
         @if ((!hasRouterLink() || hasChildren()) && isVisible()) {
-            <a [attr.href]="item().url" (click)="itemClick($event)" [ngClass]="item().class" [attr.target]="item().target" tabindex="0" pRipple>
+            <a [attr.href]="item().url" (click)="itemClick($event)" [ngClass]="item().class" [attr.target]="item().target" tabindex="0" pRipple [attr.data-tooltip]="item().label" [attr.title]="item().label">
                 <i [ngClass]="item().icon" class="layout-menuitem-icon"></i>
                 <span class="layout-menuitem-text">{{ item().label }}</span>
                 @if (hasChildren()) {
@@ -38,6 +38,8 @@ import { filter } from 'rxjs/operators';
                 [attr.target]="item().target"
                 tabindex="0"
                 pRipple
+                [attr.data-tooltip]="item().label"
+                [attr.title]="item().label"
             >
                 <i [ngClass]="item().icon" class="layout-menuitem-icon"></i>
                 <span class="layout-menuitem-text">{{ item().label }}</span>

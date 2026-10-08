@@ -49,7 +49,8 @@ export class AppMenu implements OnInit {
                     { label: 'Classes', icon: 'pi pi-fw pi-book', routerLink: ['/classes'], visible: this.can('class.view') },
                     { label: 'Calendário', icon: 'pi pi-fw pi-calendar', routerLink: ['/calendario'], visible: this.can('event.view') },
                     { label: 'Escalas', icon: 'pi pi-fw pi-list', routerLink: ['/escalas'], visible: this.can('schedule.view') },
-                    { label: 'Relatórios', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/relatorios'], visible: this.can('report.view') },
+                    { label: 'Relatórios EBD', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/relatorios'], visible: this.can('report.view') },
+                    { label: 'Relatório Anual da Igreja', icon: 'pi pi-fw pi-chart-pie', routerLink: ['/relatorios/anual'], visible: this.can('report.view') },
                 ],
             },
             {
@@ -59,6 +60,15 @@ export class AppMenu implements OnInit {
                     { label: 'Alertas Pastorais', icon: 'pi pi-fw pi-bell', routerLink: ['/dizimos/alertas'], visible: this.can('dizimos.alertas.manage') },
                     { label: 'Fila Diaconato', icon: 'pi pi-fw pi-heart', routerLink: ['/dizimos/diaconato'], visible: this.can('dizimos.diaconato.atender') },
                     { label: 'Config. Dízimos', icon: 'pi pi-fw pi-cog', routerLink: ['/dizimos/config'], visible: this.can('dizimos.config.manage') },
+                ],
+            },
+            {
+                label: 'Financeiro & Contábil',
+                items: [
+                    { label: 'Livro Caixa', icon: 'pi pi-fw pi-wallet', routerLink: ['/financeiro/transacoes'], visible: this.can('financial.view') },
+                    { label: 'Contabilidade & Balancete', icon: 'pi pi-fw pi-file-excel', routerLink: ['/financeiro/contabilidade'], visible: this.can('financial.accounting.view') },
+                    { label: 'Plano de Contas & Custos', icon: 'pi pi-fw pi-tags', routerLink: ['/financeiro/categorias-custos'], visible: this.can('financial.view') },
+                    { label: 'Contas & Caixas', icon: 'pi pi-fw pi-building', routerLink: ['/financeiro/contas'], visible: this.can('financial.view') },
                 ],
             },
             {

@@ -122,6 +122,14 @@ class ColetaService
             // Disparar consolidação do mês automaticamente
             app(AlertEngineService::class)->consolidateMonth($coleta->date->year, $coleta->date->month);
 
+            // Sincronizar receita automaticamente no Livro Caixa Financeiro
+            try {
+                app(\App\Services\Financial\FinancialService::class)->syncFromColeta($coleta, $user);
+            } catch (\Throwable $e) {
+                // Log de aviso caso ocorra erro, sem impedir o fechamento
+                \Illuminate\Support\Facades\Log::warning('Erro ao sincronizar coleta no financeiro: ' . $e->getMessage());
+            }
+
             return $coleta;
         });
     }
@@ -137,6 +145,13 @@ class ColetaService
                 'status' => 'Reaberta para correção',
                 'notes' => trim($coleta->notes . "\n[Reabertura em " . now()->format('d/m/Y H:i') . ' por ' . $user->name . ']: ' . $reason),
             ]);
+
+            // Atualiza status no financeiro para pendente
+            try {
+                app(\App\Services\Financial\FinancialService::class)->syncFromColeta($coleta, $user);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Erro ao atualizar coleta no financeiro: ' . $e->getMessage());
+            }
 
             AuditoriaDizimosService::log('coleta.reabrir', 'coleta_dizimo', $coleta->id, [
                 'reason' => $reason,

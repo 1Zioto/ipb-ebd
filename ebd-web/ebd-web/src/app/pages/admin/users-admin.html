@@ -1,75 +1,287 @@
-<div class="flex justify-between items-center mb-4">
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
   <div>
     <h1 class="m-0 text-2xl font-semibold">Usuários e Permissões</h1>
-    <p class="text-muted-color mb-0">Controle de acesso ao sistema</p>
+    <p class="text-muted-color mb-0">Controle de acessos, papéis e senhas do sistema</p>
   </div>
   <p-button label="Novo usuário" icon="pi pi-plus" (onClick)="openNew()" />
 </div>
-@if (error()) { <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message> }
-@if (loading()) { <div class="card flex justify-center p-8"><i class="pi pi-spin pi-spinner text-2xl"></i></div> }
-@else {
+
+@if (successMsg()) {
+  <p-message severity="success" styleClass="mb-4 w-full" [closable]="true" (onClose)="successMsg.set(null)">
+    {{ successMsg() }}
+  </p-message>
+}
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full" [closable]="true" (onClose)="error.set(null)">
+    {{ error() }}
+  </p-message>
+}
+
+@if (loading()) {
+  <div class="card flex justify-center p-8"><i class="pi pi-spin pi-spinner text-2xl"></i></div>
+} @else {
+  <!-- Tabela de Usuários -->
   <div class="card mb-4">
-    <h2 class="mt-0">Usuários</h2>
-    <p-table [value]="users()">
-      <ng-template pTemplate="header"><tr><th>Nome</th><th>Usuário</th><th>Papéis</th><th></th></tr></ng-template>
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="m-0 text-lg font-semibold">Usuários Cadastrados</h2>
+      <span class="text-sm text-muted-color">{{ users().length }} usuário(s)</span>
+    </div>
+    
+    <p-table [value]="users()" [responsiveLayout]="'scroll'">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nome</th>
+          <th>Login</th>
+          <th>E-mail</th>
+          <th>Papéis</th>
+          <th>Status</th>
+          <th style="width: 14rem; text-align: right">Ações</th>
+        </tr>
+      </ng-template>
       <ng-template pTemplate="body" let-u>
         <tr>
-          <td>{{ u.name }}</td>
-          <td>{{ u.username }}</td>
-          <td>{{ u.roles.join(', ') }}</td>
-          <td><p-button [label]="u.is_active ? 'Desativar' : 'Ativar'" size="small" [severity]="u.is_active ? 'danger' : 'success'" (onClick)="toggleActive(u)" /></td>
+          <td class="font-medium">
+            {{ u.name }}
+            @if (u.id === auth.user()?.id) {
+              <p-tag value="Você" severity="info" styleClass="ml-2 text-xs" />
+            }
+          </td>
+          <td><span class="font-mono text-sm">{{ u.username }}</span></td>
+          <td>{{ u.email || '—' }}</td>
+          <td>
+            <div class="flex flex-wrap gap-1">
+              @for (role of u.roles; track role) {
+                <p-tag [value]="role" [severity]="getRoleBadgeSeverity(role)" />
+              }
+            </div>
+          </td>
+          <td>
+            <p-tag [value]="u.is_active ? 'Ativo' : 'Inativo'" [severity]="u.is_active ? 'success' : 'danger'" />
+          </td>
+          <td>
+            <div class="flex justify-end gap-1">
+              <p-button
+                icon="pi pi-pencil"
+                [text]="true"
+                [rounded]="true"
+                severity="info"
+                pTooltip="Editar dados e permissões"
+                tooltipPosition="top"
+                (onClick)="openEdit(u)"
+              />
+              <p-button
+                [icon]="u.is_active ? 'pi pi-ban' : 'pi pi-check'"
+                [text]="true"
+                [rounded]="true"
+                [severity]="u.is_active ? 'warn' : 'success'"
+                [pTooltip]="u.is_active ? 'Desativar acesso' : 'Ativar acesso'"
+                tooltipPosition="top"
+                [disabled]="u.id === auth.user()?.id"
+                (onClick)="toggleActive(u)"
+              />
+              <p-button
+                icon="pi pi-trash"
+                [text]="true"
+                [rounded]="true"
+                severity="danger"
+                pTooltip="Excluir usuário"
+                tooltipPosition="top"
+                [disabled]="u.id === auth.user()?.id"
+                (onClick)="openDeleteConfirm(u)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center p-4 text-muted-color">Nenhum usuário encontrado.</td>
         </tr>
       </ng-template>
     </p-table>
   </div>
+
+  <!-- Tabela de Papéis e Permissões Globais -->
   <div class="card">
-    <h2 class="mt-0">Papéis</h2>
+    <div class="flex justify-between items-center mb-3">
+      <div>
+        <h2 class="m-0 text-lg font-semibold">Papéis e Perfis de Acesso</h2>
+        <p class="text-xs text-muted-color mb-0">Configure as permissões granulares associadas a cada papel institucional</p>
+      </div>
+    </div>
     <p-table [value]="roles()">
-      <ng-template pTemplate="header"><tr><th>Papel</th><th>Permissões</th><th></th></tr></ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Papel</th>
+          <th>Permissões Ativas</th>
+          <th style="width: 8rem; text-align: right">Gerenciar</th>
+        </tr>
+      </ng-template>
       <ng-template pTemplate="body" let-r>
         <tr>
-          <td>{{ r.name }}<div class="text-muted-color text-sm">{{ r.description }}</div></td>
-          <td>{{ r.permissions.length }}</td>
-          <td><p-button label="Permissões" size="small" [disabled]="r.slug==='programador'" (onClick)="editRole(r)" /></td>
+          <td>
+            <div class="font-medium">{{ r.name }}</div>
+            <div class="text-muted-color text-xs">{{ r.description }}</div>
+          </td>
+          <td>
+            <p-tag [value]="r.permissions.length + ' permissões'" [severity]="getRoleBadgeSeverity(r.slug)" />
+          </td>
+          <td style="text-align: right">
+            <p-button
+              label="Permissões"
+              icon="pi pi-sliders-h"
+              size="small"
+              [outlined]="true"
+              [disabled]="r.slug === 'programador'"
+              (onClick)="editRole(r)"
+            />
+          </td>
         </tr>
       </ng-template>
     </p-table>
   </div>
 }
-<p-dialog header="Novo usuário" [visible]="showForm()" (visibleChange)="showForm.set($event)" [modal]="true" [style]="{width:'32rem'}">
-  <div class="flex flex-col gap-3">
-    <div><label class="block mb-2">Nome</label><input pInputText class="w-full" [(ngModel)]="form.name" /></div>
-    <div><label class="block mb-2">Usuário</label><input pInputText class="w-full" [(ngModel)]="form.username" /></div>
-    <div><label class="block mb-2">E-mail</label><input pInputText class="w-full" type="email" [(ngModel)]="form.email" /></div>
-    <div><label class="block mb-2">Senha</label><input pInputText class="w-full" type="password" [(ngModel)]="form.password" /></div>
+
+<!-- Modal de Criação / Edição de Usuário -->
+<p-dialog
+  [header]="userEditing() ? 'Editar Usuário — ' + userEditing()?.name : 'Cadastrar Novo Usuário'"
+  [visible]="showForm()"
+  (visibleChange)="showForm.set($event)"
+  [modal]="true"
+  [style]="{ width: '34rem' }"
+>
+  <div class="flex flex-col gap-4">
+    <div>
+      <label class="block font-medium mb-1">Nome Completo *</label>
+      <input pInputText class="w-full" [(ngModel)]="form.name" placeholder="Ex: Rev. João Silveira" />
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block font-medium mb-1">Login de Acesso *</label>
+        <input pInputText class="w-full" [(ngModel)]="form.username" placeholder="Ex: joao.pastor" />
+      </div>
+      <div>
+        <label class="block font-medium mb-1">E-mail</label>
+        <input pInputText class="w-full" type="email" [(ngModel)]="form.email" placeholder="pastor@ipb.org" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block font-medium mb-1">
+        @if (userEditing()) {
+          Redefinir Senha
+          <span class="text-xs text-muted-color font-normal">(Opcional — deixe em branco para manter a atual)</span>
+        } @else {
+          Senha de Acesso *
+          <span class="text-xs text-muted-color font-normal">(Mínimo 8 caracteres)</span>
+        }
+      </label>
+      <input
+        pInputText
+        class="w-full"
+        type="password"
+        [(ngModel)]="form.password"
+        [placeholder]="userEditing() ? 'Digite a nova senha se desejar alterar...' : 'Digite a senha (mínimo 8 caracteres)...'"
+      />
+    </div>
+
     <fieldset class="border border-surface rounded-border p-3">
-      <legend>Papéis</legend>
-      @for (r of roles(); track r.id) {
-        <div class="flex items-center gap-2 mb-2">
-          <p-checkbox [binary]="true" [ngModel]="form.role_ids.includes(r.id)" (ngModelChange)="toggleRole(r.id)" [inputId]="'role-'+r.id" />
-          <label [for]="'role-'+r.id">{{ r.name }}</label>
-        </div>
-      }
+      <legend class="font-medium text-sm px-1">Papéis e Permissões do Usuário *</legend>
+      <div class="flex flex-col gap-2 mt-1">
+        @for (r of roles(); track r.id) {
+          <div class="flex items-center gap-2 p-2 rounded hover:bg-surface-100 transition-colors">
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="form.role_ids.includes(r.id)"
+              (ngModelChange)="toggleRole(r.id)"
+              [inputId]="'role-' + r.id"
+            />
+            <label [for]="'role-' + r.id" class="cursor-pointer flex-1">
+              <span class="font-medium text-sm">{{ r.name }}</span>
+              <span class="text-muted-color text-xs block">{{ r.description }}</span>
+            </label>
+            <p-tag [value]="r.slug" [severity]="getRoleBadgeSeverity(r.slug)" styleClass="text-xs" />
+          </div>
+        }
+      </div>
     </fieldset>
+
+    <div class="flex items-center gap-2">
+      <p-checkbox [binary]="true" [(ngModel)]="form.is_active" inputId="user-active" />
+      <label for="user-active" class="cursor-pointer font-medium text-sm">Usuário ativo (permite login)</label>
+    </div>
   </div>
+
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" severity="secondary" (onClick)="showForm.set(false)" />
-    <p-button label="Salvar" [loading]="saving()" (onClick)="saveUser()" />
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showForm.set(false)" />
+    <p-button
+      [label]="userEditing() ? 'Salvar Alterações' : 'Criar Usuário'"
+      icon="pi pi-check"
+      [loading]="saving()"
+      (onClick)="saveUser()"
+    />
   </ng-template>
 </p-dialog>
+
+<!-- Modal de Confirmação de Exclusão -->
+<p-dialog
+  header="Confirmar Exclusão"
+  [visible]="showDeleteDialog()"
+  (visibleChange)="showDeleteDialog.set($event)"
+  [modal]="true"
+  [style]="{ width: '28rem' }"
+>
+  <div class="flex items-start gap-3 my-2">
+    <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
+    <div>
+      <p class="font-medium m-0 mb-1">Tem certeza que deseja excluir este usuário?</p>
+      <p class="text-sm text-muted-color m-0">
+        O usuário <strong>{{ userToDelete()?.name }}</strong> (login: <code>{{ userToDelete()?.username }}</code>) será desativado e removido do acesso ao sistema.
+      </p>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showDeleteDialog.set(false)" />
+    <p-button
+      label="Excluir Usuário"
+      icon="pi pi-trash"
+      severity="danger"
+      [loading]="deleting()"
+      (onClick)="confirmDelete()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de Permissões do Papel -->
 @if (roleEditing(); as role) {
-  <p-dialog header="Permissões — {{ role.name }}" [visible]="true" (visibleChange)="!$event && roleEditing.set(null)" [modal]="true" [style]="{width:'40rem'}">
-    <div class="grid grid-cols-12 gap-2">
+  <p-dialog
+    header="Permissões do Papel — {{ role.name }}"
+    [visible]="true"
+    (visibleChange)="!$event && roleEditing.set(null)"
+    [modal]="true"
+    [style]="{ width: '42rem' }"
+  >
+    <div class="grid grid-cols-12 gap-3 max-h-96 overflow-y-auto p-1">
       @for (p of permissions(); track p.id) {
-        <div class="col-span-12 md:col-span-6 flex items-start gap-2">
-          <p-checkbox [binary]="true" [ngModel]="rolePermissionIds.has(p.id)" (ngModelChange)="togglePermission(p.id)" [inputId]="'perm-'+p.id" />
-          <label [for]="'perm-'+p.id">{{ p.name }}<div class="text-muted-color text-xs">{{ p.slug }}</div></label>
+        <div class="col-span-12 md:col-span-6 flex items-start gap-2 p-2 rounded hover:bg-surface-100 transition-colors">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="rolePermissionIds.has(p.id)"
+            (ngModelChange)="togglePermission(p.id)"
+            [inputId]="'perm-' + p.id"
+          />
+          <label [for]="'perm-' + p.id" class="cursor-pointer">
+            <div class="font-medium text-sm">{{ p.name }}</div>
+            <div class="text-muted-color text-xs font-mono">{{ p.slug }}</div>
+          </label>
         </div>
       }
     </div>
     <ng-template pTemplate="footer">
-      <p-button label="Cancelar" severity="secondary" (onClick)="roleEditing.set(null)" />
-      <p-button label="Salvar permissões" [loading]="saving()" (onClick)="saveRole()" />
+      <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="roleEditing.set(null)" />
+      <p-button label="Salvar Permissões" icon="pi pi-check" [loading]="saving()" (onClick)="saveRole()" />
     </ng-template>
   </p-dialog>
 }

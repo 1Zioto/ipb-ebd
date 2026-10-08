@@ -24,6 +24,7 @@ class UserResource extends JsonResource
             ] : null,
             'is_active' => $this->is_active,
             'roles' => $this->roles->pluck('slug'),
+            'role_ids' => $this->roles->pluck('id'),
             'permissions' => $this->permissionSlugs(),
             'is_programmer' => $this->isProgrammer(),
         ];

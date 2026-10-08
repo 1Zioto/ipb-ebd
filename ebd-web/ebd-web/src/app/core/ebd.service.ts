@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Paginated, Person } from './models';
+import { AnnualReportSummary, Paginated, Person } from './models';
 import { environment } from '../../environments/environment';
 
 export interface MonthlyReport {
@@ -137,6 +137,12 @@ export class EbdService {
     if (dateFrom) p = p.set('date_from', dateFrom);
     if (dateTo) p = p.set('date_to', dateTo);
     return this.http.get<StudentReport>(`${this.baseUrl}/reports/ebd/student/${personId}`, { params: p });
+  }
+
+  getAnnualReport(year?: number): Observable<AnnualReportSummary> {
+    let p = new HttpParams();
+    if (year) p = p.set('year', year.toString());
+    return this.http.get<AnnualReportSummary>(`${this.baseUrl}/reports/annual`, { params: p });
   }
 
   getAuditLogs(params?: { action?: string; entity?: string; page?: number }): Observable<Paginated<unknown>> {

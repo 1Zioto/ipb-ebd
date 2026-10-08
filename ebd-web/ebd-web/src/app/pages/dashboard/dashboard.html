@@ -1,11 +1,131 @@
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
   <div>
-    <h1 class="m-0 text-3xl font-semibold">Escola Bíblica Dominical</h1>
-    <p class="text-muted-color mt-2 mb-0">Painel Geral de Gestão Operacional</p>
+    <h1 class="m-0 text-3xl font-semibold">Escola Bíblica Dominical & Gestão IPB</h1>
+    <p class="text-muted-color mt-2 mb-0">Painel Geral de Gestão Operacional, EBD e Finanças</p>
   </div>
-  @if (summary()?.next_event) {
-    <p-button [routerLink]="['/eventos', summary()?.next_event?.id]" label="Realizar Chamada ({{ summary()?.next_event?.event_date | date: 'dd/MM' }})" icon="pi pi-bolt" />
-  }
+  <div class="flex items-center gap-2">
+    @if (auth.can('financial.manage')) {
+      <p-button [routerLink]="['/financeiro/transacoes']" label="Novo Lançamento" icon="pi pi-plus" severity="success" [outlined]="true" />
+    }
+    @if (summary()?.next_event) {
+      <p-button [routerLink]="['/eventos', summary()?.next_event?.id]" label="Realizar Chamada ({{ summary()?.next_event?.event_date | date: 'dd/MM' }})" icon="pi pi-bolt" />
+    }
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MENUS RÁPIDOS NO TOPO DO DASHBOARD -->
+<!-- ========================================== -->
+<div class="card mb-6 p-4 shadow-sm border border-surface bg-surface-card rounded-2xl">
+  <div class="flex items-center justify-between mb-3 px-1">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+        <i class="pi pi-compass text-sm font-bold"></i>
+      </div>
+      <span class="font-bold text-xs uppercase tracking-wider text-muted-color">Acesso Rápido</span>
+    </div>
+    <span class="text-xs text-muted-color hidden sm:inline">Atalhos diretos para operações diárias</span>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+    <!-- 1. Livro Caixa / Finanças -->
+    @if (auth.can('financial.view')) {
+      <a
+        [routerLink]="['/financeiro/transacoes']"
+        class="group flex flex-col items-center text-center p-3 rounded-xl border border-surface bg-surface-card transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      >
+        <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-2 text-xl group-hover:scale-110 transition-transform">
+          <i class="pi pi-wallet"></i>
+        </div>
+        <span class="font-semibold text-xs text-surface-900 dark:text-surface-0 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Livro Caixa</span>
+        <span class="text-[11px] text-muted-color mt-0.5">Tesouraria</span>
+      </a>
+    }
+
+    <!-- 2. Contabilidade & Balancete -->
+    @if (auth.can('financial.accounting.view')) {
+      <a
+        [routerLink]="['/financeiro/contabilidade']"
+        class="group flex flex-col items-center text-center p-3 rounded-xl border border-surface bg-surface-card transition-all duration-200 hover:border-teal-500 hover:bg-teal-50/60 dark:hover:bg-teal-950/20 hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      >
+        <div class="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mb-2 text-xl group-hover:scale-110 transition-transform">
+          <i class="pi pi-file-excel"></i>
+        </div>
+        <span class="font-semibold text-xs text-surface-900 dark:text-surface-0 group-hover:text-teal-600 dark:group-hover:text-teal-400">Balancete</span>
+        <span class="text-[11px] text-muted-color mt-0.5">Contabilidade</span>
+      </a>
+    }
+
+    <!-- 3. Coletas & Dízimos -->
+    @if (auth.can('dizimos.coleta.operar')) {
+      <a
+        [routerLink]="['/dizimos/coletas']"
+        class="group flex flex-col items-center text-center p-3 rounded-xl border border-surface bg-surface-card transition-all duration-200 hover:border-amber-500 hover:bg-amber-50/60 dark:hover:bg-amber-950/20 hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      >
+        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-2 text-xl group-hover:scale-110 transition-transform">
+          <i class="pi pi-inbox"></i>
+        </div>
+        <span class="font-semibold text-xs text-surface-900 dark:text-surface-0 group-hover:text-amber-600 dark:group-hover:text-amber-400">Coletas</span>
+        <span class="text-[11px] text-muted-color mt-0.5">Dízimos e Ofertas</span>
+      </a>
+    }
+
+    <!-- 4. Classes EBD -->
+    @if (auth.can('class.view')) {
+      <a
+        [routerLink]="['/classes']"
+        class="group flex flex-col items-center text-center p-3 rounded-xl border border-surface bg-surface-card transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/60 dark:hover:bg-blue-950/20 hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      >
+        <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-2 text-xl group-hover:scale-110 transition-transform">
+          <i class="pi pi-book"></i>
+        </div>
+        <span class="font-semibold text-xs text-surface-900 dark:text-surface-0 group-hover:text-blue-600 dark:group-hover:text-blue-400">Classes EBD</span>
+        <span class="text-[11px] text-muted-color mt-0.5">Alunos e Aulas</span>
+      </a>
+    }
+
+    <!-- 5. Membros & Pessoas -->
+    @if (auth.can('person.view')) {
+      <a
+        [routerLink]="['/pessoas']"
+        class="group flex flex-col items-center text-center p-3 rounded-xl border border-surface bg-surface-card transition-all duration-200 hover:border-violet-500 hover:bg-violet-50/60 dark:hover:bg-violet-950/20 hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      >
+        <div class="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-2 text-xl group-hover:scale-110 transition-transform">
+          <i class="pi pi-users"></i>
+        </div>
+        <span class="font-semibold text-xs text-surface-900 dark:text-surface-0 group-hover:text-violet-600 dark:group-hover:text-violet-400">Pessoas</span>
+        <span class="text-[11px] text-muted-color mt-0.5">Rol de Membros</span>
+      </a>
+    }
+
+    <!-- 6. Calendário & Escalas -->
+    @if (auth.can('event.view')) {
+      <a
+        [routerLink]="['/calendario']"
+        class="group flex flex-col items-center text-center p-3 rounded-xl border border-surface bg-surface-card transition-all duration-200 hover:border-cyan-500 hover:bg-cyan-50/60 dark:hover:bg-cyan-950/20 hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      >
+        <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-2 text-xl group-hover:scale-110 transition-transform">
+          <i class="pi pi-calendar"></i>
+        </div>
+        <span class="font-semibold text-xs text-surface-900 dark:text-surface-0 group-hover:text-cyan-600 dark:group-hover:text-cyan-400">Calendário</span>
+        <span class="text-[11px] text-muted-color mt-0.5">Domingos e Eventos</span>
+      </a>
+    }
+
+    <!-- 7. Estrutura Institucional -->
+    @if (auth.can('institution.tree.view') || auth.can('institution.view')) {
+      <a
+        [routerLink]="['/instituicoes/arvore']"
+        class="group flex flex-col items-center text-center p-3 rounded-xl border border-surface bg-surface-card transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/20 hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      >
+        <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-2 text-xl group-hover:scale-110 transition-transform">
+          <i class="pi pi-sitemap"></i>
+        </div>
+        <span class="font-semibold text-xs text-surface-900 dark:text-surface-0 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Institucional</span>
+        <span class="text-[11px] text-muted-color mt-0.5">Hierarquia IPB</span>
+      </a>
+    }
+  </div>
 </div>
 
 @if (loading()) {

@@ -63,6 +63,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/reports/reports').then((m) => m.EbdReportsPage),
       },
       {
+        path: 'relatorios/anual',
+        canActivate: [permissionGuard('report.view')],
+        loadComponent: () => import('./pages/reports/annual-report').then((m) => m.AnnualReportPage),
+      },
+      {
         path: 'eventos/:id',
         canActivate: [permissionGuard('event.view')],
         loadComponent: () => import('./pages/calendar/event-detail').then((m) => m.EventDetailPage),
@@ -114,6 +119,32 @@ export const routes: Routes = [
         path: 'dizimos/config',
         canActivate: [permissionGuard('dizimos.config.manage')],
         loadComponent: () => import('./pages/dizimos/dizimos-config').then((m) => m.DizimosConfigPage),
+      },
+      // ---- Módulo Financeiro & Contábil ----
+      {
+        path: 'financeiro',
+        pathMatch: 'full',
+        redirectTo: 'financeiro/transacoes',
+      },
+      {
+        path: 'financeiro/transacoes',
+        canActivate: [permissionGuard('financial.view')],
+        loadComponent: () => import('./pages/financial/transactions-list').then((m) => m.FinancialTransactionsPage),
+      },
+      {
+        path: 'financeiro/contabilidade',
+        canActivate: [permissionGuard('financial.accounting.view')],
+        loadComponent: () => import('./pages/financial/accounting-report').then((m) => m.AccountingReportPage),
+      },
+      {
+        path: 'financeiro/categorias-custos',
+        canActivate: [permissionGuard('financial.view')],
+        loadComponent: () => import('./pages/financial/categories-cost-centers').then((m) => m.CategoriesCostCentersPage),
+      },
+      {
+        path: 'financeiro/contas',
+        canActivate: [permissionGuard('financial.view')],
+        loadComponent: () => import('./pages/financial/accounts-list').then((m) => m.AccountsListPage),
       },
     ],
   },

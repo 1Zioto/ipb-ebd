@@ -1,0 +1,474 @@
+<div class="annual-report-container" [class.presentation-mode]="presentationMode()">
+  <!-- Barra Superior de Controles e Filtros (Oculta na Impressão) -->
+  <div class="no-print flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="m-0 text-2xl font-bold">Relatório Anual da Igreja</h1>
+        <p-tag [value]="selectedYear().toString()" severity="info" styleClass="text-base font-bold px-3" />
+      </div>
+      <p class="text-muted-color mb-0 text-sm">Prestação de contas, indicadores da EBD e balanço anual para Assembleia Geral</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Seletor de Ano -->
+      <div class="flex bg-surface-100 p-1 rounded-border">
+        @for (y of availableYears; track y) {
+          <button
+            type="button"
+            class="px-3 py-1 text-sm font-medium rounded transition-colors"
+            [class.bg-primary]="selectedYear() === y"
+            [class.text-white]="selectedYear() === y"
+            [class.text-surface-700]="selectedYear() !== y"
+            (click)="onYearChange(y)"
+          >
+            {{ y }}
+          </button>
+        }
+      </div>
+
+      <!-- Botão Modo Apresentação -->
+      <p-button
+        [label]="presentationMode() ? 'Sair da Apresentação' : 'Modo Telão'"
+        [icon]="presentationMode() ? 'pi pi-window-minimize' : 'pi pi-desktop'"
+        [severity]="presentationMode() ? 'warn' : 'secondary'"
+        [outlined]="!presentationMode()"
+        (onClick)="togglePresentationMode()"
+      />
+
+      <!-- Botão Imprimir / PDF -->
+      <p-button
+        label="Imprimir / PDF"
+        icon="pi pi-print"
+        severity="contrast"
+        (onClick)="printReport()"
+      />
+
+      <!-- Botão Atualizar -->
+      <p-button
+        icon="pi pi-refresh"
+        [text]="true"
+        [rounded]="true"
+        severity="secondary"
+        pTooltip="Atualizar dados"
+        (onClick)="fetchData()"
+      />
+    </div>
+  </div>
+
+  <!-- Abas de Navegação Interna (Ocultas na Impressão) -->
+  <div class="no-print nav-tabs-wrapper flex gap-2 mb-4 overflow-x-auto pb-1">
+    <p-button
+      label="Visão Geral & Gráficos"
+      icon="pi pi-chart-pie"
+      [outlined]="activeSection() !== 'geral'"
+      (onClick)="activeSection.set('geral')"
+    />
+    <p-button
+      label="Escola Bíblica (EBD)"
+      icon="pi pi-book"
+      [outlined]="activeSection() !== 'ebd'"
+      (onClick)="activeSection.set('ebd')"
+    />
+    <p-button
+      label="Financeiro & Contábil"
+      icon="pi pi-dollar"
+      [outlined]="activeSection() !== 'financeiro'"
+      (onClick)="activeSection.set('financeiro')"
+    />
+    <p-button
+      label="Membresia & Famílias"
+      icon="pi pi-users"
+      [outlined]="activeSection() !== 'membresia'"
+      (onClick)="activeSection.set('membresia')"
+    />
+  </div>
+
+  @if (loading()) {
+    <div class="card flex flex-col items-center justify-center p-12 gap-3">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+      <span class="text-muted-color">Consolidando dados anuais da igreja...</span>
+    </div>
+  } @else if (reportData(); as data) {
+    <!-- Cabeçalho Oficial da Igreja (Sempre visível e estilizado na impressão) -->
+    <div class="card mb-4 border-l-4 border-primary">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs uppercase tracking-wider font-bold text-primary">Igreja Presbiteriana do Brasil</span>
+            <span class="text-xs text-muted-color">•</span>
+            <span class="text-xs text-muted-color">Assembleia Geral Ordinária</span>
+          </div>
+          <h2 class="m-0 text-xl md:text-2xl font-bold">{{ data.institution.name }}</h2>
+          <p class="text-xs text-muted-color mt-1 mb-0">
+            {{ data.institution.city }}/{{ data.institution.state }} • CNPJ: {{ data.institution.cnpj || '00.000.000/0001-00' }}
+          </p>
+        </div>
+        <div class="text-left md:text-right">
+          <div class="text-xs text-muted-color">Período de Referência</div>
+          <div class="text-xl font-bold text-slate-800">Exercício Anual {{ data.year }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Cards KPIs Executivos Principais -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <!-- KPI 1: Membresia -->
+      <div class="card kpi-card p-4 m-0 border-t-4 border-blue-500">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold text-muted-color uppercase">Membros & Famílias</span>
+          <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+            <i class="pi pi-users text-sm"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-slate-800">{{ data.kpis.total_members }} <span class="text-xs font-normal text-muted-color">membros</span></div>
+        <div class="text-xs text-muted-color mt-2 flex items-center gap-2">
+          <span><i class="pi pi-home text-xs"></i> {{ data.kpis.total_families }} famílias</span>
+          <span>•</span>
+          <span>{{ data.membership.total_tithers }} dizimistas</span>
+        </div>
+      </div>
+
+      <!-- KPI 2: Frequência EBD -->
+      <div class="card kpi-card p-4 m-0 border-t-4 border-cyan-500">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold text-muted-color uppercase">Frequência EBD</span>
+          <div class="w-8 h-8 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center">
+            <i class="pi pi-book text-sm"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-cyan-600">{{ formatPercent(data.kpis.avg_ebd_rate) }}</div>
+        <div class="text-xs text-muted-color mt-2 flex items-center gap-2">
+          <span>{{ data.kpis.total_ebd_events }} domingos</span>
+          <span>•</span>
+          <span>{{ data.kpis.total_classes }} classes ativas</span>
+        </div>
+      </div>
+
+      <!-- KPI 3: Arrecadação Total -->
+      <div class="card kpi-card p-4 m-0 border-t-4 border-emerald-500">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold text-muted-color uppercase">Arrecadação Anual</span>
+          <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <i class="pi pi-arrow-up-right text-sm"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-emerald-600">{{ formatCurrency(data.kpis.total_revenue) }}</div>
+        <div class="text-xs text-muted-color mt-2 flex items-center gap-2">
+          <span>Dízimos: {{ formatCurrency(data.tithes.total_tithes) }}</span>
+        </div>
+      </div>
+
+      <!-- KPI 4: Resultado Financeiro -->
+      <div class="card kpi-card p-4 m-0 border-t-4" [class.border-emerald-500]="data.kpis.surplus_deficit >= 0" [class.border-red-500]="data.kpis.surplus_deficit < 0">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold text-muted-color uppercase">Resultado do Exercício</span>
+          <div class="w-8 h-8 rounded-full flex items-center justify-center"
+               [class.bg-emerald-100]="data.kpis.surplus_deficit >= 0"
+               [class.text-emerald-600]="data.kpis.surplus_deficit >= 0"
+               [class.bg-red-100]="data.kpis.surplus_deficit < 0"
+               [class.text-red-600]="data.kpis.surplus_deficit < 0">
+            <i [class]="data.kpis.surplus_deficit >= 0 ? 'pi pi-check' : 'pi pi-exclamation-triangle'" class="text-sm"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold" [class.text-emerald-600]="data.kpis.surplus_deficit >= 0" [class.text-red-600]="data.kpis.surplus_deficit < 0">
+          {{ formatCurrency(data.kpis.surplus_deficit) }}
+        </div>
+        <div class="text-xs text-muted-color mt-2">
+          <span class="font-medium" [class.text-emerald-600]="data.kpis.surplus_deficit >= 0" [class.text-red-600]="data.kpis.surplus_deficit < 0">
+            {{ data.kpis.surplus_deficit >= 0 ? 'Superávit Acumulado' : 'Déficit no Exercício' }}
+          </span>
+          • Saldo em caixa: {{ formatCurrency(data.kpis.current_patrimonial_balance) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 1: VISÃO GERAL & GRÁFICOS (OU VISÍVEL NA IMPRESSÃO) -->
+    @if (activeSection() === 'geral' || presentationMode()) {
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+        <!-- Gráfico 1: Evolução Financeira Mensal (Receitas x Despesas) -->
+        <div class="col-span-12 lg:col-span-8 card m-0">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h3 class="m-0 text-base font-semibold">Evolução Financeira Mensal</h3>
+              <p class="text-xs text-muted-color mb-0">Comparativo mês a mês entre entradas arrecadadas e saídas efetuadas</p>
+            </div>
+            <p-tag value="Exercício {{ data.year }}" severity="secondary" styleClass="text-xs" />
+          </div>
+          <div class="chart-card-wrapper">
+            <canvas #financialChartCanvas></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 2: Despesas por Categoria (Doughnut) -->
+        <div class="col-span-12 lg:col-span-4 card m-0">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h3 class="m-0 text-base font-semibold">Distribuição de Despesas</h3>
+              <p class="text-xs text-muted-color mb-0">Destinação dos recursos da igreja</p>
+            </div>
+          </div>
+          <div class="chart-card-wrapper">
+            <canvas #categoriesChartCanvas></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+        <!-- Gráfico 3: Frequência Mensal da EBD (Line) -->
+        <div class="col-span-12 lg:col-span-6 card m-0">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h3 class="m-0 text-base font-semibold">Frequência Mensal da EBD</h3>
+              <p class="text-xs text-muted-color mb-0">Percentual médio de comparecimento aos domingos</p>
+            </div>
+            <span class="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded">Média: {{ formatPercent(data.kpis.avg_ebd_rate) }}</span>
+          </div>
+          <div class="chart-card-sm">
+            <canvas #ebdMonthlyChartCanvas></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 4: Frequência por Classe da EBD (Horizontal Bar) -->
+        <div class="col-span-12 lg:col-span-6 card m-0">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h3 class="m-0 text-base font-semibold">Presença por Classe da EBD</h3>
+              <p class="text-xs text-muted-color mb-0">Desempenho de participação por faixa etária</p>
+            </div>
+            <span class="text-xs text-muted-color">{{ data.kpis.total_classes }} classes</span>
+          </div>
+          <div class="chart-card-sm">
+            <canvas #ebdClassesChartCanvas></canvas>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- SEÇÃO 2: DETALHAMENTO DA EBD -->
+    @if (activeSection() === 'ebd' || !presentationMode()) {
+      <div class="card mb-4" [class.no-print]="activeSection() !== 'ebd' && activeSection() !== 'geral'">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <h3 class="m-0 text-base font-semibold">Desempenho por Mês — Escola Bíblica Dominical</h3>
+            <p class="text-xs text-muted-color mb-0">Consolidado de presenças, faltas, bíblias e revistas utilizadas</p>
+          </div>
+        </div>
+        <p-table [value]="data.ebd.monthly" [responsiveLayout]="'scroll'">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Mês</th>
+              <th style="text-align: center">Encontros</th>
+              <th style="text-align: right">Presentes</th>
+              <th style="text-align: right">Ausentes</th>
+              <th style="width: 14rem">Índice de Frequência</th>
+              <th style="text-align: right">Bíblias</th>
+              <th style="text-align: right">Revistas</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-m>
+            <tr>
+              <td class="font-medium">{{ m.month_name }}/{{ data.year }}</td>
+              <td style="text-align: center">{{ m.events_count }}</td>
+              <td style="text-align: right" class="text-emerald-600 font-medium">{{ m.present }}</td>
+              <td style="text-align: right" class="text-red-500">{{ m.absent }}</td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 bg-surface-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-primary h-full rounded-full" [style.width.%]="m.rate"></div>
+                  </div>
+                  <span class="text-xs font-semibold w-10 text-right">{{ m.rate }}%</span>
+                </div>
+              </td>
+              <td style="text-align: right">{{ m.bibles }}</td>
+              <td style="text-align: right">{{ m.magazines }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="card mb-4" [class.no-print]="activeSection() !== 'ebd' && activeSection() !== 'geral'">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <h3 class="m-0 text-base font-semibold">Quadro de Classes da EBD</h3>
+            <p class="text-xs text-muted-color mb-0">Classes ativas e taxa de frequência anual</p>
+          </div>
+        </div>
+        <p-table [value]="data.ebd.classes" [responsiveLayout]="'scroll'">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Classe</th>
+              <th>Faixa Etária</th>
+              <th style="text-align: center">Sessões Realizadas</th>
+              <th style="text-align: right">Presenças</th>
+              <th style="text-align: right">Faltas</th>
+              <th style="width: 12rem; text-align: right">Frequência</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-c>
+            <tr>
+              <td class="font-medium">{{ c.name }}</td>
+              <td><p-tag [value]="c.age_range || 'Geral'" severity="secondary" /></td>
+              <td style="text-align: center">{{ c.sessions_count }}</td>
+              <td style="text-align: right" class="text-emerald-600 font-medium">{{ c.present }}</td>
+              <td style="text-align: right" class="text-red-500">{{ c.absent }}</td>
+              <td style="text-align: right">
+                <span class="font-bold text-primary">{{ c.attendance_rate }}%</span>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
+
+    <!-- SEÇÃO 3: DETALHAMENTO FINANCEIRO & CONTÁBIL -->
+    @if (activeSection() === 'financeiro' || !presentationMode()) {
+      <!-- Demonstrativo Trimestral (DRE) -->
+      <div class="card mb-4" [class.no-print]="activeSection() !== 'financeiro' && activeSection() !== 'geral'">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <h3 class="m-0 text-base font-semibold">Demonstrativo de Resultados por Trimestre (DRE)</h3>
+            <p class="text-xs text-muted-color mb-0">Evolução trimestral de receitas, despesas e resultado líquido</p>
+          </div>
+        </div>
+        <p-table [value]="data.financial.quarters" [responsiveLayout]="'scroll'">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Período</th>
+              <th style="text-align: right">Receitas / Entradas</th>
+              <th style="text-align: right">Despesas / Saídas</th>
+              <th style="text-align: right">Resultado Líquido</th>
+              <th style="text-align: center">Situação</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-q>
+            <tr>
+              <td class="font-semibold">{{ q.name }}</td>
+              <td style="text-align: right" class="text-emerald-600 font-medium">{{ formatCurrency(q.revenue) }}</td>
+              <td style="text-align: right" class="text-red-600 font-medium">{{ formatCurrency(q.expense) }}</td>
+              <td style="text-align: right" class="font-bold" [class.text-emerald-600]="q.balance >= 0" [class.text-red-600]="q.balance < 0">
+                {{ formatCurrency(q.balance) }}
+              </td>
+              <td style="text-align: center">
+                <p-tag [value]="q.balance >= 0 ? 'Superávit' : 'Déficit'" [severity]="q.balance >= 0 ? 'success' : 'danger'" />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="footer">
+            <tr class="font-bold bg-surface-100">
+              <td>TOTAL CONSOLIDADO ANUAL</td>
+              <td style="text-align: right" class="text-emerald-600">{{ formatCurrency(data.financial.total_revenue) }}</td>
+              <td style="text-align: right" class="text-red-600">{{ formatCurrency(data.financial.total_expense) }}</td>
+              <td style="text-align: right" [class.text-emerald-600]="data.financial.surplus_deficit >= 0" [class.text-red-600]="data.financial.surplus_deficit < 0">
+                {{ formatCurrency(data.financial.surplus_deficit) }}
+              </td>
+              <td style="text-align: center">
+                <p-tag [value]="data.financial.surplus_deficit >= 0 ? 'Superavitário' : 'Deficitário'" [severity]="data.financial.surplus_deficit >= 0 ? 'success' : 'danger'" />
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Tabela de Categorias de Despesas -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4" [class.no-print]="activeSection() !== 'financeiro' && activeSection() !== 'geral'">
+        <div class="col-span-12 lg:col-span-8 card m-0">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="m-0 text-base font-semibold">Detalhamento das Maiores Despesas</h3>
+            <span class="text-xs text-muted-color">{{ data.financial.categories_expense.length }} categorias registradas</span>
+          </div>
+          <p-table [value]="data.financial.categories_expense" [responsiveLayout]="'scroll'">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Categoria</th>
+                <th style="width: 10rem">Participação</th>
+                <th style="text-align: right">Valor Anual</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-cat>
+              <tr>
+                <td class="font-medium">{{ cat.name }}</td>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 bg-surface-200 rounded-full h-2 overflow-hidden">
+                      <div class="bg-primary h-full rounded-full" [style.width.%]="cat.percentage"></div>
+                    </div>
+                    <span class="text-xs font-semibold w-12 text-right">{{ cat.percentage }}%</span>
+                  </div>
+                </td>
+                <td style="text-align: right" class="font-bold text-slate-800">{{ formatCurrency(cat.amount) }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+
+        <!-- Contas Bancárias & Saldo Patrimonial -->
+        <div class="col-span-12 lg:col-span-4 card m-0">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="m-0 text-base font-semibold">Saldos Bancários & Caixas</h3>
+          </div>
+          <div class="flex flex-col gap-3">
+            @for (acc of data.financial.accounts; track acc.id) {
+              <div class="flex justify-between items-center p-3 rounded-border border border-surface">
+                <div>
+                  <div class="font-medium text-sm">{{ acc.name }}</div>
+                  <span class="text-xs text-muted-color uppercase">{{ acc.account_type }}</span>
+                </div>
+                <div class="font-bold text-slate-800">{{ formatCurrency(acc.current_balance) }}</div>
+              </div>
+            }
+          </div>
+          <div class="mt-4 p-3 bg-primary-50 text-primary-900 rounded-border flex justify-between items-center">
+            <span class="font-semibold text-sm">Patrimônio Líquido Disponível:</span>
+            <span class="text-lg font-bold text-primary">{{ formatCurrency(data.financial.current_patrimonial_balance) }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- SEÇÃO 4: MEMBRESIA & OFICIAIS -->
+    @if (activeSection() === 'membresia' || !presentationMode()) {
+      <div class="card mb-4" [class.no-print]="activeSection() !== 'membresia' && activeSection() !== 'geral'">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <h3 class="m-0 text-base font-semibold">Estrutura de Membresia e Oficiais</h3>
+            <p class="text-xs text-muted-color mb-0">Composição do corpo de membros, líderes e famílias</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="p-3 border border-surface rounded-border text-center">
+            <div class="text-xs text-muted-color uppercase font-medium">Membros Ativos</div>
+            <div class="text-2xl font-bold text-primary mt-1">{{ data.membership.total_members }}</div>
+          </div>
+          <div class="p-3 border border-surface rounded-border text-center">
+            <div class="text-xs text-muted-color uppercase font-medium">Dizimistas Cadastrados</div>
+            <div class="text-2xl font-bold text-emerald-600 mt-1">{{ data.membership.total_tithers }}</div>
+          </div>
+          <div class="p-3 border border-surface rounded-border text-center">
+            <div class="text-xs text-muted-color uppercase font-medium">Corpo Docente (Professores)</div>
+            <div class="text-2xl font-bold text-cyan-600 mt-1">{{ data.membership.total_teachers }}</div>
+          </div>
+          <div class="p-3 border border-surface rounded-border text-center">
+            <div class="text-xs text-muted-color uppercase font-medium">Superintendentes EBD</div>
+            <div class="text-2xl font-bold text-indigo-600 mt-1">{{ data.membership.total_superintendents }}</div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Assinaturas Oficiais para a Ata da Assembleia Geral (Aparece na Impressão/PDF) -->
+    <div class="print-signatures print-only">
+      <div class="sig-line">
+        Rev. Pastor Presidente<br />
+        <span class="text-xs text-muted-color">Ministro Titular</span>
+      </div>
+      <div class="sig-line">
+        Conselho da Igreja<br />
+        <span class="text-xs text-muted-color">Presbítero Regente</span>
+      </div>
+      <div class="sig-line">
+        Tesouraria da Igreja<br />
+        <span class="text-xs text-muted-color">Responsável Contábil</span>
+      </div>
+    </div>
+  }
+</div>

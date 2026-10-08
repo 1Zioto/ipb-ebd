@@ -13,6 +13,7 @@ export interface AuthUser {
   } | null;
   is_active: boolean;
   roles: string[];
+  role_ids?: number[];
   permissions: string[];
   is_programmer: boolean;
 }
@@ -457,4 +458,268 @@ export interface AuditLog {
   new_values?: Record<string, unknown> | null;
   ip_address?: string | null;
   created_at: string;
+}
+
+// ==========================================
+// MÓDULO FINANCEIRO & CONTÁBIL
+// ==========================================
+
+export interface FinancialAccount {
+  id: number;
+  institution_id?: number | null;
+  name: string;
+  account_type: 'caixa' | 'corrente' | 'poupanca' | 'aplicacao';
+  bank_name?: string | null;
+  agency?: string | null;
+  account_number?: string | null;
+  initial_balance: number;
+  current_balance: number;
+  is_active: boolean;
+  notes?: string | null;
+  transactions_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FinancialCostCenter {
+  id: number;
+  institution_id?: number | null;
+  code?: string | null;
+  name: string;
+  description?: string | null;
+  budget_limit?: number | null;
+  is_active: boolean;
+  period_expense?: number;
+  budget_percentage?: number | null;
+  transactions_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FinancialCategory {
+  id: number;
+  institution_id?: number | null;
+  parent_id?: number | null;
+  parent?: FinancialCategory | null;
+  children?: FinancialCategory[];
+  code?: string | null;
+  name: string;
+  type: 'receita' | 'despesa';
+  description?: string | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FinancialTransaction {
+  id: number;
+  institution_id?: number | null;
+  financial_account_id: number;
+  account?: FinancialAccount;
+  destination_account_id?: number | null;
+  destination_account?: FinancialAccount;
+  financial_category_id?: number | null;
+  category?: FinancialCategory;
+  financial_cost_center_id?: number | null;
+  cost_center?: FinancialCostCenter;
+  type: 'receita' | 'despesa' | 'transferencia';
+  date: string;
+  competency_date?: string | null;
+  amount: number;
+  description: string;
+  entity_name?: string | null;
+  document_number?: string | null;
+  payment_method: 'pix' | 'ted_doc' | 'dinheiro' | 'boleto' | 'cartao_debito' | 'cartao_credito' | 'cheque' | 'outro';
+  status: 'pago' | 'pendente' | 'cancelado';
+  paid_at?: string | null;
+  coleta_id?: number | null;
+  attachment_url?: string | null;
+  notes?: string | null;
+  created_by?: number;
+  creator?: { id: number; name: string };
+  running_balance?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FinancialMonthClosing {
+  id: number;
+  institution_id?: number | null;
+  year: number;
+  month: number;
+  status: 'aberto' | 'em_conferencia' | 'fechado';
+  opening_balance: number;
+  total_income: number;
+  total_expense: number;
+  closing_balance: number;
+  closed_by?: number | null;
+  closed_at?: string | null;
+  accounting_notes?: string | null;
+}
+
+export interface FinancialSummary {
+  year: number;
+  month: number;
+  accounts_total_balance: number;
+  incomes_paid: number;
+  expenses_paid: number;
+  net_paid: number;
+  incomes_pending: number;
+  expenses_pending: number;
+}
+
+export interface FinancialLedger {
+  period: {
+    year: number;
+    month: number | null;
+    start_date: string;
+    end_date: string;
+  };
+  closing_status: 'aberto' | 'em_conferencia' | 'fechado';
+  closing_info?: FinancialMonthClosing | null;
+  summary: {
+    opening_balance: number;
+    total_income: number;
+    total_expense: number;
+    net_result: number;
+    closing_balance: number;
+    transactions_count: number;
+  };
+  transactions: FinancialTransaction[];
+}
+
+export interface FinancialTrialBalanceCategory {
+  category_id: number | null;
+  category_code: string | null;
+  category_name: string | null;
+  transaction_type: 'receita' | 'despesa';
+  count: number;
+  total_amount: number;
+}
+
+export interface FinancialTrialBalanceCostCenter {
+  cost_center_id: number | null;
+  cost_center_code: string | null;
+  cost_center_name: string | null;
+  transaction_type: 'receita' | 'despesa';
+  count: number;
+  total_amount: number;
+}
+
+export interface FinancialTrialBalance {
+  period: {
+    year: number;
+    month: number | null;
+    start_date: string;
+    end_date: string;
+  };
+  closing_status: 'aberto' | 'em_conferencia' | 'fechado';
+  summary: {
+    opening_balance: number;
+    total_income: number;
+    total_expense: number;
+    net_result: number;
+    closing_balance: number;
+    transactions_count: number;
+  };
+  categories: FinancialTrialBalanceCategory[];
+  cost_centers: FinancialTrialBalanceCostCenter[];
+}
+
+export interface AnnualReportSummary {
+  year: number;
+  institution: {
+    id: number;
+    name: string;
+    short_name: string;
+    city: string;
+    state: string;
+    cnpj: string;
+  };
+  kpis: {
+    total_members: number;
+    total_families: number;
+    total_ebd_events: number;
+    total_classes: number;
+    avg_ebd_rate: number;
+    total_revenue: number;
+    total_expense: number;
+    surplus_deficit: number;
+    current_patrimonial_balance: number;
+  };
+  membership: {
+    total_members: number;
+    total_families: number;
+    total_tithers: number;
+    total_teachers: number;
+    total_superintendents: number;
+    age_distribution: {
+      infantil: number;
+      jovens: number;
+      adultos: number;
+      idosos: number;
+    };
+  };
+  ebd: {
+    total_events: number;
+    total_classes: number;
+    total_enrolled: number;
+    avg_rate: number;
+    monthly: Array<{
+      month: number;
+      month_name: string;
+      events_count: number;
+      present: number;
+      absent: number;
+      rate: number;
+      bibles: number;
+      magazines: number;
+    }>;
+    classes: Array<{
+      class_id: number;
+      name: string;
+      age_range: string;
+      sessions_count: number;
+      present: number;
+      absent: number;
+      attendance_rate: number;
+    }>;
+  };
+  tithes: {
+    total_tithes: number;
+    total_offerings: number;
+    total_collected: number;
+    coletas_count: number;
+  };
+  financial: {
+    total_revenue: number;
+    total_expense: number;
+    surplus_deficit: number;
+    current_patrimonial_balance: number;
+    monthly: Array<{
+      month: number;
+      month_name: string;
+      revenue: number;
+      expense: number;
+      balance: number;
+    }>;
+    categories_expense: Array<{
+      category_id: number;
+      name: string;
+      amount: number;
+      percentage: number;
+    }>;
+    quarters: Array<{
+      name: string;
+      revenue: number;
+      expense: number;
+      balance: number;
+    }>;
+    accounts: Array<{
+      id: number;
+      name: string;
+      account_type: string;
+      current_balance: number;
+    }>;
+  };
 }

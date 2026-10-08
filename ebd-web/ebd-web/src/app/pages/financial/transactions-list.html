@@ -1,0 +1,648 @@
+<div class="space-y-6">
+  <!-- Header / Top Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold">
+          <i class="pi pi-wallet text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Financeiro & Livro Caixa</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Controle de entradas, saídas, custos por ministério e saldos</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Navigation & Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2">
+      <a routerLink="/financeiro/contabilidade" class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition">
+        <i class="pi pi-book"></i> Contabilidade & Balancete
+      </a>
+      <a routerLink="/financeiro/categorias-custos" class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+        <i class="pi pi-tags"></i> Plano & Custos
+      </a>
+      <a routerLink="/financeiro/contas" class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+        <i class="pi pi-building"></i> Contas & Caixas
+      </a>
+
+      @if (auth.can('financial.manage')) {
+        <button
+          type="button"
+          (click)="openCreateModal('receita')"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
+        >
+          <i class="pi pi-plus"></i> Receita
+        </button>
+        <button
+          type="button"
+          (click)="openCreateModal('despesa')"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition"
+        >
+          <i class="pi pi-minus"></i> Despesa
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Saldo Geral em Caixa/Bancos -->
+    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-wider font-semibold text-slate-400">Saldo Atual em Contas</p>
+        <h3 class="text-2xl font-bold mt-1 text-slate-800 dark:text-slate-100">
+          R$ {{ (summary()?.accounts_total_balance || 0) | number:'1.2-2' }}
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Soma de caixas e contas ativas</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+        <i class="pi pi-money-bill text-2xl"></i>
+      </div>
+    </div>
+
+    <!-- Receitas do Mês -->
+    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-wider font-semibold text-emerald-500">Receitas do Mês</p>
+        <h3 class="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
+          R$ {{ (summary()?.incomes_paid || 0) | number:'1.2-2' }}
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">
+          @if (summary()?.incomes_pending) {
+            + R$ {{ summary()?.incomes_pending | number:'1.2-2' }} a receber
+          } @else {
+            Entradas confirmadas
+          }
+        </p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+        <i class="pi pi-arrow-up-right text-2xl"></i>
+      </div>
+    </div>
+
+    <!-- Despesas do Mês -->
+    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-wider font-semibold text-rose-500">Despesas / Custos</p>
+        <h3 class="text-2xl font-bold mt-1 text-rose-600 dark:text-rose-400">
+          R$ {{ (summary()?.expenses_paid || 0) | number:'1.2-2' }}
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">
+          @if (summary()?.expenses_pending) {
+            + R$ {{ summary()?.expenses_pending | number:'1.2-2' }} a pagar
+          } @else {
+            Pagamentos realizados
+          }
+        </p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
+        <i class="pi pi-arrow-down-right text-2xl"></i>
+      </div>
+    </div>
+
+    <!-- Resultado / Superávit do Mês -->
+    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-wider font-semibold text-slate-400">Resultado do Mês</p>
+        <h3
+          class="text-2xl font-bold mt-1"
+          [ngClass]="(summary()?.net_paid || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+        >
+          R$ {{ (summary()?.net_paid || 0) | number:'1.2-2' }}
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">
+          {{ (summary()?.net_paid || 0) >= 0 ? 'Superávit operacional' : 'Déficit no período' }}
+        </p>
+      </div>
+      <div
+        class="w-12 h-12 rounded-xl flex items-center justify-center"
+        [ngClass]="(summary()?.net_paid || 0) >= 0 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400'"
+      >
+        <i class="pi" [ngClass]="(summary()?.net_paid || 0) >= 0 ? 'pi-chart-line' : 'pi-exclamation-circle'"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Mês -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Mês:</span>
+        <select
+          [(ngModel)]="selectedMonth"
+          (change)="loadData()"
+          class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+        >
+          @for (m of months; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Ano -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Ano:</span>
+        <select
+          [(ngModel)]="selectedYear"
+          (change)="loadData()"
+          class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+        >
+          @for (y of years; track y) {
+            <option [value]="y">{{ y }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Tipo -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Tipo:</span>
+        <select
+          [(ngModel)]="filterType"
+          (change)="loadData()"
+          class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+        >
+          <option value="">Todos</option>
+          <option value="receita">Receitas</option>
+          <option value="despesa">Despesas</option>
+          <option value="transferencia">Transferências</option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Status:</span>
+        <select
+          [(ngModel)]="filterStatus"
+          (change)="loadData()"
+          class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+        >
+          <option value="">Todos</option>
+          <option value="pago">Pago / Recebido</option>
+          <option value="pendente">Pendente</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <!-- Busca textual -->
+      <div class="flex-1 min-w-[200px]">
+        <div class="relative">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="loadData()"
+            placeholder="Buscar por descrição, fornecedor, documento..."
+            class="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        (click)="loadData()"
+        class="px-3.5 py-1.5 text-sm font-medium rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+      >
+        <i class="pi pi-filter"></i> Filtrar
+      </button>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Movimentações do Período</h2>
+        <p class="text-xs text-slate-500">{{ transactions().length }} registros encontrados</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <a
+          routerLink="/financeiro/contabilidade"
+          class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+        >
+          <i class="pi pi-file-export"></i> Ver Balancete Contábil
+        </a>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="p-12 text-center text-slate-400">
+        <i class="pi pi-spin pi-spinner text-3xl mb-2"></i>
+        <p class="text-sm">Carregando movimentações...</p>
+      </div>
+    } @else if (transactions().length === 0) {
+      <div class="p-12 text-center text-slate-400">
+        <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+          <i class="pi pi-inbox text-2xl"></i>
+        </div>
+        <h3 class="text-base font-semibold text-slate-700 dark:text-slate-300">Nenhum lançamento no período</h3>
+        <p class="text-sm mt-1">Utilize os botões acima para cadastrar receitas ou despesas.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Data</th>
+              <th class="py-3 px-4">Tipo</th>
+              <th class="py-3 px-4">Descrição / Favorecido</th>
+              <th class="py-3 px-4">Categoria / Cód. Contábil</th>
+              <th class="py-3 px-4">Centro de Custo</th>
+              <th class="py-3 px-4">Conta / Caixa</th>
+              <th class="py-3 px-4 text-right">Valor</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (tx of transactions(); track tx.id) {
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                <!-- Data -->
+                <td class="py-3 px-4 whitespace-nowrap font-medium text-slate-700 dark:text-slate-200">
+                  {{ tx.date | date:'dd/MM/yyyy' }}
+                </td>
+
+                <!-- Tipo -->
+                <td class="py-3 px-4 whitespace-nowrap">
+                  @if (tx.type === 'receita') {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                      <i class="pi pi-arrow-up-right text-[10px]"></i> Receita
+                    </span>
+                  } @else if (tx.type === 'despesa') {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                      <i class="pi pi-arrow-down-right text-[10px]"></i> Despesa
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+                      <i class="pi pi-arrows-h text-[10px]"></i> Transf.
+                    </span>
+                  }
+                </td>
+
+                <!-- Descrição / Favorecido -->
+                <td class="py-3 px-4">
+                  <div class="font-medium text-slate-800 dark:text-slate-100">{{ tx.description }}</div>
+                  @if (tx.entity_name) {
+                    <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                      <i class="pi pi-user text-[10px]"></i> {{ tx.entity_name }}
+                    </div>
+                  }
+                  @if (tx.document_number) {
+                    <span class="inline-block mt-0.5 text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">
+                      Doc: {{ tx.document_number }}
+                    </span>
+                  }
+                </td>
+
+                <!-- Categoria -->
+                <td class="py-3 px-4 whitespace-nowrap">
+                  @if (tx.category) {
+                    <div>
+                      <span class="text-xs font-mono font-bold text-slate-400 mr-1">{{ tx.category.code }}</span>
+                      <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ tx.category.name }}</span>
+                    </div>
+                  } @else {
+                    <span class="text-xs text-slate-400 italic">Não categorizado</span>
+                  }
+                </td>
+
+                <!-- Centro de Custo -->
+                <td class="py-3 px-4 whitespace-nowrap">
+                  @if (tx.cost_center) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {{ tx.cost_center.name }}
+                    </span>
+                  } @else {
+                    <span class="text-xs text-slate-400">-</span>
+                  }
+                </td>
+
+                <!-- Conta Bancária / Caixa -->
+                <td class="py-3 px-4 whitespace-nowrap">
+                  <div class="text-sm text-slate-700 dark:text-slate-200 font-medium">{{ tx.account?.name }}</div>
+                  @if (tx.type === 'transferencia' && tx.destination_account) {
+                    <div class="text-xs text-blue-500">→ {{ tx.destination_account.name }}</div>
+                  }
+                </td>
+
+                <!-- Valor -->
+                <td class="py-3 px-4 whitespace-nowrap text-right">
+                  <span
+                    class="font-bold text-sm"
+                    [ngClass]="{
+                      'text-emerald-600 dark:text-emerald-400': tx.type === 'receita',
+                      'text-rose-600 dark:text-rose-400': tx.type === 'despesa',
+                      'text-blue-600 dark:text-blue-400': tx.type === 'transferencia'
+                    }"
+                  >
+                    {{ tx.type === 'despesa' ? '-' : '+' }} R$ {{ tx.amount | number:'1.2-2' }}
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td class="py-3 px-4 whitespace-nowrap text-center">
+                  @if (tx.status === 'pago') {
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      Liquidado
+                    </span>
+                  } @else if (tx.status === 'pendente') {
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                      Pendente
+                    </span>
+                  } @else {
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                      Cancelado
+                    </span>
+                  }
+                </td>
+
+                <!-- Ações -->
+                <td class="py-3 px-4 whitespace-nowrap text-center">
+                  @if (auth.can('financial.manage')) {
+                    <div class="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        (click)="openEditModal(tx)"
+                        title="Editar lançamento"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      >
+                        <i class="pi pi-pencil text-xs"></i>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteTransaction(tx)"
+                        title="Excluir lançamento"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      >
+                        <i class="pi pi-trash text-xs"></i>
+                      </button>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal de Novo / Editar Lançamento -->
+<p-dialog
+  [(visible)]="showModal"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '680px' }"
+  [header]="isEditing() ? 'Editar Lançamento Financeiro' : 'Novo Lançamento Financeiro'"
+  [closable]="true"
+  (onHide)="closeModal()"
+>
+  @if (errorMessage()) {
+    <div class="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form (ngSubmit)="saveTransaction()" class="space-y-4">
+    <!-- Tipo de Lançamento -->
+    <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+      <button
+        type="button"
+        (click)="form.type = 'receita'"
+        class="py-2 text-sm font-semibold rounded-lg transition"
+        [ngClass]="form.type === 'receita' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'"
+      >
+        <i class="pi pi-arrow-up-right mr-1"></i> Receita
+      </button>
+      <button
+        type="button"
+        (click)="form.type = 'despesa'"
+        class="py-2 text-sm font-semibold rounded-lg transition"
+        [ngClass]="form.type === 'despesa' ? 'bg-white dark:bg-slate-700 text-rose-600 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'"
+      >
+        <i class="pi pi-minus mr-1"></i> Despesa
+      </button>
+      <button
+        type="button"
+        (click)="form.type = 'transferencia'"
+        class="py-2 text-sm font-semibold rounded-lg transition"
+        [ngClass]="form.type === 'transferencia' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'"
+      >
+        <i class="pi pi-arrows-h mr-1"></i> Transferência
+      </button>
+    </div>
+
+    <!-- Valor e Datas -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Valor (R$) *</label>
+        <input
+          type="number"
+          step="0.01"
+          [(ngModel)]="form.amount"
+          name="amount"
+          required
+          placeholder="0,00"
+          class="w-full px-3 py-2 text-base font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Data do Pagamento *</label>
+        <input
+          type="date"
+          [(ngModel)]="form.date"
+          name="date"
+          required
+          class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Data Competência</label>
+        <input
+          type="date"
+          [(ngModel)]="form.competency_date"
+          name="competency_date"
+          class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+    </div>
+
+    <!-- Descrição e Favorecido -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Descrição / Histórico *</label>
+        <input
+          type="text"
+          [(ngModel)]="form.description"
+          name="description"
+          required
+          placeholder="Ex: Compra de revistas da EBD, Conta de luz..."
+          class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Favorecido / Fornecedor / Membro</label>
+        <input
+          type="text"
+          [(ngModel)]="form.entity_name"
+          name="entity_name"
+          placeholder="Ex: CPAD, Enel, Pastor, Nome do prestador..."
+          class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+    </div>
+
+    <!-- Contas Envolvidas -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+          {{ form.type === 'transferencia' ? 'Conta de Origem *' : 'Conta / Caixa *' }}
+        </label>
+        <select
+          [(ngModel)]="form.financial_account_id"
+          name="financial_account_id"
+          required
+          class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+        >
+          <option [ngValue]="null" disabled>Selecione a conta...</option>
+          @for (acc of accounts(); track acc.id) {
+            <option [value]="acc.id">{{ acc.name }} (Saldo: R$ {{ acc.current_balance | number:'1.2-2' }})</option>
+          }
+        </select>
+      </div>
+
+      @if (form.type === 'transferencia') {
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Conta de Destino *</label>
+          <select
+            [(ngModel)]="form.destination_account_id"
+            name="destination_account_id"
+            required
+            class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+          >
+            <option [ngValue]="null" disabled>Selecione conta de destino...</option>
+            @for (acc of accounts(); track acc.id) {
+              @if (acc.id !== form.financial_account_id) {
+                <option [value]="acc.id">{{ acc.name }}</option>
+              }
+            }
+          </select>
+        </div>
+      } @else {
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Forma de Pagamento</label>
+          <select
+            [(ngModel)]="form.payment_method"
+            name="payment_method"
+            class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+          >
+            <option value="pix">PIX</option>
+            <option value="ted_doc">TED / DOC / Transferência</option>
+            <option value="dinheiro">Dinheiro em Espécie</option>
+            <option value="boleto">Boleto Bancário</option>
+            <option value="cartao_debito">Cartão de Débito</option>
+            <option value="cartao_credito">Cartão de Crédito</option>
+            <option value="cheque">Cheque</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      }
+    </div>
+
+    <!-- Categoria e Centro de Custo (se não for transferência) -->
+    @if (form.type !== 'transferencia') {
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Categoria Contábil</label>
+          <select
+            [(ngModel)]="form.financial_category_id"
+            name="financial_category_id"
+            class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+          >
+            <option [ngValue]="null">Sem categoria contábil</option>
+            @for (cat of filteredCategories; track cat.id) {
+              <option [value]="cat.id">[{{ cat.code }}] {{ cat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Centro de Custo / Ministério</label>
+          <select
+            [(ngModel)]="form.financial_cost_center_id"
+            name="financial_cost_center_id"
+            class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+          >
+            <option [ngValue]="null">Geral / Não atribuído</option>
+            @for (cc of costCenters(); track cc.id) {
+              <option [value]="cc.id">{{ cc.code }} - {{ cc.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    }
+
+    <!-- Documento e Status -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Nº Documento / NF / Comprovante</label>
+        <input
+          type="text"
+          [(ngModel)]="form.document_number"
+          name="document_number"
+          placeholder="Ex: NF 1234, Recibo 05/26, Pix E2E..."
+          class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Situação / Status</label>
+        <select
+          [(ngModel)]="form.status"
+          name="status"
+          class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-700 dark:text-slate-200"
+        >
+          <option value="pago">Pago / Liquidado</option>
+          <option value="pendente">Pendente / A pagar ou receber</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Observações -->
+    <div>
+      <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Observações Adicionais</label>
+      <textarea
+        rows="2"
+        [(ngModel)]="form.notes"
+        name="notes"
+        placeholder="Informações para a contabilidade ou auditoria..."
+        class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500"
+      ></textarea>
+    </div>
+
+    <!-- Rodapé Modal -->
+    <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="px-4 py-2 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        [disabled]="saving()"
+        class="px-5 py-2 text-sm font-semibold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition disabled:opacity-50"
+      >
+        @if (saving()) {
+          <i class="pi pi-spin pi-spinner mr-1"></i> Salvando...
+        } @else {
+          Salvar Lançamento
+        }
+      </button>
+    </div>
+  </form>
+</p-dialog>

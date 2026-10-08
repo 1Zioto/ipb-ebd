@@ -5,16 +5,78 @@
     width: 20rem;
     height: calc(100vh - 8rem);
     z-index: 999;
-    overflow-y: auto;
     user-select: none;
     top: 6rem;
     left: 2rem;
+    display: flex;
+    flex-direction: column;
     transition:
         transform var(--layout-section-transition-duration),
-        left var(--layout-section-transition-duration);
+        left var(--layout-section-transition-duration),
+        width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     background-color: var(--surface-overlay);
     border-radius: var(--content-border-radius);
-    padding: 0.5rem 1.5rem;
+    padding: 0.75rem 1.25rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--surface-border);
+
+    .sidebar-toggle-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--surface-border);
+        flex-shrink: 0;
+
+        .sidebar-retract-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: transparent;
+            border: 1px solid var(--surface-border);
+            border-radius: 8px;
+            color: var(--text-color-secondary);
+            padding: 0.35rem 0.65rem;
+            font-size: 0.775rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            justify-content: center;
+
+            &:hover {
+                background-color: var(--surface-hover);
+                color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+
+            i {
+                font-size: 0.85rem;
+            }
+
+            .sidebar-retract-text {
+                white-space: nowrap;
+            }
+        }
+    }
+
+    .sidebar-menu-wrapper {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 0.15rem;
+
+        &::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--surface-border);
+            border-radius: 4px;
+        }
+    }
 }
 
 .layout-menu {
@@ -156,4 +218,161 @@
 .layout-submenu-enter-active {
     overflow: hidden;
     transition: max-height 1s ease-in-out;
+}
+
+// ==========================================
+// MODO MENU RETRÁTIL (COLLAPSIBLE SIDEBAR)
+// ==========================================
+.layout-sidebar-collapsed {
+    .layout-sidebar {
+        width: 5.25rem !important;
+        padding: 0.75rem 0.4rem !important;
+        overflow: visible !important;
+
+        .sidebar-toggle-header {
+            justify-content: center;
+            padding-bottom: 0.4rem;
+            margin-bottom: 0.4rem;
+
+            .sidebar-retract-btn {
+                width: 2.25rem;
+                height: 2.25rem;
+                padding: 0;
+                justify-content: center;
+                border-radius: 50%;
+                border-color: var(--surface-border);
+
+                i {
+                    font-size: 0.95rem;
+                }
+
+                .sidebar-retract-text {
+                    display: none !important;
+                }
+            }
+        }
+
+        .sidebar-menu-wrapper {
+            overflow: visible !important;
+        }
+
+        .layout-root-menuitem {
+            > .layout-menuitem-root-text {
+                height: 1px;
+                width: 60%;
+                margin: 0.75rem auto 0.4rem auto;
+                background-color: var(--surface-border);
+                text-indent: -9999px;
+                overflow: hidden;
+                opacity: 0.6;
+            }
+        }
+
+        .layout-menu {
+            overflow: visible !important;
+
+            ul {
+                overflow: visible !important;
+
+                a {
+                    justify-content: center !important;
+                    padding: 0.7rem 0 !important;
+                    margin: 0.15rem 0 !important;
+                    position: relative !important;
+                    border-radius: 8px !important;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+                    .layout-menuitem-icon {
+                        margin-right: 0 !important;
+                        font-size: 1.25rem !important;
+                        transition: transform 0.2s ease;
+                    }
+
+                    .layout-menuitem-text,
+                    .layout-submenu-toggler {
+                        display: none !important;
+                    }
+
+                    &:hover {
+                        background-color: var(--surface-hover);
+
+                        .layout-menuitem-icon {
+                            transform: scale(1.15);
+                            color: var(--primary-color);
+                        }
+
+                        // Tooltip Flutuante Moderno
+                        &::after {
+                            content: attr(data-tooltip);
+                            position: absolute;
+                            left: calc(100% + 12px);
+                            top: 50%;
+                            transform: translateY(-50%);
+                            background: #0f172a;
+                            color: #ffffff;
+                            padding: 0.45rem 0.85rem;
+                            border-radius: 8px;
+                            font-size: 0.825rem;
+                            font-weight: 600;
+                            white-space: nowrap;
+                            z-index: 10000;
+                            pointer-events: none;
+                            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+                            border: 1px solid rgba(255, 255, 255, 0.15);
+                            animation: tooltipSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+                        }
+
+                        &::before {
+                            content: '';
+                            position: absolute;
+                            left: calc(100% + 5px);
+                            top: 50%;
+                            transform: translateY(-50%);
+                            border-width: 6px;
+                            border-style: solid;
+                            border-color: transparent #0f172a transparent transparent;
+                            z-index: 10000;
+                            pointer-events: none;
+                            animation: tooltipSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+                        }
+                    }
+
+                    &.active-route {
+                        background-color: color-mix(in srgb, var(--primary-color) 16%, transparent) !important;
+                        color: var(--primary-color) !important;
+
+                        .layout-menuitem-icon {
+                            color: var(--primary-color) !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Tooltip no tema escuro
+.app-dark {
+    .layout-sidebar-collapsed {
+        .layout-menu ul a:hover {
+            &::after {
+                background: #1e293b;
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+            &::before {
+                border-color: transparent #1e293b transparent transparent;
+            }
+        }
+    }
+}
+
+@keyframes tooltipSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) translateX(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+    }
 }

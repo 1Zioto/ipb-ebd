@@ -24,7 +24,7 @@ class SystemAdminController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:180'],
-            'username' => ['required', 'string', 'max:80', 'alpha_dash', 'unique:users,username'],
+            'username' => ['required', 'string', 'max:80', 'regex:/^[a-zA-Z0-9._-]+$/', 'unique:users,username'],
             'email' => ['nullable', 'email', 'max:180', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
             'person_id' => ['nullable', 'integer', 'exists:people,id'],
@@ -44,7 +44,7 @@ class SystemAdminController extends Controller
     {
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:180'],
-            'username' => ['sometimes', 'required', 'string', 'max:80', 'alpha_dash', Rule::unique('users')->ignore($user->id)],
+            'username' => ['sometimes', 'required', 'string', 'max:80', 'regex:/^[a-zA-Z0-9._-]+$/', Rule::unique('users')->ignore($user->id)],
             'email' => ['nullable', 'email', 'max:180', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8'],
             'person_id' => ['nullable', 'integer', 'exists:people,id'],
@@ -63,6 +63,33 @@ class SystemAdminController extends Controller
         if ($roleIds !== null) $user->roles()->sync($roleIds);
         Audit::log('user.updated', 'user', $user->id, $old, ['name' => $user->name, 'username' => $user->username, 'is_active' => $user->is_active, 'roles' => $roleIds]);
         return new UserResource($user->load('roles.permissions'));
+    }
+
+    public function destroyUser(Request $request, User $user): JsonResponse
+    {
+        if ($request->user()->is($user)) {
+            return response()->json(['message' => 'Você não pode excluir seu próprio usuário.'], 422);
+        }
+
+        if ($user->roles()->where('slug', 'programador')->exists()) {
+            $otherProgrammers = User::whereHas('roles', fn ($q) => $q->where('slug', 'programador'))
+                ->where('id', '!=', $user->id)
+                ->where('is_active', true)
+                ->count();
+            if ($otherProgrammers === 0) {
+                return response()->json(['message' => 'Não é permitido excluir o único usuário com papel Programador.'], 422);
+            }
+        }
+
+        Audit::log('user.deleted', 'user', $user->id, [
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+        ], null);
+
+        $user->delete();
+
+        return response()->json(['message' => 'Usuário excluído com sucesso.']);
     }
 
     public function roles(): JsonResponse

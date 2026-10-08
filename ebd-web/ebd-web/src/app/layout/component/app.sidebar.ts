@@ -1,5 +1,6 @@
-import { Component, computed, effect, ElementRef, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, inject, OnDestroy, OnInit, effect } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { filter, Subject, takeUntil } from 'rxjs';
 import { AppMenu } from './app.menu';
 import { LayoutService } from '@/app/layout/service/layout.service';
@@ -7,10 +8,24 @@ import { LayoutService } from '@/app/layout/service/layout.service';
 @Component({
     selector: 'app-sidebar',
     standalone: true,
-    imports: [AppMenu, RouterModule],
+    imports: [CommonModule, AppMenu, RouterModule],
     template: `
-        <div class="layout-sidebar">
-            <app-menu></app-menu>
+        <div class="layout-sidebar" [class.is-collapsed]="layoutService.layoutState().sidebarCollapsed">
+            <div class="sidebar-toggle-header">
+                <button
+                    type="button"
+                    class="sidebar-retract-btn"
+                    (click)="layoutService.toggleSidebarCollapse()"
+                    [title]="layoutService.layoutState().sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'"
+                    aria-label="Alternar menu retrátil"
+                >
+                    <i class="pi" [ngClass]="layoutService.layoutState().sidebarCollapsed ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
+                    <span class="sidebar-retract-text" *ngIf="!layoutService.layoutState().sidebarCollapsed">Recolher Menu</span>
+                </button>
+            </div>
+            <div class="sidebar-menu-wrapper">
+                <app-menu></app-menu>
+            </div>
         </div>
     `
 })

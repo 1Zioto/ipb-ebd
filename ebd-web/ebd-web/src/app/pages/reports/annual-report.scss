@@ -1,0 +1,116 @@
+.annual-report-container {
+  min-height: 100%;
+
+  .chart-card-wrapper {
+    height: 320px;
+    position: relative;
+  }
+
+  .chart-card-sm {
+    height: 260px;
+    position: relative;
+  }
+
+  .kpi-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  // Modo Apresentação em Telão
+  &.presentation-mode {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+
+    .card {
+      background-color: #1e293b !important;
+      border: 1px solid #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .text-muted-color {
+      color: #94a3b8 !important;
+    }
+
+    h1, h2, h3, h4 {
+      color: #ffffff !important;
+    }
+
+    th {
+      background-color: #0f172a !important;
+      color: #cbd5e1 !important;
+    }
+
+    td {
+      border-color: #334155 !important;
+      color: #e2e8f0 !important;
+    }
+  }
+}
+
+// Estilos de Impressão Oficial da Assembleia Geral
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  .no-print,
+  .layout-sidebar,
+  .layout-topbar,
+  .layout-footer,
+  .p-button,
+  .nav-tabs-wrapper {
+    display: none !important;
+  }
+
+  .annual-report-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+
+    .card {
+      box-shadow: none !important;
+      border: 1px solid #cbd5e1 !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      margin-bottom: 1.5rem !important;
+    }
+
+    .chart-card-wrapper,
+    .chart-card-sm {
+      height: 280px !important;
+      page-break-inside: avoid !important;
+    }
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-signatures {
+    display: flex !important;
+    justify-content: space-around !important;
+    margin-top: 4rem !important;
+    page-break-inside: avoid !important;
+
+    .sig-line {
+      width: 200px;
+      border-top: 1px solid #333333;
+      text-align: center;
+      padding-top: 6px;
+      font-size: 9pt;
+    }
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

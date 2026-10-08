@@ -16,5 +16,6 @@ export class AdminService {
   permissions(): Observable<PermissionAdmin[]> { return this.http.get<PermissionAdmin[]>(`${this.base}/permissions`); }
   createUser(data: unknown): Observable<AuthUser> { return this.http.post<AuthUser>(`${this.base}/users`, data); }
   updateUser(id: number, data: unknown): Observable<AuthUser> { return this.http.patch<AuthUser>(`${this.base}/users/${id}`, data); }
+  deleteUser(id: number): Observable<{ message: string }> { return this.http.delete<{ message: string }>(`${this.base}/users/${id}`); }
   updateRole(id: number, permissionIds: number[]): Observable<RoleAdmin> { return this.http.put<RoleAdmin>(`${this.base}/roles/${id}`, { permission_ids: permissionIds }); }
 }

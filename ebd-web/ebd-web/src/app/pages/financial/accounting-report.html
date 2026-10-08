@@ -1,0 +1,463 @@
+<div class="space-y-6">
+  <!-- Top Bar (Oculto na Impressão) -->
+  <div class="print:hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
+        <i class="pi pi-file-excel text-xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Área Contábil & Fechamento</h1>
+          @if (ledger()?.closing_status === 'fechado') {
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <i class="pi pi-lock text-[10px] mr-1"></i> Mês Fechado / Auditado
+            </span>
+          } @else {
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+              <i class="pi pi-lock-open text-[10px] mr-1"></i> Mês Aberto
+            </span>
+          }
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Balancete oficial, conciliação do Livro Caixa e exportação para a contabilidade</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap items-center gap-2">
+      <a routerLink="/financeiro/transacoes" class="px-3.5 py-2 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+        <i class="pi pi-arrow-left mr-1"></i> Livro Caixa
+      </a>
+
+      <!-- Exportar CSV -->
+      <button
+        type="button"
+        (click)="exportCsv()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
+        title="Baixar planilha CSV/Excel formatada para a contabilidade"
+      >
+        <i class="pi pi-download"></i> Exportar p/ Contabilidade (Excel)
+      </button>
+
+      <!-- Imprimir Relatório -->
+      <button
+        type="button"
+        (click)="printReport()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+      >
+        <i class="pi pi-print"></i> Imprimir Balancete
+      </button>
+
+      <!-- Fechar / Reabrir Mês -->
+      @if (auth.can('financial.accounting.close')) {
+        @if (ledger()?.closing_status === 'fechado') {
+          <button
+            type="button"
+            (click)="reopenMonth()"
+            [disabled]="closingLoading()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition"
+          >
+            <i class="pi pi-lock-open"></i> Reabrir Mês
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="openCloseMonthModal()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-slate-800 hover:bg-slate-900 text-white transition"
+          >
+            <i class="pi pi-lock"></i> Fechar Mês Contábil
+          </button>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Cabeçalho Exclusivo para Impressão (Oficial Igreja) -->
+  <div class="hidden print:block text-center border-b-2 border-slate-900 pb-4 mb-6">
+    <h2 class="text-xl font-bold uppercase tracking-wide">Igreja Presbiteriana do Brasil</h2>
+    <h3 class="text-lg font-semibold mt-1">RELATÓRIO FINANCEIRO E BALANCETE CONTÁBIL</h3>
+    <p class="text-sm text-slate-600 mt-1">
+      Competência: <strong class="text-black">{{ currentMonthLabel }} / {{ selectedYear }}</strong>
+      &nbsp;|&nbsp;
+      Período: {{ ledger()?.period?.start_date | date:'dd/MM/yyyy' }} a {{ ledger()?.period?.end_date | date:'dd/MM/yyyy' }}
+    </p>
+  </div>
+
+  <!-- Seletor de Período (Oculto na Impressão) -->
+  <div class="print:hidden bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-semibold text-slate-500 uppercase">Mês:</label>
+        <select
+          [(ngModel)]="selectedMonth"
+          (change)="loadData()"
+          class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl px-3 py-1.5 text-slate-700 dark:text-slate-200"
+        >
+          @for (m of months; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-semibold text-slate-500 uppercase">Ano:</label>
+        <select
+          [(ngModel)]="selectedYear"
+          (change)="loadData()"
+          class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl px-3 py-1.5 text-slate-700 dark:text-slate-200"
+        >
+          @for (y of years; track y) {
+            <option [value]="y">{{ y }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+      <button
+        type="button"
+        (click)="activeTab = 'ledger'"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition"
+        [ngClass]="activeTab === 'ledger' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+      >
+        <i class="pi pi-list mr-1"></i> Livro Caixa Detalhado
+      </button>
+      <button
+        type="button"
+        (click)="activeTab = 'categories'"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition"
+        [ngClass]="activeTab === 'categories' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+      >
+        <i class="pi pi-tags mr-1"></i> Balancete por Categorias (DRE)
+      </button>
+      <button
+        type="button"
+        (click)="activeTab = 'costCenters'"
+        class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition"
+        [ngClass]="activeTab === 'costCenters' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+      >
+        <i class="pi pi-sitemap mr-1"></i> Por Centros de Custo
+      </button>
+    </div>
+  </div>
+
+  <!-- Balancete Resumo Oficial / Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <!-- Saldo Anterior -->
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 print:border-black">
+      <p class="text-[11px] uppercase font-bold text-slate-500">Saldo Anterior</p>
+      <p class="text-lg font-bold mt-1 text-slate-800 dark:text-slate-100">
+        R$ {{ (ledger()?.summary?.opening_balance || 0) | number:'1.2-2' }}
+      </p>
+    </div>
+
+    <!-- Total Entradas -->
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 print:border-black">
+      <p class="text-[11px] uppercase font-bold text-emerald-600">Total de Entradas (+)</p>
+      <p class="text-lg font-bold mt-1 text-emerald-600 dark:text-emerald-400">
+        R$ {{ (ledger()?.summary?.total_income || 0) | number:'1.2-2' }}
+      </p>
+    </div>
+
+    <!-- Total Saídas -->
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 print:border-black">
+      <p class="text-[11px] uppercase font-bold text-rose-600">Total de Saídas (-)</p>
+      <p class="text-lg font-bold mt-1 text-rose-600 dark:text-rose-400">
+        R$ {{ (ledger()?.summary?.total_expense || 0) | number:'1.2-2' }}
+      </p>
+    </div>
+
+    <!-- Resultado do Mês -->
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 print:border-black">
+      <p class="text-[11px] uppercase font-bold text-slate-500">Resultado Líquido</p>
+      <p
+        class="text-lg font-bold mt-1"
+        [ngClass]="(ledger()?.summary?.net_result || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'"
+      >
+        R$ {{ (ledger()?.summary?.net_result || 0) | number:'1.2-2' }}
+      </p>
+    </div>
+
+    <!-- Saldo Final Acumulado -->
+    <div class="col-span-2 sm:col-span-1 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 print:border-black">
+      <p class="text-[11px] uppercase font-bold text-indigo-700 dark:text-indigo-300">Saldo Atual Fechamento</p>
+      <p class="text-xl font-black mt-1 text-indigo-900 dark:text-indigo-100">
+        R$ {{ (ledger()?.summary?.closing_balance || 0) | number:'1.2-2' }}
+      </p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="p-12 text-center text-slate-400">
+      <i class="pi pi-spin pi-spinner text-3xl mb-2"></i>
+      <p class="text-sm">Consolidando balancete contábil...</p>
+    </div>
+  } @else {
+    <!-- TAB 1: Livro Caixa Analítico -->
+    @if (activeTab === 'ledger') {
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden print:border print:border-black print:rounded-none">
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-slate-800 dark:text-slate-100">Livro Caixa Analítico Detalhado</h3>
+            <p class="text-xs text-slate-500">Todas as transações cronológicas conciliadas para escrituração contábil</p>
+          </div>
+          <span class="text-xs font-semibold text-slate-500">{{ ledger()?.transactions?.length || 0 }} lançamentos</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-700 dark:text-slate-200">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-[11px] uppercase font-bold text-slate-600 dark:text-slate-300 border-b">
+              <tr>
+                <th class="py-2.5 px-3">Data</th>
+                <th class="py-2.5 px-3">Código</th>
+                <th class="py-2.5 px-3">Categoria</th>
+                <th class="py-2.5 px-3">Centro de Custo</th>
+                <th class="py-2.5 px-3">Conta</th>
+                <th class="py-2.5 px-3">Histórico / Descrição</th>
+                <th class="py-2.5 px-3 text-right text-emerald-600">Entrada (R$)</th>
+                <th class="py-2.5 px-3 text-right text-rose-600">Saída (R$)</th>
+                <th class="py-2.5 px-3 text-right font-bold">Saldo (R$)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- Linha Saldo Anterior -->
+              <tr class="bg-slate-50/70 font-semibold text-slate-600">
+                <td class="py-2 px-3">{{ ledger()?.period?.start_date | date:'dd/MM/yyyy' }}</td>
+                <td class="py-2 px-3">-</td>
+                <td class="py-2 px-3 italic" colspan="4">SALDO ANTERIOR DE ABERTURA</td>
+                <td class="py-2 px-3 text-right">-</td>
+                <td class="py-2 px-3 text-right">-</td>
+                <td class="py-2 px-3 text-right font-bold">
+                  {{ ledger()?.summary?.opening_balance | number:'1.2-2' }}
+                </td>
+              </tr>
+
+              @for (tx of ledger()?.transactions; track tx.id) {
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                  <td class="py-2 px-3 whitespace-nowrap">{{ tx.date | date:'dd/MM/yyyy' }}</td>
+                  <td class="py-2 px-3 font-mono text-[10px] text-slate-500">{{ tx.category?.code || '-' }}</td>
+                  <td class="py-2 px-3 font-medium">{{ tx.category?.name || '-' }}</td>
+                  <td class="py-2 px-3 text-slate-500">{{ tx.cost_center?.name || '-' }}</td>
+                  <td class="py-2 px-3 text-slate-500">{{ tx.account?.name }}</td>
+                  <td class="py-2 px-3">
+                    <div class="font-medium text-slate-800 dark:text-slate-100">{{ tx.description }}</div>
+                    @if (tx.entity_name) {
+                      <div class="text-[10px] text-slate-400">Fav: {{ tx.entity_name }}</div>
+                    }
+                  </td>
+                  <td class="py-2 px-3 text-right text-emerald-600 font-medium">
+                    {{ tx.type === 'receita' ? (tx.amount | number:'1.2-2') : '-' }}
+                  </td>
+                  <td class="py-2 px-3 text-right text-rose-600 font-medium">
+                    {{ tx.type === 'despesa' ? (tx.amount | number:'1.2-2') : '-' }}
+                  </td>
+                  <td class="py-2 px-3 text-right font-bold text-slate-900 dark:text-slate-100">
+                    {{ tx.running_balance | number:'1.2-2' }}
+                  </td>
+                </tr>
+              }
+
+              <!-- Linha Saldo Final -->
+              <tr class="bg-indigo-50/60 dark:bg-indigo-950/40 font-bold border-t-2 border-indigo-200">
+                <td class="py-2.5 px-3" colspan="6">TOTAL DO PERÍODO & SALDO FINAL FECHAMENTO</td>
+                <td class="py-2.5 px-3 text-right text-emerald-700 font-bold">
+                  R$ {{ ledger()?.summary?.total_income | number:'1.2-2' }}
+                </td>
+                <td class="py-2.5 px-3 text-right text-rose-700 font-bold">
+                  R$ {{ ledger()?.summary?.total_expense | number:'1.2-2' }}
+                </td>
+                <td class="py-2.5 px-3 text-right text-indigo-900 dark:text-indigo-200 font-black">
+                  R$ {{ ledger()?.summary?.closing_balance | number:'1.2-2' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: Balancete por Categorias (DRE) -->
+    @if (activeTab === 'categories') {
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5 space-y-4">
+        <div>
+          <h3 class="font-bold text-slate-800 dark:text-slate-100">Balancete Sintético por Categorias Contábeis</h3>
+          <p class="text-xs text-slate-500">Agrupamento pelo Plano de Contas padrão para conciliação contábil e DRE</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Receitas -->
+          <div class="border border-emerald-100 dark:border-emerald-950/60 rounded-xl overflow-hidden">
+            <div class="bg-emerald-50 dark:bg-emerald-950/40 p-3 border-b border-emerald-100 font-bold text-emerald-800 text-sm flex justify-between">
+              <span>RECEITAS / ENTRADAS</span>
+              <span>Total: R$ {{ ledger()?.summary?.total_income | number:'1.2-2' }}</span>
+            </div>
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b">
+                <tr>
+                  <th class="p-2.5">Cód.</th>
+                  <th class="p-2.5">Categoria</th>
+                  <th class="p-2.5 text-center">Qtd</th>
+                  <th class="p-2.5 text-right">Total (R$)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (c of trialBalance()?.categories; track c.category_id) {
+                  @if (c.transaction_type === 'receita') {
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="p-2 font-mono text-slate-500">{{ c.category_code || '-' }}</td>
+                      <td class="p-2 font-medium">{{ c.category_name || 'Diversos' }}</td>
+                      <td class="p-2 text-center text-slate-400">{{ c.count }}</td>
+                      <td class="p-2 text-right font-bold text-emerald-600">R$ {{ c.total_amount | number:'1.2-2' }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Despesas -->
+          <div class="border border-rose-100 dark:border-rose-950/60 rounded-xl overflow-hidden">
+            <div class="bg-rose-50 dark:bg-rose-950/40 p-3 border-b border-rose-100 font-bold text-rose-800 text-sm flex justify-between">
+              <span>DESPESAS / CUSTOS</span>
+              <span>Total: R$ {{ ledger()?.summary?.total_expense | number:'1.2-2' }}</span>
+            </div>
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b">
+                <tr>
+                  <th class="p-2.5">Cód.</th>
+                  <th class="p-2.5">Categoria</th>
+                  <th class="p-2.5 text-center">Qtd</th>
+                  <th class="p-2.5 text-right">Total (R$)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (c of trialBalance()?.categories; track c.category_id) {
+                  @if (c.transaction_type === 'despesa') {
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="p-2 font-mono text-slate-500">{{ c.category_code || '-' }}</td>
+                      <td class="p-2 font-medium">{{ c.category_name || 'Diversos' }}</td>
+                      <td class="p-2 text-center text-slate-400">{{ c.count }}</td>
+                      <td class="p-2 text-right font-bold text-rose-600">R$ {{ c.total_amount | number:'1.2-2' }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 3: Por Centros de Custo -->
+    @if (activeTab === 'costCenters') {
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5 space-y-4">
+        <div>
+          <h3 class="font-bold text-slate-800 dark:text-slate-100">Demonstrativo de Custos por Centros de Custo</h3>
+          <p class="text-xs text-slate-500">Distribuição financeira entre ministérios, conselho e departamentos da igreja</p>
+        </div>
+
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b">
+            <tr>
+              <th class="p-3">Código</th>
+              <th class="p-3">Centro de Custo / Ministério</th>
+              <th class="p-3">Tipo</th>
+              <th class="p-3 text-center">Lançamentos</th>
+              <th class="p-3 text-right">Valor Consolidado (R$)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (cc of trialBalance()?.cost_centers; track cc.cost_center_id) {
+              <tr class="hover:bg-slate-50/50">
+                <td class="p-3 font-mono font-bold text-slate-500">{{ cc.cost_center_code || '-' }}</td>
+                <td class="p-3 font-medium text-slate-800 dark:text-slate-100">{{ cc.cost_center_name || 'Geral' }}</td>
+                <td class="p-3">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                    [ngClass]="cc.transaction_type === 'receita' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                  >
+                    {{ cc.transaction_type }}
+                  </span>
+                </td>
+                <td class="p-3 text-center text-slate-500">{{ cc.count }}</td>
+                <td class="p-3 text-right font-bold" [ngClass]="cc.transaction_type === 'receita' ? 'text-emerald-600' : 'text-rose-600'">
+                  R$ {{ cc.total_amount | number:'1.2-2' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Assinaturas Contábeis Oficiais (Visível em Impressão e na visualização) -->
+  <div class="mt-12 pt-8 border-t-2 border-slate-200 print:border-black grid grid-cols-1 sm:grid-cols-3 gap-8 text-center text-xs text-slate-600">
+    <div>
+      <div class="border-b border-slate-400 pb-1 mb-1"></div>
+      <p class="font-bold text-slate-800">Tesoureiro(a) da Igreja</p>
+      <p class="text-[10px] text-slate-400">Responsável pelos Lançamentos</p>
+    </div>
+    <div>
+      <div class="border-b border-slate-400 pb-1 mb-1"></div>
+      <p class="font-bold text-slate-800">Pastor Presidente / Conselho</p>
+      <p class="text-[10px] text-slate-400">Visto Pastoral</p>
+    </div>
+    <div>
+      <div class="border-b border-slate-400 pb-1 mb-1"></div>
+      <p class="font-bold text-slate-800">Conselho Fiscal / Auditoria</p>
+      <p class="text-[10px] text-slate-400">Parecer de Conformidade</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Fechar Mês Contábil -->
+<p-dialog
+  [(visible)]="showCloseModal"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '520px' }"
+  header="Fechar Mês Contábil"
+  [closable]="true"
+>
+  <div class="space-y-4">
+    <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-800 dark:text-amber-300 text-sm flex gap-2">
+      <i class="pi pi-exclamation-triangle text-xl shrink-0"></i>
+      <div>
+        <p class="font-bold">Atenção ao fechar o mês:</p>
+        <p class="text-xs mt-1">Ao fechar o mês {{ selectedMonth }}/{{ selectedYear }}, todos os saldos serão travados e nenhuma alteração ou novo lançamento poderá ser feito sem antes reabrir o período.</p>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Notas Contábeis / Observações para o Contador</label>
+      <textarea
+        rows="3"
+        [(ngModel)]="closeNotes"
+        placeholder="Ex: Conciliação bancária conferida, comprovantes arquivados e enviados para a contabilidade em formato CSV."
+        class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500"
+      ></textarea>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+      <button
+        type="button"
+        (click)="showCloseModal.set(false)"
+        class="px-4 py-2 text-sm rounded-xl text-slate-600 hover:bg-slate-100"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirmCloseMonth()"
+        [disabled]="closingLoading()"
+        class="px-5 py-2 text-sm font-semibold rounded-xl text-white bg-slate-900 hover:bg-black transition disabled:opacity-50"
+      >
+        @if (closingLoading()) {
+          <i class="pi pi-spin pi-spinner mr-1"></i> Fechando...
+        } @else {
+          Confirmar Fechamento
+        }
+      </button>
+    </div>
+  </div>
+</p-dialog>
