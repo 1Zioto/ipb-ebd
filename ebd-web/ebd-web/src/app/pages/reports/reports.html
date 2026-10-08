@@ -1,59 +1,286 @@
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
   <div>
-    <h1 class="m-0 text-2xl font-semibold">Relatórios da EBD</h1>
+    <h1 class="m-0 text-2xl font-bold flex items-center gap-2">
+      <i class="pi pi-chart-bar text-primary"></i>
+      Relatórios da EBD
+    </h1>
     <p class="text-muted-color mb-0">Análise histórica de frequência, classes, alunos e materiais</p>
   </div>
-  <p-button label="Imprimir / PDF" icon="pi pi-print" (onClick)="exportPdf()" />
-</div>
-<div class="flex flex-wrap gap-2 mb-4">
-  <p-button label="Mensal geral" [outlined]="activeReport !== 'monthly'" (onClick)="activeReport = 'monthly'" />
-  <p-button label="Por classe" [outlined]="activeReport !== 'class'" (onClick)="activeReport = 'class'" />
-  <p-button label="Por aluno" [outlined]="activeReport !== 'student'" (onClick)="activeReport = 'student'" />
+  <div class="flex items-center gap-2">
+    <p-button label="Imprimir / PDF" icon="pi pi-print" [outlined]="true" (onClick)="exportPdf()" />
+  </div>
 </div>
 
+<!-- Abas de Navegação -->
+<div class="flex flex-wrap gap-2 mb-4">
+  <p-button
+    label="Mensal Geral"
+    icon="pi pi-calendar"
+    [outlined]="activeReport !== 'monthly'"
+    (onClick)="activeReport = 'monthly'"
+  />
+  <p-button
+    label="Por Classe"
+    icon="pi pi-building"
+    [outlined]="activeReport !== 'class'"
+    (onClick)="activeReport = 'class'; fetchClassReport()"
+  />
+  <p-button
+    label="Por Aluno"
+    icon="pi pi-user"
+    [outlined]="activeReport !== 'student'"
+    (onClick)="activeReport = 'student'; fetchStudentReport()"
+  />
+</div>
+
+<!-- ================= ABA 1: MENSAL GERAL ================= -->
 @if (activeReport === 'monthly') {
-  <div class="card mb-4 flex flex-col md:flex-row gap-2 items-end">
-    <div class="flex-1">
-      <label class="block mb-2">Mês</label>
-      <select class="w-full p-inputtext p-component" [(ngModel)]="selectedMonth">
-        <option [value]="1">Janeiro</option><option [value]="2">Fevereiro</option><option [value]="3">Março</option>
-        <option [value]="4">Abril</option><option [value]="5">Maio</option><option [value]="6">Junho</option>
-        <option [value]="7">Julho</option><option [value]="8">Agosto</option><option [value]="9">Setembro</option>
-        <option [value]="10">Outubro</option><option [value]="11">Novembro</option><option [value]="12">Dezembro</option>
-      </select>
+  <!-- Navegador de Mês -->
+  <div class="card p-3 mb-4 flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <p-button icon="pi pi-chevron-left" [text]="true" (onClick)="prevMonth()" pTooltip="Mês anterior" />
+      <span class="text-lg font-bold min-w-44 text-center">{{ monthTitle() }}</span>
+      <p-button icon="pi pi-chevron-right" [text]="true" (onClick)="nextMonth()" pTooltip="Próximo mês" />
     </div>
-    <div><label class="block mb-2">Ano</label><input pInputText type="number" [(ngModel)]="selectedYear" /></div>
-    <p-button label="Gerar relatório" (onClick)="fetchMonthlyReport()" />
+
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs text-muted-color uppercase font-semibold">Atalhos:</span>
+      <p-button label="Setembro" size="small" [outlined]="selectedMonth() !== 9" (onClick)="setMonth(9)" />
+      <p-button label="Outubro (Atual)" size="small" [outlined]="selectedMonth() !== 10" (onClick)="setMonth(10)" />
+      <p-button label="Novembro" size="small" [outlined]="selectedMonth() !== 11" (onClick)="setMonth(11)" />
+    </div>
   </div>
-  @if (monthlyData(); as m) {
-    <div class="grid grid-cols-12 gap-4">
-      <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Encontros</span><div class="text-2xl font-semibold">{{ m.events_count }}</div></div></div>
-      <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Presentes</span><div class="text-2xl font-semibold text-green-500">{{ m.total_present }}</div></div></div>
-      <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Ausentes</span><div class="text-2xl font-semibold text-red-500">{{ m.total_absent }}</div></div></div>
-      <div class="col-span-12 md:col-span-3"><div class="card mb-0"><span class="text-muted-color">Materiais</span><div class="text-xl font-semibold">{{ m.total_bibles }} / {{ m.total_magazines }}</div></div></div>
+
+  @if (loading()) {
+    <div class="flex justify-center items-center py-12">
+      <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+    </div>
+  } @else if (monthlyData(); as m) {
+    <!-- Cards de Métricas Principais -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <!-- Taxa de Assiduidade -->
+      <div class="card p-4 mb-0 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-muted-color font-medium">Taxa de Assiduidade</span>
+          <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i class="pi pi-percentage"></i>
+          </div>
+        </div>
+        <div class="text-3xl font-bold text-blue-600 mb-2">
+          {{ m.attendance_rate || 0 }}%
+        </div>
+        <p-progressBar [value]="m.attendance_rate || 0" [showValue]="false" styleClass="h-2" />
+      </div>
+
+      <!-- Presenças vs Faltas -->
+      <div class="card p-4 mb-0 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-muted-color font-medium">Chamadas Registradas</span>
+          <div class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+            <i class="pi pi-users"></i>
+          </div>
+        </div>
+        <div class="flex items-baseline gap-3">
+          <div class="text-3xl font-bold text-green-600">{{ m.total_present }}</div>
+          <span class="text-xs text-muted-color">presentes</span>
+          <div class="text-xl font-bold text-red-500 ml-auto">{{ m.total_absent }}</div>
+          <span class="text-xs text-muted-color">faltas</span>
+        </div>
+        <div class="text-xs text-muted-color mt-2">
+          Total de {{ m.total_present + m.total_absent }} chamadas
+        </div>
+      </div>
+
+      <!-- Bíblias e Revistas -->
+      <div class="card p-4 mb-0 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-muted-color font-medium">Bíblias & Revistas</span>
+          <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i class="pi pi-book"></i>
+          </div>
+        </div>
+        <div class="flex items-baseline gap-3">
+          <div>
+            <span class="text-2xl font-bold text-amber-600">{{ m.total_bibles }}</span>
+            <span class="text-xs text-muted-color block">Bíblias</span>
+          </div>
+          <div class="ml-auto text-right">
+            <span class="text-2xl font-bold text-indigo-600">{{ m.total_magazines }}</span>
+            <span class="text-xs text-muted-color block">Revistas</span>
+          </div>
+        </div>
+        <div class="text-xs text-muted-color mt-2">Material levado aos encontros</div>
+      </div>
+
+      <!-- Encontros Realizados -->
+      <div class="card p-4 mb-0 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-muted-color font-medium">Encontros no Mês</span>
+          <div class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+            <i class="pi pi-calendar-clock"></i>
+          </div>
+        </div>
+        <div class="text-3xl font-bold text-purple-600">
+          {{ m.events_count }}
+        </div>
+        <div class="text-xs text-muted-color mt-2">
+          Domingos no período de {{ monthTitle() }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela 1: Detalhamento por Domingo -->
+    <div class="card mb-4">
+      <h3 class="mt-0 text-lg font-semibold flex items-center gap-2">
+        <i class="pi pi-calendar text-primary"></i>
+        Frequência por Domingo
+      </h3>
+      @if (m.by_sunday && m.by_sunday.length > 0) {
+        <p-table [value]="m.by_sunday" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Presentes</th>
+              <th>Ausentes</th>
+              <th>Frequência</th>
+              <th>Bíblias</th>
+              <th>Revistas</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-s>
+            <tr>
+              <td>
+                <span class="font-semibold">{{ s.date | date: 'dd/MM/yyyy' }}</span>
+                <span class="text-xs text-muted-color block">Domingo</span>
+              </td>
+              <td>
+                <p-tag [value]="s.status" [severity]="s.status === 'finalizada' ? 'success' : 'warn'" />
+              </td>
+              <td class="font-semibold text-green-600">{{ s.present }}</td>
+              <td class="font-semibold text-red-500">{{ s.absent }}</td>
+              <td>
+                <span class="font-bold text-sm" [ngClass]="{'text-green-600': s.rate >= 75, 'text-amber-600': s.rate < 75 && s.rate > 0, 'text-muted-color': s.rate === 0}">
+                  {{ s.rate }}%
+                </span>
+              </td>
+              <td>{{ s.bibles }}</td>
+              <td>{{ s.magazines }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else {
+        <p class="text-muted-color my-4">Nenhum registro detalhado de domingo encontrado para este mês.</p>
+      }
+    </div>
+
+    <!-- Tabela 2: Desempenho por Classe no Mês -->
+    <div class="card mb-4">
+      <h3 class="mt-0 text-lg font-semibold flex items-center gap-2">
+        <i class="pi pi-users text-primary"></i>
+        Desempenho Consolidado por Classe em {{ monthTitle() }}
+      </h3>
+      @if (m.by_class && m.by_class.length > 0) {
+        <p-table [value]="m.by_class" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Classe</th>
+              <th>Presentes</th>
+              <th>Ausentes</th>
+              <th>Assiduidade</th>
+              <th>Bíblias</th>
+              <th>Revistas</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-c>
+            <tr>
+              <td>
+                <span class="font-bold text-sm">{{ c.class_name }}</span>
+              </td>
+              <td class="font-semibold text-green-600">{{ c.present }}</td>
+              <td class="font-semibold text-red-500">{{ c.absent }}</td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-sm min-w-10">{{ c.rate }}%</span>
+                  <p-progressBar [value]="c.rate" [showValue]="false" styleClass="w-24 h-2" />
+                </div>
+              </td>
+              <td>{{ c.bibles }}</td>
+              <td>{{ c.magazines }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else {
+        <p class="text-muted-color my-4">Nenhum dado por classe para exibir neste mês.</p>
+      }
     </div>
   }
 }
 
+<!-- ================= ABA 2: POR CLASSE ================= -->
 @if (activeReport === 'class') {
   <div class="card mb-4">
-    <label class="block mb-2">Classe</label>
-    <select class="w-full p-inputtext p-component" [(ngModel)]="selectedClassId" (change)="fetchClassReport()">
-      <option [value]="null">Selecione uma classe...</option>
-      @for (c of classes(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+    <label class="block mb-2 font-semibold text-sm">Selecione a Classe:</label>
+    <select class="w-full md:w-80 p-inputtext p-component" [ngModel]="selectedClassId()" (ngModelChange)="onClassChange($event)">
+      @for (c of classes(); track c.id) {
+        <option [ngValue]="c.id">{{ c.name }}</option>
+      }
     </select>
   </div>
-  @if (classData(); as cd) {
+
+  @if (loading()) {
+    <div class="flex justify-center items-center py-12">
+      <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+    </div>
+  } @else if (classData(); as cd) {
     <div class="card">
-      <h3 class="mt-0">Histórico — {{ cd.class?.name }}</h3>
-      <p-table [value]="cd.sessions">
-        <ng-template pTemplate="header"><tr><th>Data</th><th>Professor</th><th>Status</th><th>Presentes</th><th>Ausentes</th><th>Bíblias</th><th>Revistas</th></tr></ng-template>
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 class="m-0 text-xl font-bold">{{ cd.class?.name }}</h3>
+          <p class="text-muted-color text-sm mb-0">Histórico de chamadas das últimas aulas</p>
+        </div>
+        <p-tag [value]="cd.sessions.length + ' aulas registradas'" severity="info" />
+      </div>
+
+      <p-table [value]="cd.sessions" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Data</th>
+            <th>Professor</th>
+            <th>Status</th>
+            <th>Presentes</th>
+            <th>Ausentes</th>
+            <th>Assiduidade</th>
+            <th>Bíblias</th>
+            <th>Revistas</th>
+          </tr>
+        </ng-template>
         <ng-template pTemplate="body" let-s>
           <tr>
-            <td>{{ s.date | date: 'dd/MM/yyyy' }}</td>
-            <td>{{ s.teacher || 'Não informado' }}</td>
-            <td><p-tag [value]="s.status" /></td>
-            <td>{{ s.present }}</td><td>{{ s.absent }}</td><td>{{ s.bibles }}</td><td>{{ s.magazines }}</td>
+            <td class="font-semibold">{{ s.date | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              <div class="flex items-center gap-2">
+                <i class="pi pi-user text-muted-color"></i>
+                <span>{{ s.teacher || 'Não informado' }}</span>
+              </div>
+            </td>
+            <td>
+              <p-tag [value]="s.status" [severity]="s.status === 'finalizada' ? 'success' : 'warn'" />
+            </td>
+            <td class="font-semibold text-green-600">{{ s.present }}</td>
+            <td class="font-semibold text-red-500">{{ s.absent }}</td>
+            <td>
+              <span class="font-bold text-sm">{{ s.rate || 0 }}%</span>
+            </td>
+            <td>{{ s.bibles }}</td>
+            <td>{{ s.magazines }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center py-8 text-muted-color">
+              Nenhuma aula registrada para esta classe no período.
+            </td>
           </tr>
         </ng-template>
       </p-table>
@@ -61,29 +288,107 @@
   }
 }
 
+<!-- ================= ABA 3: POR ALUNO ================= -->
 @if (activeReport === 'student') {
   <div class="card mb-4">
-    <label class="block mb-2">Pessoa</label>
-    <select class="w-full p-inputtext p-component" [(ngModel)]="selectedPersonId" (change)="fetchStudentReport()">
-      <option [value]="null">Selecione um aluno...</option>
-      @for (p of people(); track p.id) { <option [value]="p.id">{{ p.full_name }}</option> }
+    <label class="block mb-2 font-semibold text-sm">Selecione o Aluno / Membro:</label>
+    <select class="w-full md:w-96 p-inputtext p-component" [ngModel]="selectedPersonId()" (ngModelChange)="onStudentChange($event)">
+      @for (p of people(); track p.id) {
+        <option [ngValue]="p.id">{{ p.full_name }}</option>
+      }
     </select>
   </div>
-  @if (studentData(); as sd) {
-    <div class="card mb-4">
-      <h3 class="mt-0">{{ sd.person?.full_name }} — {{ sd.summary?.attendance_percentage }}%</h3>
-      <p class="mb-0">Chamadas: {{ sd.summary?.total_events }} | Presenças: {{ sd.summary?.present }} | Ausências: {{ sd.summary?.absent }}</p>
+
+  @if (loading()) {
+    <div class="flex justify-center items-center py-12">
+      <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
     </div>
+  } @else if (studentData(); as sd) {
+    <!-- Card Destaque do Aluno -->
+    <div class="card mb-4 bg-slate-50 border border-slate-200">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold">
+            {{ sd.person?.full_name?.charAt(0) }}
+          </div>
+          <div>
+            <h2 class="m-0 text-xl font-bold">{{ sd.person?.full_name }}</h2>
+            <span class="text-sm text-muted-color">Frequência Geral nos últimos 6 meses</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <span class="text-xs text-muted-color uppercase font-semibold block">Total de Aulas</span>
+            <span class="text-xl font-bold">{{ sd.summary?.total_events }}</span>
+          </div>
+          <div class="text-center">
+            <span class="text-xs text-muted-color uppercase font-semibold block">Presenças</span>
+            <span class="text-xl font-bold text-green-600">{{ sd.summary?.present }}</span>
+          </div>
+          <div class="text-center">
+            <span class="text-xs text-muted-color uppercase font-semibold block">Faltas</span>
+            <span class="text-xl font-bold text-red-500">{{ sd.summary?.absent }}</span>
+          </div>
+          <div class="text-center pl-4 border-l">
+            <span class="text-xs text-muted-color uppercase font-semibold block">Assiduidade</span>
+            <span class="text-2xl font-extrabold text-blue-600">{{ sd.summary?.attendance_percentage }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela Histórico de Chamadas do Aluno -->
     <div class="card">
-      <p-table [value]="sd.history">
-        <ng-template pTemplate="header"><tr><th>Data</th><th>Classe</th><th>Presença</th><th>Bíblia</th><th>Revista</th></tr></ng-template>
+      <h3 class="mt-0 text-lg font-semibold mb-3">Histórico de Presenças</h3>
+      <p-table [value]="sd.history" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Data</th>
+            <th>Classe</th>
+            <th>Presença</th>
+            <th>Trouxe Bíblia?</th>
+            <th>Trouxe Revista?</th>
+          </tr>
+        </ng-template>
         <ng-template pTemplate="body" let-h>
           <tr>
-            <td>{{ h.date | date: 'dd/MM/yyyy' }}</td>
-            <td>{{ h.class_name }}</td>
-            <td><p-tag [value]="h.present ? 'Presente' : 'Ausente'" [severity]="h.present ? 'success' : 'danger'" /></td>
-            <td>{{ h.brought_bible ? 'Sim' : 'Não' }}</td>
-            <td>{{ h.brought_magazine ? 'Sim' : 'Não' }}</td>
+            <td class="font-semibold">{{ h.date | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              <p-tag [value]="h.class_name" severity="info" />
+            </td>
+            <td>
+              <p-tag
+                [value]="h.present ? 'Presente' : 'Ausente'"
+                [severity]="h.present ? 'success' : 'danger'"
+                [icon]="h.present ? 'pi pi-check' : 'pi pi-times'"
+              />
+            </td>
+            <td>
+              @if (h.brought_bible) {
+                <span class="text-green-600 font-medium flex items-center gap-1">
+                  <i class="pi pi-check text-xs"></i> Sim
+                </span>
+              } @else {
+                <span class="text-muted-color">Não</span>
+              }
+            </td>
+            <td>
+              @if (h.brought_magazine) {
+                <span class="text-green-600 font-medium flex items-center gap-1">
+                  <i class="pi pi-check text-xs"></i> Sim
+                </span>
+              } @else {
+                <span class="text-muted-color">Não</span>
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center py-8 text-muted-color">
+              Nenhuma presença registrada para este aluno.
+            </td>
           </tr>
         </ng-template>
       </p-table>

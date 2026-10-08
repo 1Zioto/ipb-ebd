@@ -5,16 +5,42 @@ import { AnnualReportSummary, Paginated, Person } from './models';
 import { environment } from '../../environments/environment';
 
 export interface MonthlyReport {
+  year?: number;
+  month?: number;
   events_count: number;
   total_present: number;
   total_absent: number;
   total_bibles: number;
   total_magazines: number;
+  attendance_rate?: number;
+  by_sunday?: Array<{
+    event_id: number;
+    date: string;
+    status: string;
+    present: number;
+    absent: number;
+    total: number;
+    rate: number;
+    bibles: number;
+    magazines: number;
+  }>;
+  by_class?: Array<{
+    class_id: number;
+    class_name: string;
+    present: number;
+    absent: number;
+    total: number;
+    rate: number;
+    bibles: number;
+    magazines: number;
+  }>;
+  events?: Array<{ id: number; event_date: string; type: string; status: string }>;
 }
 
 export interface ClassReport {
   class?: { id: number; name: string };
-  sessions: Array<{ session_id: number; date: string; teacher?: string; status: string; present: number; absent: number; bibles: number; magazines: number }>;
+  period?: { from: string; to: string };
+  sessions: Array<{ session_id: number; date: string; teacher?: string; status: string; present: number; absent: number; rate?: number; bibles: number; magazines: number }>;
 }
 
 export interface StudentReport {
