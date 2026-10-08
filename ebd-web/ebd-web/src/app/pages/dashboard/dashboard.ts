@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
-import { EbdDashboardSummary, EbdService, SuperintendentLiveMonitor } from '../../core/ebd.service';
+import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
+import { EbdDashboardSummary, EbdService, SuperintendentLiveMonitor, LiveSessionSummary } from '../../core/ebd.service';
 import { ResponsiveService } from '../../core/responsive.service';
 import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-ebd-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, ButtonModule, TagModule],
+  imports: [CommonModule, RouterLink, ButtonModule, TagModule, DialogModule, TooltipModule],
   templateUrl: './dashboard.html',
 })
 export class EbdDashboardPage implements OnInit {
@@ -21,6 +23,10 @@ export class EbdDashboardPage implements OnInit {
   summary = signal<EbdDashboardSummary | null>(null);
   liveMonitor = signal<SuperintendentLiveMonitor | null>(null);
   loading = signal<boolean>(true);
+
+  // Modal de Resumo da Classe
+  selectedSession = signal<LiveSessionSummary | null>(null);
+  sessionModalVisible = signal<boolean>(false);
 
   ngOnInit(): void {
     this.loadDashboard();
@@ -54,5 +60,14 @@ export class EbdDashboardPage implements OnInit {
       default:
         return 'status-canceled';
     }
+  }
+
+  openSessionSummary(session: LiveSessionSummary): void {
+    this.selectedSession.set(session);
+    this.sessionModalVisible.set(true);
+  }
+
+  closeSessionSummary(): void {
+    this.sessionModalVisible.set(false);
   }
 }

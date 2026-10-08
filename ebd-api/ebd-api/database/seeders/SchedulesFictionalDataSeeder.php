@@ -257,7 +257,7 @@ class SchedulesFictionalDataSeeder extends Seeder
             '2026-09-27' => ['status' => 'finalizada'],
             // Outubro 2026 (Mês Atual - foco imediato da tela!)
             '2026-10-04' => ['status' => 'finalizada'],
-            '2026-10-11' => ['status' => 'pendente'],
+            '2026-10-11' => ['status' => 'finalizada'],
             '2026-10-18' => ['status' => 'pendente'],
             '2026-10-25' => ['status' => 'pendente'],
             // Novembro 2026 (planejamento futuro)

@@ -205,21 +205,164 @@
       <div class="grid grid-cols-12 gap-3">
         @for (s of liveMonitor()?.sessions; track s.id) {
           <div class="col-span-12 md:col-span-6 xl:col-span-4">
-            <div class="p-3 rounded-border border border-surface">
+            <div
+              class="p-3 rounded-border border border-surface cursor-pointer hover:border-primary hover:shadow-md transition-all duration-200 bg-surface-0 dark:bg-surface-900 group"
+              (click)="openSessionSummary(s)"
+              pTooltip="Clique para ver o resumo da classe"
+              tooltipPosition="top"
+            >
               <div class="flex justify-between items-center mb-2">
-                <strong>{{ s.class_name }}</strong>
-                <p-tag [value]="s.status" [severity]="s.status === 'Finalizada' ? 'success' : s.status === 'Em andamento' ? 'info' : 'warn'" />
+                <strong class="group-hover:text-primary transition-colors">{{ s.class_name }}</strong>
+                <p-tag [value]="s.status" [severity]="(s.status === 'Finalizada' || s.status === 'finalizada') ? 'success' : (s.status === 'Em andamento' || s.status === 'em_andamento') ? 'info' : 'warn'" />
               </div>
               <div class="text-muted-color text-sm">Prof: {{ s.teacher_name || 'Não informado' }}</div>
-              @if (s.status === 'Finalizada') {
-                <div class="text-sm mt-2">Concluído {{ s.finalized_at | date: 'HH:mm' }}</div>
-              }
+              <div class="flex items-center justify-between text-xs text-muted-color mt-2">
+                @if (s.status === 'Finalizada' || s.status === 'finalizada') {
+                  <span>Concluído {{ s.finalized_at | date: 'HH:mm' }}</span>
+                } @else {
+                  <span>{{ s.status }}</span>
+                }
+                <span class="text-primary font-medium group-hover:underline flex items-center gap-1">
+                  Resumo <i class="pi pi-chevron-right text-[10px]"></i>
+                </span>
+              </div>
             </div>
           </div>
         }
       </div>
     </div>
   }
+
+  <!-- Modal Resumo da Classe no Domingo -->
+  <p-dialog
+    [visible]="sessionModalVisible()"
+    (visibleChange)="sessionModalVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '650px', maxWidth: '95vw' }"
+    [header]="'Resumo da Classe — ' + (selectedSession()?.class_name || '')"
+  >
+    @if (selectedSession(); as s) {
+      <div class="space-y-4 pt-1">
+        <!-- Cabeçalho Informativo -->
+        <div class="p-3 bg-surface-50 dark:bg-surface-800/60 rounded-xl border border-surface-200 dark:border-surface-700 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="text-xs text-muted-color uppercase font-bold tracking-wider">Professor(a)</div>
+            <div class="text-base font-semibold text-surface-900 dark:text-surface-0 mt-0.5">
+              {{ s.teacher_name || 'Não informado' }}
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <p-tag
+              [value]="s.status"
+              [severity]="(s.status === 'Finalizada' || s.status === 'finalizada') ? 'success' : (s.status === 'Em andamento' || s.status === 'em_andamento') ? 'info' : 'warn'"
+            ></p-tag>
+            @if (s.finalized_at) {
+              <span class="text-xs text-muted-color bg-surface-100 dark:bg-surface-800 px-2.5 py-1 rounded-md font-mono">
+                Concluído {{ s.finalized_at | date: 'HH:mm' }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Estatísticas da Classe -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div class="p-3 rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/20">
+            <span class="text-xs text-green-700 dark:text-green-300 font-medium block">Presentes</span>
+            <strong class="text-2xl text-green-600 dark:text-green-400 font-bold">{{ s.present ?? 0 }}</strong>
+            <span class="text-[11px] text-muted-color block mt-0.5">{{ s.attendance_rate ?? 0 }}% freq.</span>
+          </div>
+          <div class="p-3 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20">
+            <span class="text-xs text-red-700 dark:text-red-300 font-medium block">Ausentes</span>
+            <strong class="text-2xl text-red-600 dark:text-red-400 font-bold">{{ s.absent ?? 0 }}</strong>
+            <span class="text-[11px] text-muted-color block mt-0.5">de {{ s.total_enrolled ?? 0 }} alunos</span>
+          </div>
+          <div class="p-3 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/20">
+            <span class="text-xs text-blue-700 dark:text-blue-300 font-medium block">Bíblias</span>
+            <strong class="text-2xl text-blue-600 dark:text-blue-400 font-bold">{{ s.bibles_total ?? 0 }}</strong>
+            <span class="text-[11px] text-muted-color block mt-0.5">exemplares</span>
+          </div>
+          <div class="p-3 rounded-xl border border-purple-200 dark:border-purple-900/40 bg-purple-50/60 dark:bg-purple-950/20">
+            <span class="text-xs text-purple-700 dark:text-purple-300 font-medium block">Revistas</span>
+            <strong class="text-2xl text-purple-600 dark:text-purple-400 font-bold">{{ s.magazines_total ?? 0 }}</strong>
+            <span class="text-[11px] text-muted-color block mt-0.5">exemplares</span>
+          </div>
+        </div>
+
+        <!-- Lista de Alunos e Chamada Individual -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-sm font-bold text-surface-800 dark:text-surface-200 m-0 flex items-center gap-2">
+              <i class="pi pi-users text-primary"></i> Alunos Matriculados ({{ s.students?.length || 0 }})
+            </h4>
+            <span class="text-xs text-muted-color">Lançamento de chamada do domingo</span>
+          </div>
+
+          <div class="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
+            @for (student of s.students; track student.id; let last = $last) {
+              <div
+                class="flex items-center justify-between p-2.5 bg-surface-0 dark:bg-surface-900 transition-colors"
+                [class.border-b]="!last"
+                [class.border-surface-200]="!last"
+                [class.dark:border-surface-700]="!last"
+              >
+                <div class="flex items-center gap-2.5">
+                  <div
+                    class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                    [class]="student.present ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'"
+                  >
+                    <i [class]="student.present ? 'pi pi-check' : 'pi pi-times'"></i>
+                  </div>
+                  <div>
+                    <div class="font-medium text-sm text-surface-900 dark:text-surface-0">{{ student.name }}</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-xs px-2 py-0.5 rounded-md font-medium"
+                    [class]="student.present ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'"
+                  >
+                    {{ student.present ? 'Presente' : 'Ausente' }}
+                  </span>
+
+                  @if (student.brought_bible) {
+                    <span
+                      class="text-xs px-2 py-0.5 rounded-md font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 flex items-center gap-1"
+                      pTooltip="Trouxe Bíblia"
+                    >
+                      <i class="pi pi-book text-[10px]"></i> Bíblia
+                    </span>
+                  }
+                  @if (student.brought_magazine) {
+                    <span
+                      class="text-xs px-2 py-0.5 rounded-md font-medium bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 flex items-center gap-1"
+                      pTooltip="Trouxe Revista"
+                    >
+                      <i class="pi pi-bookmark text-[10px]"></i> Revista
+                    </span>
+                  }
+                </div>
+              </div>
+            } @empty {
+              <div class="p-6 text-center text-sm text-muted-color">
+                Nenhum registro de aluno lançado para esta classe.
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <p-button label="Fechar" icon="pi pi-times" [text]="true" (onClick)="closeSessionSummary()"></p-button>
+        <p-button
+          label="Abrir Chamada Completa"
+          icon="pi pi-external-link"
+          [routerLink]="['/chamada', s.id]"
+          (onClick)="closeSessionSummary()"
+        ></p-button>
+      </ng-template>
+    }
+  </p-dialog>
 
   <div class="grid grid-cols-12 gap-4">
     <div class="col-span-12 xl:col-span-6">

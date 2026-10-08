@@ -7,6 +7,7 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, AtaConselho } from '../../core/secretaria.service';
 
@@ -22,6 +23,7 @@ import { SecretariaService, AtaConselho } from '../../core/secretaria.service';
     DialogModule,
     InputTextModule,
     ToastModule,
+    TooltipModule,
   ],
   providers: [MessageService],
   templateUrl: './atas-conselho.html',
@@ -46,6 +48,7 @@ export class AtasConselhoPage implements OnInit {
     local: 'Gabinete Pastoral / Sala do Conselho',
     pastor_presidente: 'Rev. Marcos Silva',
     secretario_conselho: 'Presb. José Carlos Prado',
+    ata_original: '',
     status: 'Aprovada',
   };
 
@@ -91,6 +94,7 @@ export class AtasConselhoPage implements OnInit {
       abertura: 'O Presidente abriu os trabalhos com leitura bíblica e oração.',
       pauta: '1. Expediente; 2. Relatório de finanças; 3. Assuntos pastorais.',
       deliberacoes: 'O Conselho deliberou por unanimidade aprovar os itens da pauta.',
+      ata_original: '',
       status: 'Aprovada',
     };
     this.formDialog = true;
@@ -127,6 +131,29 @@ export class AtasConselhoPage implements OnInit {
         error: () => this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao registrar ata.' }),
       });
     }
+  }
+
+  aprovarAta(ata: AtaConselho): void {
+    if (!confirm(`Confirma a aprovação oficial da ${ata.numero_ata} pelo Conselho?`)) {
+      return;
+    }
+
+    this.secService.aprovarAta(ata.id).subscribe({
+      next: () => {
+        this.msg.add({
+          severity: 'success',
+          summary: 'Ata Aprovada',
+          detail: `${ata.numero_ata} foi aprovada com sucesso pelo Conselho!`,
+        });
+        if (this.selectedAta && this.selectedAta.id === ata.id) {
+          this.selectedAta.status = 'Aprovada';
+        }
+        this.carregarAtas();
+      },
+      error: () => {
+        this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao aprovar ata.' });
+      },
+    });
   }
 
   visualizarAta(ata: AtaConselho): void {

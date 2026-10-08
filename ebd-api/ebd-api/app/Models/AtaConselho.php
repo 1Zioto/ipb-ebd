@@ -26,6 +26,7 @@ class AtaConselho extends Model
         'abertura',
         'pauta',
         'deliberacoes',
+        'ata_original',
         'status',
     ];
 

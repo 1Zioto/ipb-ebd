@@ -246,6 +246,7 @@ Route::prefix('v1')->group(function () {
             Route::post('atas', [SecretariaController::class, 'storeAta']);
             Route::get('atas/{ata}', [SecretariaController::class, 'showAta']);
             Route::put('atas/{ata}', [SecretariaController::class, 'updateAta']);
+            Route::patch('atas/{ata}/aprovar', [SecretariaController::class, 'aprovarAta']);
         });
 
         // ---- 👥 2. Sociedades Internas & Ministérios (SAF, UPH, UMP, UPA, UCP) ----

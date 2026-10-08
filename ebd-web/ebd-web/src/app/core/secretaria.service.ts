@@ -83,6 +83,7 @@ export interface AtaConselho {
   abertura?: string;
   pauta?: string;
   deliberacoes?: string;
+  ata_original?: string;
   status: 'Rascunho' | 'Aprovada' | 'Assinada';
 }
 
@@ -221,6 +222,10 @@ export class SecretariaService {
 
   updateAta(id: number, data: Partial<AtaConselho>): Observable<AtaConselho> {
     return this.http.put<AtaConselho>(`${this.api}/secretaria/atas/${id}`, data);
+  }
+
+  aprovarAta(id: number): Observable<{ message: string; ata: AtaConselho }> {
+    return this.http.patch<{ message: string; ata: AtaConselho }>(`${this.api}/secretaria/atas/${id}/aprovar`, {});
   }
 
   // 👥 Sociedades Internas

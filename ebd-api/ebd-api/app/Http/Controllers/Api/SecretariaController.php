@@ -190,7 +190,8 @@ class SecretariaController extends Controller
             $query->where(function ($q) use ($s) {
                 $q->where('numero_ata', 'ilike', "%{$s}%")
                   ->orWhere('pauta', 'ilike', "%{$s}%")
-                  ->orWhere('deliberacoes', 'ilike', "%{$s}%");
+                  ->orWhere('deliberacoes', 'ilike', "%{$s}%")
+                  ->orWhere('ata_original', 'ilike', "%{$s}%");
             });
         }
 
@@ -212,6 +213,7 @@ class SecretariaController extends Controller
             'abertura' => 'nullable|string',
             'pauta' => 'nullable|string',
             'deliberacoes' => 'nullable|string',
+            'ata_original' => 'nullable|string',
             'status' => 'nullable|string|in:Rascunho,Aprovada,Assinada',
         ]);
 
@@ -241,10 +243,20 @@ class SecretariaController extends Controller
             'abertura' => 'nullable|string',
             'pauta' => 'nullable|string',
             'deliberacoes' => 'nullable|string',
+            'ata_original' => 'nullable|string',
             'status' => 'nullable|string|in:Rascunho,Aprovada,Assinada',
         ]);
 
         $ata->update($validated);
         return response()->json($ata);
+    }
+
+    public function aprovarAta(AtaConselho $ata): JsonResponse
+    {
+        $ata->update(['status' => 'Aprovada']);
+        return response()->json([
+            'message' => 'Ata aprovada com sucesso!',
+            'ata' => $ata,
+        ]);
     }
 }

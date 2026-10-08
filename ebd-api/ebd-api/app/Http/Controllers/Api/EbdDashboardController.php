@@ -85,7 +85,14 @@ class EbdDashboardController extends Controller
         }
 
         $sessions = AttendanceSession::where('ebd_event_id', $event->id)
-            ->with(['classRoom:id,name,display_order', 'teacher:id,full_name'])
+            ->with([
+                'classRoom:id,name,display_order',
+                'teacher:id,full_name',
+                'records' => function ($q) {
+                    $q->orderBy('person_name_snapshot');
+                },
+                'records.person:id,full_name',
+            ])
             ->get();
 
         $sessionIds = $sessions->pluck('id')->all();
@@ -119,16 +126,44 @@ class EbdDashboardController extends Controller
                 'bibles' => $totalBibles,
                 'magazines' => $totalMagazines,
             ],
-            'sessions' => $sessions->map(fn ($s) => [
-                'id' => $s->id,
-                'class_name' => $s->classRoom?->name,
-                'teacher_name' => $s->teacher?->full_name ?? $s->teacher_name,
-                'status' => $s->status,
-                'material_mode' => $s->material_mode,
-                'bibles_total' => $s->bibles_total,
-                'magazines_total' => $s->magazines_total,
-                'finalized_at' => $s->finalized_at?->toDateTimeString(),
-            ]),
+            'sessions' => $sessions->map(function ($s) {
+                $records = $s->records;
+                $presentCount = $records->where('present', true)->count();
+                $absentCount = $records->where('present', false)->count();
+                $totalEnrolled = $presentCount + $absentCount;
+                $biblesCount = max($records->where('brought_bible', true)->count(), (int) $s->bibles_total);
+                $magazinesCount = max($records->where('brought_magazine', true)->count(), (int) $s->magazines_total);
+                $rate = $totalEnrolled > 0 ? round(($presentCount / $totalEnrolled) * 100, 1) : 0;
+
+                return [
+                    'id' => $s->id,
+                    'class_id' => $s->class_id,
+                    'class_name' => $s->classRoom?->name,
+                    'teacher_name' => $s->teacher?->full_name ?? $s->teacher_name,
+                    'status' => match (strtolower($s->status ?? '')) {
+                        'finalizada' => 'Finalizada',
+                        'em_andamento' => 'Em andamento',
+                        'cancelada' => 'Cancelada',
+                        default => 'Pendente',
+                    },
+                    'material_mode' => $s->material_mode,
+                    'present' => $presentCount,
+                    'absent' => $absentCount,
+                    'total_enrolled' => $totalEnrolled,
+                    'attendance_rate' => $rate,
+                    'bibles_total' => $biblesCount,
+                    'magazines_total' => $magazinesCount,
+                    'finalized_at' => $s->finalized_at?->toDateTimeString(),
+                    'students' => $records->map(fn ($r) => [
+                        'id' => $r->id,
+                        'person_id' => $r->person_id,
+                        'name' => $r->person_name_snapshot ?? $r->person?->full_name,
+                        'present' => (bool) $r->present,
+                        'brought_bible' => (bool) $r->brought_bible,
+                        'brought_magazine' => (bool) $r->brought_magazine,
+                    ])->values(),
+                ];
+            }),
         ]);
     }
 }

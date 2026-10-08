@@ -68,6 +68,32 @@ export interface EbdDashboardSummary {
   announcements: { id: number; title: string; content: string; created_at: string }[];
 }
 
+export interface LiveSessionStudent {
+  id: number;
+  person_id: number;
+  name: string;
+  present: boolean;
+  brought_bible: boolean;
+  brought_magazine: boolean;
+}
+
+export interface LiveSessionSummary {
+  id: number;
+  class_id?: number;
+  class_name: string;
+  teacher_name: string | null;
+  status: string;
+  material_mode: string;
+  present?: number;
+  absent?: number;
+  total_enrolled?: number;
+  attendance_rate?: number;
+  bibles_total: number | null;
+  magazines_total: number | null;
+  finalized_at: string | null;
+  students?: LiveSessionStudent[];
+}
+
 export interface SuperintendentLiveMonitor {
   event: {
     id: number;
@@ -83,16 +109,7 @@ export interface SuperintendentLiveMonitor {
     bibles: number;
     magazines: number;
   };
-  sessions: {
-    id: number;
-    class_name: string;
-    teacher_name: string | null;
-    status: string;
-    material_mode: string;
-    bibles_total: number | null;
-    magazines_total: number | null;
-    finalized_at: string | null;
-  }[];
+  sessions: LiveSessionSummary[];
 }
 
 export interface ScheduleItem {

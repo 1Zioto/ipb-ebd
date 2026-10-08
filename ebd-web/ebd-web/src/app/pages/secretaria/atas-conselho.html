@@ -62,7 +62,7 @@
         <th>Presidente & Secretário</th>
         <th>Resumo da Pauta</th>
         <th>Status</th>
-        <th style="width: 130px; text-align: center">Ações</th>
+        <th style="width: 160px; text-align: center">Ações</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-a>
@@ -91,9 +91,16 @@
           </div>
         </td>
         <td>
-          <span class="text-sm text-surface-700 dark:text-surface-300 line-clamp-2">
-            {{ a.pauta || a.deliberacoes || '—' }}
-          </span>
+          <div class="flex flex-col gap-1">
+            <span class="text-sm text-surface-700 dark:text-surface-300 line-clamp-2">
+              {{ a.pauta || a.deliberacoes || a.ata_original || '—' }}
+            </span>
+            @if (a.ata_original) {
+              <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
+                <i class="pi pi-file-edit text-[10px]"></i> Ata original registrada
+              </span>
+            }
+          </div>
         </td>
         <td>
           <p-tag
@@ -103,6 +110,14 @@
         </td>
         <td class="text-center">
           <div class="flex items-center justify-center gap-1">
+            <button
+              pButton
+              icon="pi pi-check"
+              class="p-button-rounded p-button-text p-button-sm p-button-success"
+              [pTooltip]="a.status === 'Aprovada' ? 'Ata já aprovada' : a.status === 'Assinada' ? 'Ata assinada' : 'Aprovar Ata'"
+              [disabled]="a.status === 'Aprovada' || a.status === 'Assinada'"
+              (click)="aprovarAta(a)"
+            ></button>
             <button
               pButton
               icon="pi pi-book"
@@ -214,12 +229,27 @@
     </div>
 
     <div>
-      <label class="block text-xs font-medium text-surface-600 mb-1">Deliberações e Resoluções Tomadas *</label>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Deliberações e Resoluções Tomadas</label>
       <textarea
         class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
-        rows="4"
+        rows="3"
         [(ngModel)]="formAta.deliberacoes"
         placeholder="Resoluções canônicas aprovadas pelo Conselho com votações e determinações..."
+      ></textarea>
+    </div>
+
+    <div class="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg border border-surface-200 dark:border-surface-700">
+      <div class="flex items-center justify-between mb-1.5">
+        <label class="block text-xs font-bold text-surface-800 dark:text-surface-200 flex items-center gap-1.5">
+          <i class="pi pi-file text-primary"></i> Ata Original (Texto Integral do Livro Físico)
+        </label>
+        <span class="text-[11px] text-surface-400">Transcrição integral ou assentamento original</span>
+      </div>
+      <textarea
+        class="w-full p-2.5 border border-surface-300 dark:border-surface-700 rounded-md bg-surface-0 dark:bg-surface-900 text-sm font-mono leading-relaxed"
+        rows="6"
+        [(ngModel)]="formAta.ata_original"
+        placeholder="Cole ou digite aqui o texto integral e fiel da ata original como lavrada no livro de atas do Conselho..."
       ></textarea>
     </div>
   </div>
@@ -280,12 +310,25 @@
           </div>
         }
 
-        <div>
-          <h4 class="font-bold text-surface-900 dark:text-surface-100 text-xs uppercase tracking-wider mb-1">
-            Deliberações e Resoluções do Conselho:
-          </h4>
-          <p>{{ selectedAta.deliberacoes }}</p>
-        </div>
+        @if (selectedAta.deliberacoes) {
+          <div>
+            <h4 class="font-bold text-surface-900 dark:text-surface-100 text-xs uppercase tracking-wider mb-1">
+              Deliberações e Resoluções do Conselho:
+            </h4>
+            <p>{{ selectedAta.deliberacoes }}</p>
+          </div>
+        }
+
+        @if (selectedAta.ata_original) {
+          <div class="mt-4 p-4 rounded-lg bg-surface-50 dark:bg-surface-800/70 border border-surface-300 dark:border-surface-700">
+            <h4 class="font-bold text-surface-900 dark:text-surface-100 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i class="pi pi-book text-primary"></i> Texto Integral da Ata Original:
+            </h4>
+            <div class="whitespace-pre-wrap font-mono text-xs leading-relaxed text-surface-800 dark:text-surface-200">
+              {{ selectedAta.ata_original }}
+            </div>
+          </div>
+        }
 
         <p class="pt-2 italic text-xs text-surface-600 dark:text-surface-400">
           Nada mais havendo a tratar, a reunião foi encerrada com oração e bênção apostólica, lavrando-se a presente ata que, após lida e achada conforme, vai assinada pelo Pastor Presidente e pelo Secretário do Conselho.
@@ -312,6 +355,9 @@
 
   <ng-template pTemplate="footer">
     <p-button label="Fechar" icon="pi pi-times" [text]="true" (onClick)="viewDialog = false"></p-button>
+    @if (selectedAta && selectedAta.status !== 'Aprovada' && selectedAta.status !== 'Assinada') {
+      <p-button label="Aprovar Ata" icon="pi pi-check" severity="success" (onClick)="aprovarAta(selectedAta)"></p-button>
+    }
     <p-button label="Imprimir Ata Oficial" icon="pi pi-print" (onClick)="imprimir()"></p-button>
   </ng-template>
 </p-dialog>
