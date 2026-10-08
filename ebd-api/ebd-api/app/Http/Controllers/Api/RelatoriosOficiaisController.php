@@ -16,19 +16,19 @@ class RelatoriosOficiaisController extends Controller
         $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month', now()->month);
 
-        $entradas = FinancialTransaction::whereYear('competence_date', $year)
-            ->whereMonth('competence_date', $month)
+        $entradas = FinancialTransaction::whereYear('competency_date', $year)
+            ->whereMonth('competency_date', $month)
             ->where('type', 'income')
             ->where('status', 'confirmed')
             ->sum('amount');
 
-        $saidas = FinancialTransaction::whereYear('competence_date', $year)
-            ->whereMonth('competence_date', $month)
+        $saidas = FinancialTransaction::whereYear('competency_date', $year)
+            ->whereMonth('competency_date', $month)
             ->where('type', 'expense')
             ->where('status', 'confirmed')
             ->sum('amount');
 
-        $saldoAnterior = FinancialTransaction::where('competence_date', '<', "{$year}-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01")
+        $saldoAnterior = FinancialTransaction::where('competency_date', '<', "{$year}-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01")
             ->where('status', 'confirmed')
             ->selectRaw("SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END) as saldo")
             ->value('saldo') ?? 0.0;
