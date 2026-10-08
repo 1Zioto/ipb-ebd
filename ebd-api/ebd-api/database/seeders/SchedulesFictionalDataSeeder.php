@@ -352,11 +352,11 @@ class SchedulesFictionalDataSeeder extends Seeder
             // 4. Criar ou Atualizar EbdEvent
             $event = EbdEvent::updateOrCreate(
                 [
-                    'institution_id' => $institutionId,
                     'event_date' => $date->toDateString(),
                     'type' => 'regular',
                 ],
                 [
+                    'institution_id' => $institutionId,
                     'status' => $eventMeta['status'],
                     'is_auto_generated' => false,
                     'created_by' => $userId,

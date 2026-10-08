@@ -78,6 +78,7 @@ export interface ScheduleItem {
   teacher?: { id: number; full_name: string };
   superintendent_person_id?: number;
   superintendent?: { id: number; full_name: string };
+  notes?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -116,6 +117,10 @@ export class EbdService {
 
   setSuperintendentSchedule(data: { date: string; superintendent_person_id: number }): Observable<ScheduleItem> {
     return this.http.post<ScheduleItem>(`${this.baseUrl}/schedules/superintendents`, data);
+  }
+
+  seedFictionalSchedules(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/schedules/seed-fictional`, {});
   }
 
   getMonthlyReport(year?: number, month?: number): Observable<MonthlyReport> {

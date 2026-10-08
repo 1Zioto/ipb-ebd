@@ -32,6 +32,7 @@ class ScheduleController extends Controller
                 'class_room' => $schedule->classRoom,
                 'teacher_person_id' => $schedule->scheduled_person_id,
                 'teacher' => $schedule->person,
+                'notes' => $schedule->notes,
             ]);
 
         return response()->json($schedules);
@@ -91,6 +92,7 @@ class ScheduleController extends Controller
                 'date' => $schedule->event?->event_date?->toDateString(),
                 'superintendent_person_id' => $schedule->scheduled_person_id,
                 'superintendent' => $schedule->person,
+                'notes' => $schedule->notes,
             ]);
 
         return response()->json($schedules);
@@ -124,6 +126,17 @@ class ScheduleController extends Controller
             'date' => $schedule->event?->event_date?->toDateString(),
             'superintendent_person_id' => $schedule->scheduled_person_id,
             'superintendent' => $schedule->person,
+            'notes' => $schedule->notes,
+        ]);
+    }
+
+    public function seedFictional(Request $request): JsonResponse
+    {
+        $seeder = new \Database\Seeders\SchedulesFictionalDataSeeder();
+        $seeder->run();
+
+        return response()->json([
+            'message' => 'Escalas fictícias geradas com sucesso para Setembro, Outubro e Novembro de 2026!',
         ]);
     }
 }

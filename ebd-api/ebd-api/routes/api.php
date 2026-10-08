@@ -99,6 +99,7 @@ Route::prefix('v1')->group(function () {
         Route::post('schedules/teachers', [\App\Http\Controllers\Api\ScheduleController::class, 'setTeacherSchedule'])->middleware('permission:schedule.manage');
         Route::get('schedules/superintendents', [\App\Http\Controllers\Api\ScheduleController::class, 'superintendentSchedules'])->middleware('permission:schedule.view');
         Route::post('schedules/superintendents', [\App\Http\Controllers\Api\ScheduleController::class, 'setSuperintendentSchedule'])->middleware('permission:schedule.manage');
+        Route::post('schedules/seed-fictional', [\App\Http\Controllers\Api\ScheduleController::class, 'seedFictional'])->middleware('permission:schedule.manage');
 
         // ---- Fase 5: Chamada ----
         Route::get('sessions/{session}/records', [CallController::class, 'records'])->middleware('permission:call.view');
