@@ -41,11 +41,17 @@ export class PastoralAlertsPage implements OnInit {
   selectedAlert = signal<AlertaDizimo | null>(null);
   showAcompModal = signal<boolean>(false);
   savingAcomp = signal<boolean>(false);
+  acompType = 'Visita Pastoral';
+  acompDate = new Date().toISOString().substring(0, 10);
   notes = '';
   nextAction = '';
   reviewDate = '';
   alertaStatus = 'Em acompanhamento';
   conclusion = '';
+
+  // Modal Histórico de Acompanhamentos
+  historyAlert = signal<AlertaDizimo | null>(null);
+  showHistoryModal = signal<boolean>(false);
 
   // Modal Encaminhar Diaconato
   showDiaconatoModal = signal<boolean>(false);
@@ -74,9 +80,16 @@ export class PastoralAlertsPage implements OnInit {
     });
   }
 
+  openHistoryModal(a: AlertaDizimo): void {
+    this.historyAlert.set(a);
+    this.showHistoryModal.set(true);
+  }
+
   openAcompModal(a: AlertaDizimo): void {
     this.selectedAlert.set(a);
     this.alertaStatus = a.status === 'Novo' ? 'Em acompanhamento' : a.status;
+    this.acompType = 'Visita Pastoral';
+    this.acompDate = new Date().toISOString().substring(0, 10);
     this.notes = '';
     this.nextAction = '';
     this.reviewDate = '';
@@ -95,6 +108,8 @@ export class PastoralAlertsPage implements OnInit {
     this.savingAcomp.set(true);
     this.dizimosService
       .addAcompanhamento(alert.id, {
+        date: this.acompDate,
+        type: this.acompType,
         notes: this.notes,
         next_action: this.nextAction,
         review_date: this.reviewDate,

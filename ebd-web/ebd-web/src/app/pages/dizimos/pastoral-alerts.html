@@ -1,18 +1,43 @@
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
   <div>
-    <h1 class="m-0 text-2xl font-semibold">Acompanhamento Pastoral</h1>
-    <p class="text-muted-color mb-0">Painel de cuidado pastoral e análise de variações de contribuição</p>
+    <h1 class="m-0 text-2xl font-semibold flex items-center gap-2">
+      <i class="pi pi-heart text-primary"></i>
+      Acompanhamento Pastoral
+    </h1>
+    <p class="text-muted-color mb-0">Painel de cuidado e assistência pastoral aos membros da igreja</p>
   </div>
   <p-button label="Executar análise mensal" icon="pi pi-refresh" severity="secondary" (onClick)="runEngine()" />
 </div>
+
 @if (stats()) {
   <div class="grid grid-cols-12 gap-4 mb-4">
-    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Pessoas acompanhadas</span><div class="text-2xl font-semibold">{{ stats()?.people_followed }}</div></div></div>
-    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Alertas ativos</span><div class="text-2xl font-semibold">{{ stats()?.active_alerts }}</div></div></div>
-    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Novos</span><div class="text-2xl font-semibold">{{ stats()?.new_alerts }}</div></div></div>
-    <div class="col-span-12 sm:col-span-6 xl:col-span-3"><div class="card mb-0"><span class="text-muted-color">Encerrados</span><div class="text-2xl font-semibold">{{ stats()?.resolved_alerts }}</div></div></div>
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+      <div class="card mb-0">
+        <span class="text-muted-color">Pessoas acompanhadas</span>
+        <div class="text-2xl font-semibold">{{ stats()?.people_followed }}</div>
+      </div>
+    </div>
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+      <div class="card mb-0">
+        <span class="text-muted-color">Alertas ativos</span>
+        <div class="text-2xl font-semibold">{{ stats()?.active_alerts }}</div>
+      </div>
+    </div>
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+      <div class="card mb-0">
+        <span class="text-muted-color">Novos</span>
+        <div class="text-2xl font-semibold">{{ stats()?.new_alerts }}</div>
+      </div>
+    </div>
+    <div class="col-span-12 sm:col-span-6 xl:col-span-3">
+      <div class="card mb-0">
+        <span class="text-muted-color">Resolvidos</span>
+        <div class="text-2xl font-semibold">{{ stats()?.resolved_alerts }}</div>
+      </div>
+    </div>
   </div>
 }
+
 <div class="card">
   <div class="flex flex-wrap gap-2 mb-4">
     <p-button label="Todos ({{ alerts().length }})" [outlined]="filterStatus() !== ''" size="small" (onClick)="filterStatus.set('')" />
@@ -21,45 +46,199 @@
     <p-button label="Acompanhamento ({{ countByStatus('Em acompanhamento') }})" [outlined]="filterStatus() !== 'Em acompanhamento'" size="small" (onClick)="filterStatus.set('Em acompanhamento')" />
     <p-button label="Resolvidos ({{ countByStatus('Resolvido') }})" [outlined]="filterStatus() !== 'Resolvido'" size="small" (onClick)="filterStatus.set('Resolvido')" />
   </div>
+
   <p-table [value]="filteredAlerts()" [loading]="loading()">
-    <ng-template pTemplate="header"><tr><th>Membro</th><th>Tipo</th><th>Referência</th><th>Variação</th><th>Detecção</th><th>Status</th><th></th></tr></ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Membro</th>
+        <th>Tipo</th>
+        <th>Referência</th>
+        <th>Variação</th>
+        <th>Detecção</th>
+        <th>Status</th>
+        <th>Acompanhamentos</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
     <ng-template pTemplate="body" let-a>
       <tr>
-        <td>{{ a.person?.full_name }}</td>
+        <td class="font-medium">{{ a.person?.full_name }}</td>
         <td>
-          @if (a.alert_type === 'queda_relevante') { <p-tag value="Queda significativa" severity="danger" /> }
-          @else if (a.alert_type === 'interrupcao_contribuicao') { <p-tag value="Possível interrupção" severity="warn" /> }
-          @else { <p-tag value="Histórico recente" severity="info" /> }
+          @if (a.alert_type === 'queda_relevante') {
+            <p-tag value="Queda significativa" severity="danger" />
+          } @else if (a.alert_type === 'interrupcao_contribuicao') {
+            <p-tag value="Possível interrupção" severity="warn" />
+          } @else {
+            <p-tag value="Histórico recente" severity="info" />
+          }
         </td>
         <td>{{ a.reference_calculation?.reference_average | currency: 'BRL' }}</td>
-        <td>{{ a.variation_percentage }}%</td>
+        <td>
+          <span [class.text-red-500]="a.variation_percentage < 0" [class.text-green-500]="a.variation_percentage > 0">
+            {{ a.variation_percentage }}%
+          </span>
+        </td>
         <td>{{ a.detection_date | date: 'dd/MM/yyyy' }}</td>
-        <td><p-tag [value]="a.status" /></td>
+        <td>
+          <p-tag
+            [value]="a.status"
+            [severity]="a.status === 'Resolvido' ? 'success' : a.status === 'Em acompanhamento' ? 'info' : a.status === 'Novo' ? 'warn' : 'secondary'"
+          />
+        </td>
+        <td>
+          @if (a.acompanhamentos && a.acompanhamentos.length > 0) {
+            <p-button
+              [label]="a.acompanhamentos.length + ' registro(s)'"
+              icon="pi pi-comments"
+              size="small"
+              [outlined]="true"
+              severity="secondary"
+              (onClick)="openHistoryModal(a)"
+            />
+          } @else {
+            <span class="text-xs text-muted-color">Nenhum</span>
+          }
+        </td>
         <td class="whitespace-nowrap">
           <p-button label="Ficha" size="small" [text]="true" [routerLink]="['/dizimos/membros', a.person_id, 'historico']" />
-          <p-button label="Cuidado" size="small" (onClick)="openAcompModal(a)" />
+          <p-button label="Cuidado" size="small" icon="pi pi-heart" (onClick)="openAcompModal(a)" />
           <p-button label="Diaconato" size="small" severity="secondary" (onClick)="openDiaconatoModal(a)" />
         </td>
       </tr>
     </ng-template>
-    <ng-template pTemplate="emptymessage"><tr><td colspan="7">Nenhum alerta no momento.</td></tr></ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center py-4 text-muted-color">Nenhum alerta encontrado no momento.</td>
+      </tr>
+    </ng-template>
   </p-table>
 </div>
-<p-dialog header="Registrar acompanhamento — {{ selectedAlert()?.person?.full_name }}" [visible]="showAcompModal()" (visibleChange)="showAcompModal.set($event)" [modal]="true" [style]="{width:'36rem'}">
+
+<!-- Modal Histórico de Cuidados Pastorais -->
+<p-dialog
+  header="Histórico Pastoral — {{ historyAlert()?.person?.full_name }}"
+  [visible]="showHistoryModal()"
+  (visibleChange)="showHistoryModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '42rem', maxWidth: '95vw' }"
+>
+  @if (historyAlert(); as alert) {
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded border border-surface-200 dark:border-surface-700">
+        <div>
+          <div class="text-sm font-semibold">{{ alert.person?.full_name }}</div>
+          <div class="text-xs text-muted-color">Status atual: {{ alert.status }} | Detecção: {{ alert.detection_date | date: 'dd/MM/yyyy' }}</div>
+        </div>
+        <p-button label="Novo Cuidado" icon="pi pi-plus" size="small" (onClick)="openAcompModal(alert)" />
+      </div>
+
+      @if (alert.acompanhamentos && alert.acompanhamentos.length > 0) {
+        <div class="flex flex-col gap-3 mt-2">
+          @for (acomp of alert.acompanhamentos; track acomp.id) {
+            <div class="p-3 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-lg shadow-xs">
+              <div class="flex items-center justify-between mb-2 pb-2 border-b border-surface-100 dark:border-surface-800">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-primary">{{ acomp.type || 'Acompanhamento Pastoral' }}</span>
+                  <span class="text-xs text-muted-color">
+                    em {{ acomp.date | date: 'dd/MM/yyyy' }}
+                    @if (acomp.responsible?.name) {
+                      • por {{ acomp.responsible?.name }}
+                    }
+                  </span>
+                </div>
+                <p-tag [value]="acomp.status" severity="info" />
+              </div>
+              <p class="text-sm my-1 text-surface-800 dark:text-surface-100 whitespace-pre-line leading-relaxed">{{ acomp.notes }}</p>
+              @if (acomp.next_action) {
+                <div class="text-xs text-muted-color mt-2 pt-2 border-t border-surface-100 dark:border-surface-800 flex items-center justify-between">
+                  <span><strong>Próxima ação:</strong> {{ acomp.next_action }}</span>
+                  @if (acomp.review_date) {
+                    <span><strong>Revisão:</strong> {{ acomp.review_date | date: 'dd/MM/yyyy' }}</span>
+                  }
+                </div>
+              }
+              @if (acomp.conclusion) {
+                <div class="text-xs text-green-600 dark:text-green-400 mt-1">
+                  <strong>Conclusão:</strong> {{ acomp.conclusion }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="text-center py-6 text-muted-color">
+          <i class="pi pi-inbox text-3xl mb-2 block"></i>
+          Nenhum registro de acompanhamento para este membro ainda.
+        </div>
+      }
+    </div>
+  }
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" severity="secondary" (onClick)="showHistoryModal.set(false)" />
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Registrar Acompanhamento -->
+<p-dialog
+  header="Registrar Cuidado Pastoral — {{ selectedAlert()?.person?.full_name }}"
+  [visible]="showAcompModal()"
+  (visibleChange)="showAcompModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '38rem', maxWidth: '95vw' }"
+>
   <div class="flex flex-col gap-3">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block mb-2 font-medium text-sm">Tipo de Atendimento</label>
+        <select class="w-full p-inputtext p-component" [(ngModel)]="acompType">
+          <option>Visita Pastoral</option>
+          <option>Contato Telefônico</option>
+          <option>Aconselhamento</option>
+          <option>Oração / Apoio Familiar</option>
+          <option>Reunião de Gabinete</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div>
+        <label class="block mb-2 font-medium text-sm">Data do Atendimento</label>
+        <input pInputText class="w-full" type="date" [(ngModel)]="acompDate" />
+      </div>
+    </div>
+
     <div>
-      <label class="block mb-2">Situação</label>
+      <label class="block mb-2 font-medium text-sm">Situação do Alerta</label>
       <select class="w-full p-inputtext p-component" [(ngModel)]="alertaStatus">
-        <option>Em análise</option><option>Em acompanhamento</option><option>Resolvido</option><option>Descartado</option>
+        <option>Em análise</option>
+        <option>Em acompanhamento</option>
+        <option>Resolvido</option>
+        <option>Descartado</option>
       </select>
     </div>
-    <div><label class="block mb-2">Observação pastoral</label><textarea pTextarea class="w-full" rows="3" [(ngModel)]="notes"></textarea></div>
-    <div class="grid grid-cols-2 gap-3">
-      <div><label class="block mb-2">Próxima ação</label><input pInputText class="w-full" [(ngModel)]="nextAction" /></div>
-      <div><label class="block mb-2">Data de revisão</label><input pInputText class="w-full" type="date" [(ngModel)]="reviewDate" /></div>
-    </div>
+
     <div>
-      <label class="block mb-2">Conclusão</label>
+      <label class="block mb-2 font-medium text-sm">Observação Pastoral Confidencial</label>
+      <textarea
+        pTextarea
+        class="w-full"
+        rows="4"
+        [(ngModel)]="notes"
+        placeholder="Descreva a conversa, necessidades espirituais, familiares ou materiais observadas..."
+      ></textarea>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block mb-2 font-medium text-sm">Próxima Ação</label>
+        <input pInputText class="w-full" [(ngModel)]="nextAction" placeholder="Ex: Retorno em 15 dias" />
+      </div>
+      <div>
+        <label class="block mb-2 font-medium text-sm">Data de Revisão</label>
+        <input pInputText class="w-full" type="date" [(ngModel)]="reviewDate" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block mb-2 font-medium text-sm">Conclusão</label>
       <select class="w-full p-inputtext p-component" [(ngModel)]="conclusion">
         <option value="">Selecione...</option>
         <option>Acompanhamento realizado</option>
@@ -71,17 +250,28 @@
       </select>
     </div>
   </div>
+
   <ng-template pTemplate="footer">
     <p-button label="Cancelar" severity="secondary" [disabled]="savingAcomp()" (onClick)="closeAcompModal()" />
-    <p-button label="Salvar" [loading]="savingAcomp()" [disabled]="!notes.trim()" (onClick)="saveAcompanhamento()" />
+    <p-button label="Salvar Registro" icon="pi pi-check" [loading]="savingAcomp()" [disabled]="!notes.trim()" (onClick)="saveAcompanhamento()" />
   </ng-template>
 </p-dialog>
-<p-dialog header="Encaminhar ao diaconato — {{ selectedAlert()?.person?.full_name }}" [visible]="showDiaconatoModal()" (visibleChange)="showDiaconatoModal.set($event)" [modal]="true" [style]="{width:'32rem'}">
-  <p-message severity="info" styleClass="mb-3 w-full">O diácono receberá apenas o nome, contato e a instrução. Valores financeiros não serão compartilhados.</p-message>
-  <label class="block mb-2">Instrução para o diácono</label>
+
+<!-- Modal Encaminhar Diaconato -->
+<p-dialog
+  header="Encaminhar ao Diaconato — {{ selectedAlert()?.person?.full_name }}"
+  [visible]="showDiaconatoModal()"
+  (visibleChange)="showDiaconatoModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '34rem', maxWidth: '95vw' }"
+>
+  <p-message severity="info" styleClass="mb-3 w-full">
+    O diácono receberá apenas o nome, contato e a instrução pastoral. Dados financeiros e valores permanecem em total sigilo.
+  </p-message>
+  <label class="block mb-2 font-medium text-sm">Instrução para a Junta Diaconal</label>
   <textarea pTextarea class="w-full" rows="4" [(ngModel)]="pastorNotesDiaconato"></textarea>
   <ng-template pTemplate="footer">
     <p-button label="Cancelar" severity="secondary" [disabled]="savingDiaconato()" (onClick)="showDiaconatoModal.set(false)" />
-    <p-button label="Encaminhar" [loading]="savingDiaconato()" (onClick)="sendToDiaconato()" />
+    <p-button label="Encaminhar" icon="pi pi-send" [loading]="savingDiaconato()" (onClick)="sendToDiaconato()" />
   </ng-template>
 </p-dialog>

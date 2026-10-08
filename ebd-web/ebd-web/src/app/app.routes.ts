@@ -106,6 +106,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dizimos/pastoral-alerts').then((m) => m.PastoralAlertsPage),
       },
       {
+        path: 'pastoral/acompanhamento',
+        redirectTo: 'dizimos/alertas',
+        pathMatch: 'full',
+      },
+      {
         path: 'dizimos/membros/:id/historico',
         canActivate: [permissionGuard('dizimos.historico_individual.view')],
         loadComponent: () => import('./pages/dizimos/membro-historico').then((m) => m.MembroHistoricoPage),
