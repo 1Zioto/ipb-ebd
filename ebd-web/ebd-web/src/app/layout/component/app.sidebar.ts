@@ -11,18 +11,6 @@ import { LayoutService } from '@/app/layout/service/layout.service';
     imports: [CommonModule, AppMenu, RouterModule],
     template: `
         <div class="layout-sidebar" [class.is-collapsed]="layoutService.layoutState().sidebarCollapsed">
-            <div class="sidebar-toggle-header">
-                <button
-                    type="button"
-                    class="sidebar-retract-btn"
-                    (click)="layoutService.toggleSidebarCollapse()"
-                    [title]="layoutService.layoutState().sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'"
-                    aria-label="Alternar menu retrátil"
-                >
-                    <i class="pi" [ngClass]="layoutService.layoutState().sidebarCollapsed ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
-                    <span class="sidebar-retract-text" *ngIf="!layoutService.layoutState().sidebarCollapsed">Recolher Menu</span>
-                </button>
-            </div>
             <div class="sidebar-menu-wrapper">
                 <app-menu></app-menu>
             </div>
