@@ -66,9 +66,17 @@ export class AppMenu implements OnInit {
                 label: 'Secretaria & Conselho',
                 items: [
                     { label: 'Rol Canônico de Membros', icon: 'pi pi-fw pi-users', routerLink: ['/secretaria/membros'], visible: this.can('person.view') },
+                    { label: 'Código de Disciplina', icon: 'pi pi-fw pi-shield', routerLink: ['/secretaria/disciplina'], visible: this.can('person.view') },
                     { label: 'Estatística do Presbitério', icon: 'pi pi-fw pi-chart-pie', routerLink: ['/secretaria/estatistica-presbiterio'], visible: this.can('person.view') },
                     { label: 'Cartas de Transferência', icon: 'pi pi-fw pi-envelope', routerLink: ['/secretaria/cartas'], visible: this.can('person.view') },
                     { label: 'Livro de Atas do Conselho', icon: 'pi pi-fw pi-book', routerLink: ['/secretaria/atas'], visible: this.can('person.view') },
+                ],
+            },
+            {
+                label: 'Junta Diaconal',
+                items: [
+                    { label: 'Livro Tombo, Bens & OS', icon: 'pi pi-fw pi-box', routerLink: ['/diaconia/patrimonio'], visible: this.can('person.view') },
+                    { label: 'Solicitações de Assistência', icon: 'pi pi-fw pi-inbox', routerLink: ['/dizimos/diaconato'], visible: this.can('dizimos.diaconato.atender') },
                 ],
             },
             {
@@ -87,6 +95,8 @@ export class AppMenu implements OnInit {
                 label: 'Financeiro & Contábil',
                 items: [
                     { label: 'Livro Caixa', icon: 'pi pi-fw pi-wallet', routerLink: ['/financeiro/transacoes'], visible: this.can('financial.view') },
+                    { label: 'Cotas & Orçamento Anual', icon: 'pi pi-fw pi-chart-line', routerLink: ['/financeiro/cotas-orcamento'], visible: this.can('financial.view') },
+                    { label: 'Parecer do Exame de Contas', icon: 'pi pi-fw pi-verified', routerLink: ['/relatorios/parecer-exame-contas'], visible: this.can('financial.accounting.view') },
                     { label: 'Contabilidade & Balancete', icon: 'pi pi-fw pi-file-excel', routerLink: ['/financeiro/contabilidade'], visible: this.can('financial.accounting.view') },
                     { label: 'Termo com Assinaturas', icon: 'pi pi-fw pi-file-edit', routerLink: ['/financeiro/termo-balancete'], visible: this.can('financial.accounting.view') },
                     { label: 'Plano de Contas & Custos', icon: 'pi pi-fw pi-tags', routerLink: ['/financeiro/categorias-custos'], visible: this.can('financial.view') },

@@ -1,0 +1,321 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+      📜 Parecer da Comissão de Exame de Contas
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Auditoria eclesiástica independente sobre as finanças da igreja para apreciação soberana da Assembleia Geral
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <button pButton label="Novo Parecer de Auditoria" icon="pi pi-file-edit" class="p-button-primary p-button-sm" (click)="abrirNovoParecer()"></button>
+  </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="p-4 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-800">
+    <div class="text-xs font-semibold text-surface-500 uppercase tracking-wider">Total de Pareceres</div>
+    <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1">{{ stats().total }}</div>
+    <span class="text-[11px] text-surface-500">Histórico de auditorias</span>
+  </div>
+
+  <div class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20">
+    <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Favorável s/ Ressalvas</div>
+    <div class="text-2xl font-bold text-emerald-800 dark:text-emerald-200 mt-1">{{ stats().sem_ressalvas }}</div>
+    <span class="text-[11px] text-emerald-600">Contas regulares</span>
+  </div>
+
+  <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20">
+    <div class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Com Ressalvas</div>
+    <div class="text-2xl font-bold text-amber-800 dark:text-amber-200 mt-1">{{ stats().com_ressalvas }}</div>
+    <span class="text-[11px] text-amber-600">Com recomendações</span>
+  </div>
+
+  <div class="p-4 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/20">
+    <div class="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wider">Desfavoráveis</div>
+    <div class="text-2xl font-bold text-red-800 dark:text-red-200 mt-1">{{ stats().desfavoraveis }}</div>
+    <span class="text-[11px] text-red-600">Irregularidades apontadas</span>
+  </div>
+</div>
+
+<div class="card p-0 overflow-hidden">
+  <div class="p-4 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between">
+    <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+      <i class="pi pi-verified text-primary"></i>
+      Pareceres Eclesiásticos Emitidos
+    </h3>
+    <button pButton icon="pi pi-refresh" class="p-button-outlined p-button-sm" (click)="carregarPareceres()"></button>
+  </div>
+
+  <p-table [value]="pareceres()" [loading]="loading()" responsiveLayout="stack" breakpoint="960px">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Parecer</th>
+        <th>Período Auditado</th>
+        <th>Relator da Comissão</th>
+        <th>Resultado Oficial</th>
+        <th>Receitas Auditadas</th>
+        <th>Despesas Auditadas</th>
+        <th>Saldo Apurado</th>
+        <th class="text-center" style="width: 140px">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-p>
+      <tr>
+        <td>
+          <span class="font-mono text-xs font-bold text-primary block">{{ p.numero_parecer }}</span>
+          <span class="text-[11px] text-surface-500">{{ p.data_emissao | date: 'dd/MM/yyyy' }}</span>
+        </td>
+        <td>
+          <strong class="text-xs text-surface-900 dark:text-surface-0 block">{{ p.periodo }}</strong>
+          <span class="text-[11px] text-surface-500">Exercício {{ p.ano_exercicio }}</span>
+        </td>
+        <td>
+          <span class="text-xs font-medium text-surface-700 dark:text-surface-300">{{ p.relator }}</span>
+        </td>
+        <td>
+          <p-tag [value]="p.resultado" [severity]="getResultadoSeverity(p.resultado)"></p-tag>
+        </td>
+        <td>
+          <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+            {{ p.total_receitas_auditado | currency: 'BRL' : 'symbol' : '1.2-2' }}
+          </span>
+        </td>
+        <td>
+          <span class="text-xs font-semibold text-red-700 dark:text-red-400">
+            {{ p.total_despesas_auditado | currency: 'BRL' : 'symbol' : '1.2-2' }}
+          </span>
+        </td>
+        <td>
+          <span class="text-xs font-bold text-surface-900 dark:text-surface-0">
+            {{ p.saldo_apurado | currency: 'BRL' : 'symbol' : '1.2-2' }}
+          </span>
+        </td>
+        <td class="text-center">
+          <button
+            pButton
+            icon="pi pi-file-pdf"
+            label="Laudo Oficial"
+            class="p-button-outlined p-button-sm"
+            pTooltip="Visualizar Laudo Oficial Formatado"
+            (click)="verLaudo(p)"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center py-8 text-surface-500">
+          Nenhum parecer emitido ainda. Clique em "Novo Parecer de Auditoria" para cadastrar.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modal: Novo Parecer de Auditoria -->
+<p-dialog [(visible)]="dialogNovo" header="Emitir Parecer da Comissão de Exame de Contas" [modal]="true" [style]="{ width: '640px' }">
+  <div class="flex flex-col gap-4 text-sm mt-2">
+    <div class="grid grid-cols-3 gap-3">
+      <div>
+        <label class="block font-semibold mb-1">Exercício *</label>
+        <input pInputText type="number" [(ngModel)]="formParecer.ano_exercicio" (change)="obterValoresSugeridos()" class="w-full p-inputtext-sm" />
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Período Auditado *</label>
+        <select [(ngModel)]="formParecer.periodo" (change)="obterValoresSugeridos()" class="w-full p-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm">
+          <option value="1º Trimestre">1º Trimestre</option>
+          <option value="2º Trimestre">2º Trimestre</option>
+          <option value="3º Trimestre">3º Trimestre</option>
+          <option value="4º Trimestre">4º Trimestre</option>
+          <option value="Exercício Anual">Exercício Anual</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Data Emissão *</label>
+        <input pInputText type="date" [(ngModel)]="formParecer.data_emissao" class="w-full p-inputtext-sm" />
+      </div>
+    </div>
+
+    <!-- Valores Contábeis Auditados -->
+    <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/40">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold uppercase text-surface-600 dark:text-surface-400">Valores Contábeis do Período</span>
+        <button pButton label="Atualizar do Livro Caixa" icon="pi pi-sync" class="p-button-text p-button-xs" (click)="obterValoresSugeridos()"></button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-emerald-700">Total Receitas (R$)</label>
+          <input pInputText type="number" [(ngModel)]="formParecer.total_receitas_auditado" class="w-full p-inputtext-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-red-700">Total Despesas (R$)</label>
+          <input pInputText type="number" [(ngModel)]="formParecer.total_despesas_auditado" class="w-full p-inputtext-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold">Saldo Final (R$)</label>
+          <input pInputText type="number" [(ngModel)]="formParecer.saldo_apurado" class="w-full p-inputtext-sm" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Itens de Conformidade -->
+    <div>
+      <span class="text-xs font-bold uppercase text-surface-600 dark:text-surface-400 block mb-2">Verificações de Auditoria</span>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="formParecer.conformidade_livro_caixa" />
+          <span>Livro Caixa em exatidão</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="formParecer.conformidade_extratos_bancarios" />
+          <span>Extratos bancários conferidos</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="formParecer.conformidade_comprovantes_fiscais" />
+          <span>Notas fiscais e recibos idôneos</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="formParecer.conformidade_cotas_conciliares" />
+          <span>Cotas conciliares recolhidas</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block font-semibold mb-1">Relator da Comissão *</label>
+        <input pInputText type="text" [(ngModel)]="formParecer.relator" placeholder="Ex: Diác. Rodrigo Sampaio" class="w-full p-inputtext-sm" />
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Resultado Conclusivo *</label>
+        <select [(ngModel)]="formParecer.resultado" class="w-full p-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm">
+          <option value="Favorável sem ressalvas">Favorável sem ressalvas</option>
+          <option value="Favorável com ressalvas">Favorável com ressalvas</option>
+          <option value="Desfavorável">Desfavorável</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block font-semibold mb-1">Membros Auditores (1 por linha)</label>
+      <textarea [(ngModel)]="membrosTexto" rows="3" class="w-full p-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-xs font-mono"></textarea>
+    </div>
+
+    <div>
+      <label class="block font-semibold mb-1">Ressalvas ou Recomendações (se houver)</label>
+      <textarea [(ngModel)]="formParecer.ressalvas_e_recomendacoes" rows="2" class="w-full p-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm"></textarea>
+    </div>
+
+    <div>
+      <label class="block font-semibold mb-1">Texto Final do Parecer para Leitura na Assembleia *</label>
+      <textarea [(ngModel)]="formParecer.texto_conclusao" rows="3" class="w-full p-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm"></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancelar" class="p-button-text p-button-secondary" (click)="dialogNovo = false"></button>
+    <button pButton label="Emitir Parecer Oficial" icon="pi pi-check" class="p-button-primary" (click)="salvarParecer()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Laudo Oficial Formatado para Leitura / Impressão -->
+<p-dialog [(visible)]="dialogLaudo" header="Parecer Oficial de Exame de Contas" [modal]="true" [style]="{ width: '680px' }">
+  @if (selectedParecer) {
+    <div class="p-6 bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 text-sm flex flex-col gap-5 print:p-0 print:border-none">
+      <!-- Cabeçalho Eclesiástico -->
+      <div class="text-center border-b border-surface-300 dark:border-surface-700 pb-4">
+        <h2 class="text-lg font-bold text-surface-900 dark:text-surface-0 m-0 uppercase tracking-wide">
+          Igreja Presbiteriana do Brasil
+        </h2>
+        <h3 class="text-sm font-semibold text-primary m-0 mt-1 uppercase">
+          Comissão de Exame de Contas da Igreja Local
+        </h3>
+        <span class="text-xs text-surface-500 font-mono mt-1 block">
+          Documento Oficial Nº {{ selectedParecer.numero_parecer }}
+        </span>
+      </div>
+
+      <!-- Resumo do Período -->
+      <div class="grid grid-cols-2 gap-3 p-3 rounded-lg bg-surface-50 dark:bg-surface-800/50 text-xs">
+        <div>
+          <span class="text-surface-500 block">Exercício / Período:</span>
+          <strong>{{ selectedParecer.periodo }} de {{ selectedParecer.ano_exercicio }}</strong>
+        </div>
+        <div>
+          <span class="text-surface-500 block">Data de Emissão:</span>
+          <strong>{{ selectedParecer.data_emissao | date: 'dd/MM/yyyy' }}</strong>
+        </div>
+      </div>
+
+      <!-- Balanço Sintético Auditado -->
+      <div class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden text-xs">
+        <div class="bg-surface-100 dark:bg-surface-800 p-2 font-bold text-center border-b border-surface-200 dark:border-surface-700">
+          DEMONSTRATIVO SINTÉTICO AUDITADO
+        </div>
+        <div class="p-3 flex justify-between border-b border-surface-200 dark:border-surface-700">
+          <span>Total de Entradas / Receitas Arrecadadas:</span>
+          <strong class="text-emerald-700 dark:text-emerald-400">
+            {{ selectedParecer.total_receitas_auditado | currency: 'BRL' : 'symbol' : '1.2-2' }}
+          </strong>
+        </div>
+        <div class="p-3 flex justify-between border-b border-surface-200 dark:border-surface-700">
+          <span>Total de Saídas / Despesas Empenhadas e Pagas:</span>
+          <strong class="text-red-700 dark:text-red-400">
+            {{ selectedParecer.total_despesas_auditado | currency: 'BRL' : 'symbol' : '1.2-2' }}
+          </strong>
+        </div>
+        <div class="p-3 flex justify-between bg-surface-50 dark:bg-surface-800/40">
+          <span class="font-bold">Superávit / Saldo Líquido Apurado:</span>
+          <strong class="text-surface-900 dark:text-surface-0 text-sm">
+            {{ selectedParecer.saldo_apurado | currency: 'BRL' : 'symbol' : '1.2-2' }}
+          </strong>
+        </div>
+      </div>
+
+      <!-- Texto do Parecer -->
+      <div>
+        <strong class="text-xs uppercase text-surface-500 block mb-1">Parecer Conclusivo:</strong>
+        <p class="text-surface-800 dark:text-surface-200 leading-relaxed text-justify mb-0">
+          {{ selectedParecer.texto_conclusao }}
+        </p>
+      </div>
+
+      @if (selectedParecer.ressalvas_e_recomendacoes) {
+        <div class="p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 text-xs">
+          <strong class="text-amber-800 dark:text-amber-200 block mb-1">Ressalvas e Recomendações:</strong>
+          <span class="text-amber-900 dark:text-amber-300">{{ selectedParecer.ressalvas_e_recomendacoes }}</span>
+        </div>
+      }
+
+      <!-- Assinaturas da Comissão -->
+      <div class="pt-6 border-t border-surface-200 dark:border-surface-700 mt-4">
+        <span class="text-xs text-center text-surface-500 uppercase block mb-6 font-semibold">
+          Comissão de Exame de Contas
+        </span>
+
+        <div class="grid grid-cols-3 gap-4 text-center text-xs">
+          @for (m of (selectedParecer.membros_comissao || [selectedParecer.relator]); track m) {
+            <div class="flex flex-col items-center">
+              <div class="w-full border-t border-surface-400 dark:border-surface-600 mb-1"></div>
+              <strong class="text-surface-900 dark:text-surface-0">{{ m }}</strong>
+              <span class="text-[10px] text-surface-500">Auditor Eleito</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Fechar" class="p-button-text p-button-secondary" (click)="dialogLaudo = false"></button>
+    <button pButton label="Imprimir Parecer" icon="pi pi-print" class="p-button-primary" (click)="imprimirLaudo()"></button>
+  </ng-template>
+</p-dialog>

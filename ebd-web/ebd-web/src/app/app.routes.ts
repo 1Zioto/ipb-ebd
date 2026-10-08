@@ -194,6 +194,30 @@ export const routes: Routes = [
         canActivate: [permissionGuard('person.view')],
         loadComponent: () => import('./pages/discipulado/discipulado-biblioteca').then((m) => m.DiscipuladoBibliotecaPage),
       },
+      // ---- ⚖️ Código de Disciplina & Jurisdição Pastoral ----
+      {
+        path: 'secretaria/disciplina',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/secretaria/disciplina-pastoral/disciplina-pastoral').then((m) => m.DisciplinaPastoralPage),
+      },
+      // ---- 🏢 Junta Diaconal & Gestão Patrimonial ----
+      {
+        path: 'diaconia/patrimonio',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/diaconia/diaconia-patrimonio/diaconia-patrimonio').then((m) => m.DiaconiaPatrimonioPage),
+      },
+      // ---- 💸 Cotas Conciliares & Orçamento Anual Programa ----
+      {
+        path: 'financeiro/cotas-orcamento',
+        canActivate: [permissionGuard('financial.view')],
+        loadComponent: () => import('./pages/financial/cotas-orcamento/cotas-orcamento').then((m) => m.CotasOrcamentoPage),
+      },
+      // ---- 📜 Parecer da Comissão de Exame de Contas ----
+      {
+        path: 'relatorios/parecer-exame-contas',
+        canActivate: [permissionGuard('financial.accounting.view')],
+        loadComponent: () => import('./pages/relatorios/parecer-exame-contas/parecer-exame-contas').then((m) => m.ParecerExameContasPage),
+      },
     ],
   },
   {

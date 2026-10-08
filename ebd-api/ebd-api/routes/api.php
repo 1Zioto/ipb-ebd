@@ -26,6 +26,10 @@ use App\Http\Controllers\Api\SecretariaController;
 use App\Http\Controllers\Api\SociedadesController;
 use App\Http\Controllers\Api\DiscipuladoBibliotecaController;
 use App\Http\Controllers\Api\RelatoriosOficiaisController;
+use App\Http\Controllers\Api\DisciplinaController;
+use App\Http\Controllers\Api\DiaconiaPatrimonioController;
+use App\Http\Controllers\Api\CotasOrcamentoController;
+use App\Http\Controllers\Api\ExameContasController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -273,6 +277,60 @@ Route::prefix('v1')->group(function () {
         Route::prefix('relatorios-oficiais')->group(function () {
             Route::get('termo-balancete', [RelatoriosOficiaisController::class, 'termoBalancete']);
             Route::get('ficha-ministerial/{person}', [RelatoriosOficiaisController::class, 'fichaMinisterial']);
+        });
+
+        // ---- ⚖️ 3. Código de Disciplina & Jurisdição Pastoral (CD/IPB) ----
+        Route::prefix('disciplina')->group(function () {
+            Route::get('processos', [DisciplinaController::class, 'index']);
+            Route::post('processos', [DisciplinaController::class, 'store']);
+            Route::get('processos/{processo}', [DisciplinaController::class, 'show']);
+            Route::put('processos/{processo}', [DisciplinaController::class, 'update']);
+            Route::post('processos/{processo}/restaurar', [DisciplinaController::class, 'restaurar']);
+            Route::get('alertas-abandono', [DisciplinaController::class, 'alertasAbandono']);
+        });
+
+        // ---- 🏢 4. Junta Diaconal & Gestão Patrimonial (Zeladoria e Bens) ----
+        Route::prefix('diaconia')->group(function () {
+            // Livro Tombo / Patrimônio
+            Route::get('bens', [DiaconiaPatrimonioController::class, 'listarBens']);
+            Route::post('bens', [DiaconiaPatrimonioController::class, 'storeBem']);
+            Route::get('bens/{bem}', [DiaconiaPatrimonioController::class, 'showBem']);
+            Route::put('bens/{bem}', [DiaconiaPatrimonioController::class, 'updateBem']);
+            Route::delete('bens/{bem}', [DiaconiaPatrimonioController::class, 'destroyBem']);
+
+            // Ordens de Serviço & Zeladoria
+            Route::get('ordens-servico', [DiaconiaPatrimonioController::class, 'listarOS']);
+            Route::post('ordens-servico', [DiaconiaPatrimonioController::class, 'storeOS']);
+            Route::put('ordens-servico/{os}', [DiaconiaPatrimonioController::class, 'updateOS']);
+            Route::post('ordens-servico/{os}/concluir', [DiaconiaPatrimonioController::class, 'concluirOS']);
+
+            // Escala de Diáconos do Culto
+            Route::get('escalas', [DiaconiaPatrimonioController::class, 'listarEscalas']);
+            Route::post('escalas', [DiaconiaPatrimonioController::class, 'storeEscala']);
+            Route::put('escalas/{escala}', [DiaconiaPatrimonioController::class, 'updateEscala']);
+        });
+
+        // ---- 💸 5. Cotas Conciliares & Orçamento Anual Programa ----
+        Route::prefix('cotas-orcamento')->group(function () {
+            // Cotas Conciliares (Presbitério e SC)
+            Route::get('cotas', [CotasOrcamentoController::class, 'listarCotas']);
+            Route::post('cotas/calcular', [CotasOrcamentoController::class, 'calcularCotaMes']);
+            Route::put('cotas/{cota}/pagamento', [CotasOrcamentoController::class, 'atualizarPagamento']);
+
+            // Orçamento Anual (Orçado vs Realizado)
+            Route::get('orcamento/comparativo', [CotasOrcamentoController::class, 'comparativoOrcamento']);
+            Route::post('orcamento/linhas', [CotasOrcamentoController::class, 'storeLinha']);
+            Route::put('orcamento/linhas/{linha}', [CotasOrcamentoController::class, 'updateLinha']);
+            Route::delete('orcamento/linhas/{linha}', [CotasOrcamentoController::class, 'destroyLinha']);
+        });
+
+        // ---- 📜 6. Parecer da Comissão de Exame de Contas ----
+        Route::prefix('exame-contas')->group(function () {
+            Route::get('pareceres', [ExameContasController::class, 'index']);
+            Route::get('auditar-periodo', [ExameContasController::class, 'auditarPeriodo']);
+            Route::post('pareceres', [ExameContasController::class, 'store']);
+            Route::get('pareceres/{parecer}', [ExameContasController::class, 'show']);
+            Route::put('pareceres/{parecer}', [ExameContasController::class, 'update']);
         });
     });
 });

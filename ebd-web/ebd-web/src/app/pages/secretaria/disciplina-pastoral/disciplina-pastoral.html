@@ -1,0 +1,349 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+      ⚖️ Código de Disciplina & Jurisdição Pastoral
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Governo eclesiástico do Conselho (CD/IPB): processos, julgamentos, vigilância e restauração à plena comunhão
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <button pButton label="Novo Processo" icon="pi pi-plus" class="p-button-primary p-button-sm" (click)="abrirNovo()"></button>
+  </div>
+</div>
+
+<!-- Cards de Indicadores -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  <div
+    class="p-4 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-800 cursor-pointer hover:border-primary transition-all"
+    [class.ring-2]="statusFilter === ''"
+    [class.ring-primary]="statusFilter === ''"
+    (click)="filtrarPorStatus('')"
+  >
+    <div class="text-xs font-semibold text-surface-500 uppercase tracking-wider">Total Processos</div>
+    <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1">{{ stats().total }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 cursor-pointer hover:border-blue-500 transition-all"
+    [class.ring-2]="statusFilter === 'Em Aberto'"
+    [class.ring-blue-500]="statusFilter === 'Em Aberto'"
+    (click)="filtrarPorStatus('Em Aberto')"
+  >
+    <div class="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Em Instrução</div>
+    <div class="text-2xl font-bold text-blue-800 dark:text-blue-200 mt-1">{{ stats().em_aberto }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer hover:border-amber-500 transition-all"
+    [class.ring-2]="statusFilter === 'Cumprindo Disciplina'"
+    [class.ring-amber-500]="statusFilter === 'Cumprindo Disciplina'"
+    (click)="filtrarPorStatus('Cumprindo Disciplina')"
+  >
+    <div class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Cumprindo Disciplina</div>
+    <div class="text-2xl font-bold text-amber-800 dark:text-amber-200 mt-1">{{ stats().cumprindo_disciplina }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer hover:border-emerald-500 transition-all"
+    [class.ring-2]="statusFilter === 'Restaurado'"
+    [class.ring-emerald-500]="statusFilter === 'Restaurado'"
+    (click)="filtrarPorStatus('Restaurado')"
+  >
+    <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Restaurados</div>
+    <div class="text-2xl font-bold text-emerald-800 dark:text-emerald-200 mt-1">{{ stats().restaurados }}</div>
+  </div>
+
+  <div class="p-4 rounded-xl border border-purple-200 dark:border-purple-800/40 bg-purple-50/50 dark:bg-purple-950/20">
+    <div class="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Em Alerta de Ausência</div>
+    <div class="text-2xl font-bold text-purple-800 dark:text-purple-200 mt-1">{{ alertasAbandono().length }}</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-12 gap-6">
+  <!-- Tabela Principal de Processos -->
+  <div class="col-span-12 xl:col-span-8">
+    <div class="card p-0 overflow-hidden">
+      <div class="p-4 border-b border-surface-200 dark:border-surface-700 flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+          <i class="pi pi-folder-open text-primary"></i>
+          Processos do Conselho
+        </h3>
+        <div class="flex items-center gap-2">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="searchQuery"
+              placeholder="Buscar processo, membro..."
+              class="p-inputtext-sm w-48 sm:w-64"
+              (keyup.enter)="carregarDados()"
+            />
+          </span>
+          <button pButton icon="pi pi-refresh" class="p-button-outlined p-button-sm" (click)="carregarDados()"></button>
+        </div>
+      </div>
+
+      <p-table [value]="processos()" [loading]="loading()" responsiveLayout="stack" breakpoint="960px">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Processo</th>
+            <th>Membro / Rol</th>
+            <th>Falta Canônica</th>
+            <th>Medida Disciplinar</th>
+            <th>Status</th>
+            <th class="text-center" style="width: 120px">Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-p>
+          <tr>
+            <td>
+              <span class="font-mono text-xs font-semibold text-surface-900 dark:text-surface-100 block">
+                {{ p.numero_processo }}
+              </span>
+              <span class="text-[11px] text-surface-500">
+                Abertura: {{ p.data_abertura | date: 'dd/MM/yyyy' }}
+              </span>
+            </td>
+            <td>
+              <div class="font-medium text-surface-900 dark:text-surface-0">
+                {{ p.person?.full_name || 'Membro não identificado' }}
+              </div>
+              <span class="text-xs text-surface-500">
+                Rol: {{ p.person?.roll_number || 'S/N' }}
+              </span>
+            </td>
+            <td>
+              <span class="text-sm font-semibold text-surface-700 dark:text-surface-300 block">
+                {{ p.tipo_falta }}
+              </span>
+              <span class="text-xs text-surface-500 line-clamp-1">
+                {{ p.descricao_falta }}
+              </span>
+            </td>
+            <td>
+              <p-tag [value]="p.medida_disciplinar" [severity]="getMedidaSeverity(p.medida_disciplinar)"></p-tag>
+            </td>
+            <td>
+              <p-tag [value]="p.status" [severity]="getStatusSeverity(p.status)"></p-tag>
+            </td>
+            <td class="text-center">
+              <div class="flex items-center justify-center gap-1">
+                <button
+                  pButton
+                  icon="pi pi-eye"
+                  class="p-button-rounded p-button-text p-button-sm"
+                  pTooltip="Ver Detalhes do Processo"
+                  (click)="verDetalhes(p)"
+                ></button>
+                @if (p.status !== 'Restaurado') {
+                  <button
+                    pButton
+                    icon="pi pi-heart"
+                    class="p-button-rounded p-button-text p-button-sm p-button-success"
+                    pTooltip="Restaurar Membro à Comunhão"
+                    (click)="abrirRestauracao(p)"
+                  ></button>
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-8 text-surface-500">
+              Nenhum processo disciplinar registrado para o filtro selecionado.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Painel Lateral: Alertas de Abandono de Comunhão -->
+  <div class="col-span-12 xl:col-span-4">
+    <div class="card p-0 overflow-hidden">
+      <div class="p-4 border-b border-surface-200 dark:border-surface-700 bg-purple-50/50 dark:bg-purple-950/20">
+        <h3 class="text-base font-semibold text-purple-900 dark:text-purple-200 m-0 flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle text-purple-600"></i>
+          Alertas de Ausência (> 1 ano)
+        </h3>
+        <p class="text-xs text-purple-700 dark:text-purple-300 mt-1 mb-0">
+          Membros comungantes sem registro de frequência ou comunhão há mais de 12 meses
+        </p>
+      </div>
+
+      <div class="p-4 divide-y divide-surface-200 dark:divide-surface-700 max-h-[520px] overflow-y-auto">
+        @for (m of alertasAbandono(); track m.id) {
+          <div class="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
+            <div>
+              <div class="font-medium text-sm text-surface-900 dark:text-surface-0">{{ m.full_name }}</div>
+              <div class="text-xs text-surface-500 flex items-center gap-2 mt-0.5">
+                <span>Rol: {{ m.roll_number || '—' }}</span>
+                @if (m.phone) {
+                  <span>• {{ m.phone }}</span>
+                }
+              </div>
+            </div>
+            <button
+              pButton
+              label="Abrir Processo"
+              icon="pi pi-shield"
+              class="p-button-outlined p-button-secondary p-button-xs"
+              (click)="abrirNovo(m)"
+            ></button>
+          </div>
+        } @empty {
+          <div class="text-center py-6 text-sm text-surface-500">
+            Nenhum membro identificado com ausência prolongada.
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo Processo Disciplinar -->
+<p-dialog [(visible)]="dialogNovo" header="Registrar Processo Disciplinar (Conselho)" [modal]="true" [style]="{ width: '600px' }">
+  <div class="flex flex-col gap-4 mt-2">
+    <div>
+      <label class="block text-sm font-semibold mb-1">Membro Envolvido *</label>
+      <select [(ngModel)]="formProcesso.person_id" class="w-full p-2.5 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm">
+        <option [ngValue]="undefined">Selecione o membro...</option>
+        @for (p of membrosDisponiveis(); track p.id) {
+          <option [value]="p.id">{{ p.full_name }} (Rol: {{ p.roll_number || 'S/N' }})</option>
+        }
+      </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-semibold mb-1">Tipo da Falta Canônica *</label>
+        <select [(ngModel)]="formProcesso.tipo_falta" class="w-full p-2.5 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm">
+          <option value="Abandono de Comunhão">Abandono de Comunhão</option>
+          <option value="Doutrinária">Doutrinária</option>
+          <option value="Moral">Moral</option>
+          <option value="Conduta">Conduta Incompatível</option>
+          <option value="Desobediência Eclesiástica">Desobediência Eclesiástica</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">Medida Disciplinar Inicial *</label>
+        <select [(ngModel)]="formProcesso.medida_disciplinar" class="w-full p-2.5 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm">
+          <option value="Em Instrução">Em Instrução / Audiência</option>
+          <option value="Sob Admoestação">Sob Admoestação</option>
+          <option value="Sob Censura">Sob Censura</option>
+          <option value="Suspensão dos Sacramentos">Suspensão dos Sacramentos</option>
+          <option value="Exclusão do Rol">Exclusão do Rol (Jurisdição)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-semibold mb-1">Data de Abertura *</label>
+        <input pInputText type="date" [(ngModel)]="formProcesso.data_abertura" class="w-full p-inputtext-sm" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">Presbítero Relator</label>
+        <input pInputText type="text" [(ngModel)]="formProcesso.relator_presbitero" placeholder="Ex: Presb. Antônio Marcos" class="w-full p-inputtext-sm" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Descrição dos Fatos / Relatório da Falta *</label>
+      <textarea [(ngModel)]="formProcesso.descricao_falta" rows="3" placeholder="Descreva sucintamente a falta apurada e o contexto da sessão..." class="w-full p-2.5 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm"></textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Observações Pastorais (Confidencial)</label>
+      <textarea [(ngModel)]="formProcesso.observacoes_pastorais" rows="2" placeholder="Recomendações e acompanhamento pelo pastor e presbíteros..." class="w-full p-2.5 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm"></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancelar" class="p-button-text p-button-secondary" (click)="dialogNovo = false"></button>
+    <button pButton label="Registrar Processo" icon="pi pi-check" class="p-button-primary" (click)="salvarProcesso()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Detalhes do Processo -->
+<p-dialog [(visible)]="dialogDetalhe" header="Ficha do Processo Disciplinar" [modal]="true" [style]="{ width: '560px' }">
+  @if (selectedProcesso) {
+    <div class="flex flex-col gap-4 text-sm mt-2">
+      <div class="p-3 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-surface-500 uppercase font-semibold">Número do Processo</span>
+          <div class="font-mono font-bold text-base">{{ selectedProcesso.numero_processo }}</div>
+        </div>
+        <p-tag [value]="selectedProcesso.medida_disciplinar" [severity]="getMedidaSeverity(selectedProcesso.medida_disciplinar)"></p-tag>
+      </div>
+
+      <div>
+        <span class="text-xs text-surface-500 uppercase font-semibold block">Membro Acusado / Ouvido</span>
+        <span class="font-bold text-base text-surface-900 dark:text-surface-0">{{ selectedProcesso.person?.full_name }}</span>
+        <span class="text-xs text-surface-500 block">Rol: {{ selectedProcesso.person?.roll_number || 'S/N' }}</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <span class="text-xs text-surface-500 uppercase font-semibold block">Tipo da Falta</span>
+          <span class="font-medium">{{ selectedProcesso.tipo_falta }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-surface-500 uppercase font-semibold block">Relator Designado</span>
+          <span class="font-medium">{{ selectedProcesso.relator_presbitero || 'Conselho Pleno' }}</span>
+        </div>
+      </div>
+
+      <div>
+        <span class="text-xs text-surface-500 uppercase font-semibold block">Descrição dos Fatos</span>
+        <p class="text-surface-700 dark:text-surface-300 mt-1 mb-0 whitespace-pre-line">{{ selectedProcesso.descricao_falta }}</p>
+      </div>
+
+      @if (selectedProcesso.observacoes_pastorais) {
+        <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900/40">
+          <span class="text-xs font-semibold text-surface-500 uppercase block">Acompanhamento Pastoral</span>
+          <p class="text-xs text-surface-600 dark:text-surface-400 mt-1 mb-0 whitespace-pre-line">{{ selectedProcesso.observacoes_pastorais }}</p>
+        </div>
+      }
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Fechar" class="p-button-text p-button-secondary" (click)="dialogDetalhe = false"></button>
+    @if (selectedProcesso && selectedProcesso.status !== 'Restaurado') {
+      <button pButton label="Restaurar Membro" icon="pi pi-heart" class="p-button-success" (click)="abrirRestauracao(selectedProcesso)"></button>
+    }
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Restauração do Membro -->
+<p-dialog [(visible)]="dialogRestaurar" header="Restaurar Membro à Plena Comunhão" [modal]="true" [style]="{ width: '500px' }">
+  <div class="flex flex-col gap-4 mt-2 text-sm">
+    <div class="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200">
+      Ao aprovar a restauração, o membro retornará automaticamente ao status canônico de <strong>Comungante</strong> em plena comunhão.
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Data da Restauração *</label>
+      <input pInputText type="date" [(ngModel)]="formRestauracao.data_restauracao" class="w-full p-inputtext-sm" />
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Registro da Decisão / Ata do Conselho</label>
+      <textarea [(ngModel)]="formRestauracao.observacoes_pastorais" rows="3" class="w-full p-2.5 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm"></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancelar" class="p-button-text p-button-secondary" (click)="dialogRestaurar = false"></button>
+    <button pButton label="Confirmar Restauração" icon="pi pi-check" class="p-button-success" (click)="confirmarRestauracao()"></button>
+  </ng-template>
+</p-dialog>
