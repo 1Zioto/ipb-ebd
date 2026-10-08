@@ -1,0 +1,317 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+      📖 Livro de Atas do Conselho (IPB)
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Registro digital seguro de reuniões do Conselho (Pastor e Presbíteros), decisões e resoluções canônicas
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <p-button icon="pi pi-plus" label="Lavrar Nova Ata" (onClick)="abrirNovaAta()"></p-button>
+  </div>
+</div>
+
+<!-- Barra de Busca & Filtros -->
+<div class="card p-4 mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+  <div class="flex items-center gap-3 w-full sm:w-auto">
+    <span class="p-input-icon-left w-full sm:w-80">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        pInputText
+        class="w-full text-sm"
+        placeholder="Buscar em pautas e deliberações..."
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="carregarAtas()"
+      />
+    </span>
+    <p-button icon="pi pi-search" label="Buscar" (onClick)="carregarAtas()"></p-button>
+  </div>
+  <div>
+    <select
+      class="p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+      [(ngModel)]="tipoFilter"
+      (change)="carregarAtas()"
+    >
+      <option value="">Todas as Reuniões</option>
+      <option value="Ordinária">Ordinárias</option>
+      <option value="Extraordinária">Extraordinárias</option>
+    </select>
+  </div>
+</div>
+
+<!-- Tabela de Atas -->
+<div class="card p-0 overflow-hidden shadow-sm rounded-xl print:hidden">
+  <p-table
+    [value]="atas()"
+    [loading]="loading()"
+    [rowHover]="true"
+    [paginator]="true"
+    [rows]="10"
+    responsiveLayout="scroll"
+    styleClass="p-datatable-sm"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 140px">Nº da Ata</th>
+        <th>Tipo</th>
+        <th>Data & Horário</th>
+        <th>Presidente & Secretário</th>
+        <th>Resumo da Pauta</th>
+        <th>Status</th>
+        <th style="width: 130px; text-align: center">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-a>
+      <tr>
+        <td>
+          <span class="font-mono text-xs font-bold px-2 py-1 bg-surface-100 dark:bg-surface-800 rounded">
+            {{ a.numero_ata }}
+          </span>
+        </td>
+        <td>
+          <p-tag
+            [value]="a.tipo"
+            [severity]="a.tipo === 'Ordinária' ? 'info' : 'warn'"
+          ></p-tag>
+        </td>
+        <td>
+          <div class="font-medium text-surface-900 dark:text-surface-0">
+            {{ a.data_reuniao | date: 'dd/MM/yyyy' }}
+          </div>
+          <span class="text-xs text-surface-400">{{ a.horario || '—' }} • {{ a.local || 'Gabinete' }}</span>
+        </td>
+        <td>
+          <div class="text-sm">
+            <div><span class="text-surface-400 text-xs">Pres:</span> {{ a.pastor_presidente }}</div>
+            <div><span class="text-surface-400 text-xs">Sec:</span> {{ a.secretario_conselho }}</div>
+          </div>
+        </td>
+        <td>
+          <span class="text-sm text-surface-700 dark:text-surface-300 line-clamp-2">
+            {{ a.pauta || a.deliberacoes || '—' }}
+          </span>
+        </td>
+        <td>
+          <p-tag
+            [value]="a.status"
+            [severity]="a.status === 'Assinada' ? 'success' : a.status === 'Aprovada' ? 'info' : 'secondary'"
+          ></p-tag>
+        </td>
+        <td class="text-center">
+          <div class="flex items-center justify-center gap-1">
+            <button
+              pButton
+              icon="pi pi-book"
+              class="p-button-rounded p-button-text p-button-sm p-button-primary"
+              pTooltip="Ler Ata Completa"
+              (click)="visualizarAta(a)"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-sm p-button-secondary"
+              pTooltip="Editar Ata"
+              (click)="editarAta(a)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center p-8 text-surface-500">
+          Nenhuma ata registrada no Livro com os critérios selecionados.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modal Lavrar / Editar Ata -->
+<p-dialog
+  [(visible)]="formDialog"
+  [modal]="true"
+  [style]="{ width: '700px', maxWidth: '95vw' }"
+  [header]="isEditing ? 'Editar Assentamento de Ata' : 'Lavrar Nova Ata no Livro Oficial do Conselho'"
+>
+  <div class="space-y-4 pt-2">
+    <div class="grid grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Número da Ata *</label>
+        <input type="text" pInputText class="w-full text-sm font-mono" [(ngModel)]="formAta.numero_ata" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Tipo de Reunião *</label>
+        <select
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="formAta.tipo"
+        >
+          <option value="Ordinária">Ordinária</option>
+          <option value="Extraordinária">Extraordinária</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Status da Ata</label>
+        <select
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="formAta.status"
+        >
+          <option value="Rascunho">Rascunho</option>
+          <option value="Aprovada">Aprovada</option>
+          <option value="Assinada">Assinada</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data da Reunião *</label>
+        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="formAta.data_reuniao" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Horário</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="formAta.horario" placeholder="Ex: 19:30" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Local da Sessão</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="formAta.local" placeholder="Ex: Gabinete Pastoral" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Pastor Presidente</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="formAta.pastor_presidente" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Secretário do Conselho</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="formAta.secretario_conselho" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Abertura e Devoção</label>
+      <textarea
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        rows="2"
+        [(ngModel)]="formAta.abertura"
+        placeholder="Texto bíblico lido, oração inicial e presença de oficiais..."
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Pauta dos Trabalhos</label>
+      <textarea
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        rows="2"
+        [(ngModel)]="formAta.pauta"
+        placeholder="1. Leitura da ata anterior; 2. Finanças; 3. Recepção de membros..."
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Deliberações e Resoluções Tomadas *</label>
+      <textarea
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        rows="4"
+        [(ngModel)]="formAta.deliberacoes"
+        placeholder="Resoluções canônicas aprovadas pelo Conselho com votações e determinações..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="formDialog = false"></p-button>
+    <p-button label="Registrar no Livro" icon="pi pi-check" (onClick)="salvarAta()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Visualizador Oficial do Livro de Atas (Pronto para Impressão) -->
+<p-dialog
+  [(visible)]="viewDialog"
+  [modal]="true"
+  [style]="{ width: '750px', maxWidth: '95vw' }"
+  header="Livro Oficial de Atas do Conselho da Igreja"
+>
+  @if (selectedAta) {
+    <div class="p-8 border border-surface-200 dark:border-surface-700 rounded-xl bg-surface-0 dark:bg-surface-900 printable-document">
+      <!-- Cabeçalho Oficial -->
+      <div class="text-center pb-6 border-b border-surface-300 dark:border-surface-700">
+        <div class="text-xs font-bold tracking-widest text-surface-500 uppercase">Igreja Presbiteriana do Brasil</div>
+        <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 mt-1 mb-0 uppercase">
+          IGREJA PRESBITERIANA EM CAMPO VERDE
+        </h2>
+        <div class="text-xs text-surface-500 mt-1">
+          LIVRO OFICIAL DE ATAS DO CONSELHO DA IGREJA
+        </div>
+        <div class="mt-3 inline-block px-3 py-1 bg-surface-100 dark:bg-surface-800 border border-surface-300 dark:border-surface-700 rounded font-bold text-xs uppercase tracking-wider">
+          {{ selectedAta.numero_ata }} — Sessão {{ selectedAta.tipo }}
+        </div>
+      </div>
+
+      <!-- Assentamento da Ata -->
+      <div class="py-6 space-y-4 text-justify leading-relaxed text-sm text-surface-800 dark:text-surface-200">
+        <p>
+          Aos <strong>{{ selectedAta.data_reuniao | date: "dd 'dias do mês de' MMMM 'de' yyyy" }}</strong>,
+          às <strong>{{ selectedAta.horario || '19:30' }}</strong>, no <strong>{{ selectedAta.local || 'Gabinete Pastoral' }}</strong>,
+          reuniu-se ordinariamente o Conselho da Igreja Presbiteriana em Campo Verde, sob a presidência do <strong>{{ selectedAta.pastor_presidente }}</strong>
+          e secretariado pelo <strong>{{ selectedAta.secretario_conselho }}</strong>.
+        </p>
+
+        @if (selectedAta.abertura) {
+          <div>
+            <h4 class="font-bold text-surface-900 dark:text-surface-100 text-xs uppercase tracking-wider mb-1">
+              Abertura & Devoção:
+            </h4>
+            <p>{{ selectedAta.abertura }}</p>
+          </div>
+        }
+
+        @if (selectedAta.pauta) {
+          <div>
+            <h4 class="font-bold text-surface-900 dark:text-surface-100 text-xs uppercase tracking-wider mb-1">
+              Pauta da Sessão:
+            </h4>
+            <p>{{ selectedAta.pauta }}</p>
+          </div>
+        }
+
+        <div>
+          <h4 class="font-bold text-surface-900 dark:text-surface-100 text-xs uppercase tracking-wider mb-1">
+            Deliberações e Resoluções do Conselho:
+          </h4>
+          <p>{{ selectedAta.deliberacoes }}</p>
+        </div>
+
+        <p class="pt-2 italic text-xs text-surface-600 dark:text-surface-400">
+          Nada mais havendo a tratar, a reunião foi encerrada com oração e bênção apostólica, lavrando-se a presente ata que, após lida e achada conforme, vai assinada pelo Pastor Presidente e pelo Secretário do Conselho.
+        </p>
+      </div>
+
+      <!-- Assinaturas do Livro de Atas -->
+      <div class="pt-8 border-t border-surface-300 dark:border-surface-700">
+        <div class="grid grid-cols-2 gap-10 text-center text-xs">
+          <div>
+            <div class="border-b border-surface-400 dark:border-surface-600 pb-1 mb-2"></div>
+            <div class="font-bold text-surface-900 dark:text-surface-100">{{ selectedAta.pastor_presidente }}</div>
+            <div class="text-surface-500">Pastor Titular • Presidente do Conselho</div>
+          </div>
+          <div>
+            <div class="border-b border-surface-400 dark:border-surface-600 pb-1 mb-2"></div>
+            <div class="font-bold text-surface-900 dark:text-surface-100">{{ selectedAta.secretario_conselho }}</div>
+            <div class="text-surface-500">Secretário do Conselho</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" icon="pi pi-times" [text]="true" (onClick)="viewDialog = false"></p-button>
+    <p-button label="Imprimir Ata Oficial" icon="pi pi-print" (onClick)="imprimir()"></p-button>
+  </ng-template>
+</p-dialog>

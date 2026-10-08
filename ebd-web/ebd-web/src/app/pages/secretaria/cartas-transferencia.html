@@ -1,0 +1,289 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+      ✉️ Cartas de Transferência (Canônico IPB)
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Emissão e controle canônico de cartas para envio a outras igrejas ou recebimento de membros
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <p-button icon="pi pi-plus" label="Emitir Nova Carta" (onClick)="abrirNovaCarta()"></p-button>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card p-4 mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+  <div class="flex items-center gap-3">
+    <select
+      class="p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+      [(ngModel)]="tipoFilter"
+      (change)="carregarCartas()"
+    >
+      @for (opt of tipoOptions; track opt.value) {
+        <option [value]="opt.value">{{ opt.label }}</option>
+      }
+    </select>
+    <select
+      class="p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+      [(ngModel)]="statusFilter"
+      (change)="carregarCartas()"
+    >
+      @for (opt of statusOptions; track opt.value) {
+        <option [value]="opt.value">{{ opt.label }}</option>
+      }
+    </select>
+  </div>
+</div>
+
+<!-- Tabela de Cartas -->
+<div class="card p-0 overflow-hidden shadow-sm rounded-xl print:hidden">
+  <p-table
+    [value]="cartas()"
+    [loading]="loading()"
+    [rowHover]="true"
+    [paginator]="true"
+    [rows]="10"
+    responsiveLayout="scroll"
+    styleClass="p-datatable-sm"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 130px">Nº Carta</th>
+        <th>Tipo</th>
+        <th>Membro</th>
+        <th>Igreja Origem</th>
+        <th>Igreja Destino</th>
+        <th>Emissão</th>
+        <th>Status</th>
+        <th style="width: 100px; text-align: center">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-c>
+      <tr>
+        <td>
+          <span class="font-mono text-xs font-bold px-2 py-1 bg-surface-100 dark:bg-surface-800 rounded">
+            {{ c.numero_carta }}
+          </span>
+        </td>
+        <td>
+          <p-tag
+            [value]="c.tipo === 'Emitida' ? 'Saída (Emitida)' : 'Entrada (Recebida)'"
+            [severity]="c.tipo === 'Emitida' ? 'info' : 'success'"
+          ></p-tag>
+        </td>
+        <td>
+          <div class="font-medium text-surface-900 dark:text-surface-0">{{ c.person?.full_name || 'Membro' }}</div>
+          @if (c.person?.roll_number) {
+            <span class="text-xs text-surface-400 font-mono">{{ c.person?.roll_number }}</span>
+          }
+        </td>
+        <td>
+          <span class="text-sm text-surface-700 dark:text-surface-300">{{ c.igreja_origem }}</span>
+        </td>
+        <td>
+          <span class="text-sm text-surface-700 dark:text-surface-300">{{ c.igreja_destino }}</span>
+        </td>
+        <td>
+          <span class="text-sm text-surface-600 dark:text-surface-400">
+            {{ c.data_emissao | date: 'dd/MM/yyyy' }}
+          </span>
+        </td>
+        <td>
+          <p-tag
+            [value]="c.status"
+            [severity]="c.status === 'Ativa' ? 'warn' : c.status === 'Concluída' ? 'success' : 'secondary'"
+          ></p-tag>
+        </td>
+        <td class="text-center">
+          <button
+            pButton
+            icon="pi pi-file-pdf"
+            class="p-button-rounded p-button-text p-button-sm p-button-primary"
+            pTooltip="Visualizar / Imprimir Carta Canônica"
+            (click)="visualizarCarta(c)"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center p-8 text-surface-500">
+          Nenhuma carta de transferência encontrada com os filtros selecionados.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modal Nova Carta -->
+<p-dialog
+  [(visible)]="newDialog"
+  [modal]="true"
+  [style]="{ width: '560px' }"
+  header="Emitir Nova Carta de Transferência Canônica"
+>
+  <div class="space-y-4 pt-2">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Número Oficial da Carta *</label>
+        <input type="text" pInputText class="w-full font-mono text-sm" [(ngModel)]="newCarta.numero_carta" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Tipo de Carta *</label>
+        <select
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="newCarta.tipo"
+        >
+          <option value="Emitida">Emitida (Saída para outra igreja)</option>
+          <option value="Recebida">Recebida (Entrada de outra igreja)</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Membro *</label>
+      <select
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        [(ngModel)]="newCarta.person_id"
+      >
+        <option [ngValue]="null">Selecione o membro...</option>
+        @for (m of membros(); track m.id) {
+          <option [ngValue]="m.id">{{ m.full_name }} ({{ m.roll_number || 'S/N' }})</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Igreja de Origem *</label>
+      <input type="text" pInputText class="w-full text-sm" [(ngModel)]="newCarta.igreja_origem" />
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Igreja de Destino *</label>
+      <input type="text" pInputText class="w-full text-sm" [(ngModel)]="newCarta.igreja_destino" placeholder="Ex: Primeira IP de Cuiabá - MT" />
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data de Emissão *</label>
+        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="newCarta.data_emissao" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data de Validade (Canônica)</label>
+        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="newCarta.data_validade" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Observações Canônicas</label>
+      <textarea
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        rows="2"
+        [(ngModel)]="newCarta.observacoes"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="newDialog = false"></p-button>
+    <p-button label="Emitir Carta Canônica" icon="pi pi-check" (onClick)="salvarNovaCarta()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Visualizador Canônico Padrão IPB (Pronto para Impressão) -->
+<p-dialog
+  [(visible)]="viewDialog"
+  [modal]="true"
+  [style]="{ width: '750px', maxWidth: '95vw' }"
+  header="Carta de Transferência Canônica — Padrão Oficial IPB"
+>
+  @if (selectedCarta) {
+    <div class="p-8 border border-surface-200 dark:border-surface-700 rounded-xl bg-surface-0 dark:bg-surface-900 printable-document">
+      <!-- Cabeçalho Oficial -->
+      <div class="text-center pb-6 border-b border-surface-300 dark:border-surface-700">
+        <div class="text-xs font-bold tracking-widest text-surface-500 uppercase">Igreja Presbiteriana do Brasil</div>
+        <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 mt-1 mb-0 uppercase">
+          {{ selectedCarta.igreja_origem }}
+        </h2>
+        <div class="text-xs text-surface-500 mt-1">
+          Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)
+        </div>
+        <div class="mt-3 inline-block px-3 py-1 bg-surface-100 dark:bg-surface-800 border border-surface-300 dark:border-surface-700 rounded font-mono font-bold text-xs uppercase tracking-wider">
+          Carta de Transferência Canônica Nº {{ selectedCarta.numero_carta }}
+        </div>
+      </div>
+
+      <!-- Texto Canônico Formal IPB -->
+      <div class="py-6 space-y-4 text-justify leading-relaxed text-sm text-surface-800 dark:text-surface-200">
+        <p class="font-semibold">
+          Ao Conselho da respeitável {{ selectedCarta.igreja_destino }},
+        </p>
+
+        <p>
+          Graça e paz da parte de nosso Senhor e Salvador Jesus Cristo.
+        </p>
+
+        <p>
+          Vimos por meio desta certificar que o(a) irmão(ã) <strong>{{ selectedCarta.person?.full_name }}</strong>,
+          inscrito(a) no Rol de Membros desta igreja sob o nº <strong>{{ selectedCarta.person?.roll_number || 'S/N' }}</strong>,
+          acha-se em plena comunhão com esta comunidade da fé, não havendo contra sua pessoa qualquer impedimento de ordem moral, doutrinária ou canônica que desabone sua caminhada cristã.
+        </p>
+
+        <p>
+          Tendo solicitado sua transferência eclesiástica para essa estimada igreja irmã, o Conselho houve por bem conceder a presente Carta de Transferência, recomendando com alegria o(a) referido(a) irmão(ã) ao vosso cuidado pastoral, comunhão fraterna e vigilância espiritual.
+        </p>
+
+        @if (selectedCarta.observacoes) {
+          <div class="p-3 bg-surface-50 dark:bg-surface-800 rounded border border-surface-200 dark:border-surface-700 text-xs italic">
+            <strong>Observações do Conselho:</strong> {{ selectedCarta.observacoes }}
+          </div>
+        }
+
+        <p class="text-xs text-surface-500">
+          * Conforme prescreve a Constituição da Igreja Presbiteriana do Brasil, a presente carta tem validade de 6 (seis) meses a contar da data de sua expedição, findos os quais caducará caso não seja apresentada.
+        </p>
+
+        <div class="text-right pt-4 text-sm">
+          Campo Verde - MT, {{ selectedCarta.data_emissao | date: "dd 'de' MMMM 'de' yyyy" }}.
+        </div>
+      </div>
+
+      <!-- Assinaturas Canônicas do Conselho -->
+      <div class="pt-8 border-t border-surface-300 dark:border-surface-700">
+        <div class="grid grid-cols-2 gap-10 text-center text-xs">
+          <div>
+            <div class="border-b border-surface-400 dark:border-surface-600 pb-1 mb-2"></div>
+            <div class="font-bold text-surface-900 dark:text-surface-100">Rev. Pastor Presidente</div>
+            <div class="text-surface-500">Pastor Titular • Presidente do Conselho</div>
+          </div>
+          <div>
+            <div class="border-b border-surface-400 dark:border-surface-600 pb-1 mb-2"></div>
+            <div class="font-bold text-surface-900 dark:text-surface-100">Presb. Secretário do Conselho</div>
+            <div class="text-surface-500">Secretaria da Igreja</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canhoto de Devolução (Conforme Praxe Canônica IPB) -->
+      <div class="mt-10 pt-4 border-t-2 border-dashed border-surface-400 text-xs text-surface-600 dark:text-surface-400">
+        <div class="text-center font-bold uppercase tracking-wider text-surface-500 mb-2">
+          (Destacar e devolver à igreja de origem após a homologação)
+        </div>
+        <p class="italic mb-4">
+          Certificamos que o(a) irmão(ã) <strong>{{ selectedCarta.person?.full_name }}</strong> foi recebido(a) em comunhão nesta igreja em ___/___/______, pelo que rogamos a respectiva baixa no vosso Rol de Membros.
+        </p>
+        <div class="text-right">
+          Assinatura do Pastor / Secretário da Igreja Receptora: ___________________________________
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" icon="pi pi-times" [text]="true" (onClick)="viewDialog = false"></p-button>
+    <p-button label="Imprimir Carta Padrão IPB" icon="pi pi-print" (onClick)="imprimir()"></p-button>
+  </ng-template>
+</p-dialog>

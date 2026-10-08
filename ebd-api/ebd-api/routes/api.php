@@ -22,6 +22,10 @@ use App\Http\Controllers\Api\Financial\FinancialCostCenterController;
 use App\Http\Controllers\Api\Financial\FinancialTransactionController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SystemAdminController;
+use App\Http\Controllers\Api\SecretariaController;
+use App\Http\Controllers\Api\SociedadesController;
+use App\Http\Controllers\Api\DiscipuladoBibliotecaController;
+use App\Http\Controllers\Api\RelatoriosOficiaisController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -228,5 +232,47 @@ Route::prefix('v1')->group(function () {
             Route::post('accounting/close-month', [FinancialAccountingController::class, 'closeMonth'])->middleware('permission:financial.accounting.close');
             Route::post('accounting/reopen-month', [FinancialAccountingController::class, 'reopenMonth'])->middleware('permission:financial.accounting.close');
         });
+
+        // ---- 🏛️ 1. Secretaria & Conselho da Igreja (Canônico IPB) ----
+        Route::prefix('secretaria')->group(function () {
+            Route::get('membros', [SecretariaController::class, 'membros']);
+            Route::get('membros/{person}', [SecretariaController::class, 'showMembro']);
+            Route::put('membros/{person}', [SecretariaController::class, 'updateMembro']);
+            Route::get('estatistica-presbiterio', [SecretariaController::class, 'estatisticaPresbiterio']);
+            Route::get('cartas', [SecretariaController::class, 'cartas']);
+            Route::post('cartas', [SecretariaController::class, 'storeCarta']);
+            Route::get('cartas/{carta}', [SecretariaController::class, 'showCarta']);
+            Route::get('atas', [SecretariaController::class, 'atas']);
+            Route::post('atas', [SecretariaController::class, 'storeAta']);
+            Route::get('atas/{ata}', [SecretariaController::class, 'showAta']);
+            Route::put('atas/{ata}', [SecretariaController::class, 'updateAta']);
+        });
+
+        // ---- 👥 2. Sociedades Internas & Ministérios (SAF, UPH, UMP, UPA, UCP) ----
+        Route::prefix('sociedades')->group(function () {
+            Route::get('/', [SociedadesController::class, 'index']);
+            Route::get('{sociedade}', [SociedadesController::class, 'show']);
+            Route::post('{sociedade}/diretoria', [SociedadesController::class, 'storeDiretoria']);
+            Route::post('{sociedade}/atividades', [SociedadesController::class, 'storeAtividade']);
+        });
+
+        // ---- 📖 5. Discipulado & Biblioteca da Igreja ----
+        Route::prefix('discipulado-biblioteca')->group(function () {
+            Route::get('discipulado', [DiscipuladoBibliotecaController::class, 'discipulado']);
+            Route::post('discipulado', [DiscipuladoBibliotecaController::class, 'storeCatecumeno']);
+            Route::put('discipulado/{item}', [DiscipuladoBibliotecaController::class, 'updateCatecumeno']);
+            Route::get('livros', [DiscipuladoBibliotecaController::class, 'livros']);
+            Route::post('livros', [DiscipuladoBibliotecaController::class, 'storeLivro']);
+            Route::get('emprestimos', [DiscipuladoBibliotecaController::class, 'emprestimos']);
+            Route::post('emprestimos', [DiscipuladoBibliotecaController::class, 'storeEmprestimo']);
+            Route::post('emprestimos/{emprestimo}/devolver', [DiscipuladoBibliotecaController::class, 'devolverEmprestimo']);
+        });
+
+        // ---- 📊 6. Relatórios Oficiais com Assinaturas ----
+        Route::prefix('relatorios-oficiais')->group(function () {
+            Route::get('termo-balancete', [RelatoriosOficiaisController::class, 'termoBalancete']);
+            Route::get('ficha-ministerial/{person}', [RelatoriosOficiaisController::class, 'fichaMinisterial']);
+        });
     });
 });
+

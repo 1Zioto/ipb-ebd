@@ -1,0 +1,176 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+      📊 Estatística Anual do Presbitério
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Relatório oficial gerado com 1 clique para entrega anual ao Presbitério (IPB)
+    </p>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-semibold text-surface-600">Ano Base:</label>
+      <select
+        class="p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm font-semibold"
+        [(ngModel)]="ano"
+        (change)="carregarEstatistica()"
+      >
+        @for (a of anosDisponiveis; track a) {
+          <option [value]="a">{{ a }}</option>
+        }
+      </select>
+    </div>
+    <p-button icon="pi pi-refresh" [text]="true" (onClick)="carregarEstatistica()" pTooltip="Atualizar dados"></p-button>
+    <p-button icon="pi pi-print" label="Imprimir / Salvar PDF" (onClick)="imprimir()"></p-button>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="card p-12 text-center text-surface-500">
+    <i class="pi pi-spin pi-spinner text-3xl"></i>
+    <p class="mt-2 text-sm">Consolidando dados canônicos do ano...</p>
+  </div>
+} @else if (dados()) {
+  <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-8 max-w-4xl mx-auto shadow-sm printable-report">
+    <!-- Cabeçalho Oficial Canônico IPB -->
+    <div class="text-center pb-6 border-b-2 border-surface-300 dark:border-surface-700">
+      <div class="text-xs font-bold tracking-widest text-surface-500 uppercase">Igreja Presbiteriana do Brasil</div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 mt-1 mb-0 uppercase">
+        {{ dados()?.igreja }}
+      </h2>
+      <div class="text-sm text-surface-600 dark:text-surface-400 mt-0.5">
+        {{ dados()?.presbiterio }}
+      </div>
+      <div class="mt-3 inline-block px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-md text-primary font-bold text-sm tracking-wide uppercase">
+        Relatório Estatístico Oficial — Exercício {{ dados()?.ano }}
+      </div>
+    </div>
+
+    <!-- 1. Balanço Geral de Membresia -->
+    <div class="mt-6 mb-8">
+      <h3 class="text-base font-bold text-surface-800 dark:text-surface-200 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <span class="w-2.5 h-2.5 bg-primary rounded-full inline-block"></span>
+        I. Balanço Oficial de Membresia (Posição em 31/12/{{ dados()?.ano }})
+      </h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="p-4 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-center">
+          <div class="text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-400">Comungantes</div>
+          <div class="text-3xl font-extrabold text-emerald-900 dark:text-emerald-200 mt-1">
+            {{ dados()?.comungantes_atual }}
+          </div>
+          <div class="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">Direito a voto & ofício</div>
+        </div>
+
+        <div class="p-4 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 rounded-xl text-center">
+          <div class="text-xs font-semibold uppercase text-blue-700 dark:text-blue-400">Não-comungantes</div>
+          <div class="text-3xl font-extrabold text-blue-900 dark:text-blue-200 mt-1">
+            {{ dados()?.nao_comungantes_atual }}
+          </div>
+          <div class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">Filhos sob a aliança</div>
+        </div>
+
+        <div class="p-4 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-xl text-center">
+          <div class="text-xs font-semibold uppercase text-amber-700 dark:text-amber-400">Sob Disciplina</div>
+          <div class="text-3xl font-extrabold text-amber-900 dark:text-amber-200 mt-1">
+            {{ dados()?.sob_disciplina_atual }}
+          </div>
+          <div class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Sob cuidado pastoral</div>
+        </div>
+
+        <div class="p-4 bg-surface-100 dark:bg-surface-800 border border-surface-300 dark:border-surface-700 rounded-xl text-center">
+          <div class="text-xs font-semibold uppercase text-surface-600 dark:text-surface-400">Membresia Total</div>
+          <div class="text-3xl font-extrabold text-surface-900 dark:text-surface-0 mt-1">
+            {{ dados()?.total_membros }}
+          </div>
+          <div class="text-xs text-surface-500 mt-0.5">Total sob jurisdição</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Movimento do Ano (Entradas e Saídas) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Entradas -->
+      <div class="border border-surface-200 dark:border-surface-700 rounded-xl p-5 bg-surface-50/50 dark:bg-surface-800/40">
+        <h4 class="text-sm font-bold text-surface-800 dark:text-surface-200 uppercase tracking-wide mb-3 flex items-center justify-between">
+          <span>II. Entradas / Recepções</span>
+          <span class="text-xs font-normal text-emerald-600 font-mono">
+            +{{ (dados()?.movimento_ano?.recebidos_profissao_batismo || 0) + (dados()?.movimento_ano?.recebidos_profissao || 0) + (dados()?.movimento_ano?.recebidos_transferencia || 0) }} total
+          </span>
+        </h4>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between items-center py-1.5 border-b border-surface-200 dark:border-surface-700">
+            <span class="text-surface-600 dark:text-surface-400">Profissão de Fé e Batismo</span>
+            <span class="font-bold text-surface-900 dark:text-surface-100">{{ dados()?.movimento_ano?.recebidos_profissao_batismo }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-surface-200 dark:border-surface-700">
+            <span class="text-surface-600 dark:text-surface-400">Profissão de Fé (ex-não comungantes)</span>
+            <span class="font-bold text-surface-900 dark:text-surface-100">{{ dados()?.movimento_ano?.recebidos_profissao }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5">
+            <span class="text-surface-600 dark:text-surface-400">Cartas de Transferência Recebidas</span>
+            <span class="font-bold text-surface-900 dark:text-surface-100">{{ dados()?.movimento_ano?.recebidos_transferencia }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saídas -->
+      <div class="border border-surface-200 dark:border-surface-700 rounded-xl p-5 bg-surface-50/50 dark:bg-surface-800/40">
+        <h4 class="text-sm font-bold text-surface-800 dark:text-surface-200 uppercase tracking-wide mb-3 flex items-center justify-between">
+          <span>III. Saídas / Demissões</span>
+          <span class="text-xs font-normal text-red-600 font-mono">
+            -{{ (dados()?.movimento_ano?.saidas_transferencia || 0) + (dados()?.movimento_ano?.saidas_falecimento || 0) }} total
+          </span>
+        </h4>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between items-center py-1.5 border-b border-surface-200 dark:border-surface-700">
+            <span class="text-surface-600 dark:text-surface-400">Cartas de Transferência Expedidas</span>
+            <span class="font-bold text-surface-900 dark:text-surface-100">{{ dados()?.movimento_ano?.saidas_transferencia }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5">
+            <span class="text-surface-600 dark:text-surface-400">Falecimentos / Partida para a Glória</span>
+            <span class="font-bold text-surface-900 dark:text-surface-100">{{ dados()?.movimento_ano?.saidas_falecimento }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Atos Ministeriais & Sacramentais -->
+    <div class="border border-surface-200 dark:border-surface-700 rounded-xl p-5 bg-surface-50/50 dark:bg-surface-800/40 mb-8">
+      <h4 class="text-sm font-bold text-surface-800 dark:text-surface-200 uppercase tracking-wide mb-3">
+        IV. Atos Sacramentais e Ministeriais no Ano
+      </h4>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="flex justify-between items-center p-3 bg-surface-0 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700">
+          <span class="text-surface-600 dark:text-surface-400">Batismos Infantis Celebrados</span>
+          <span class="text-base font-bold text-primary">{{ dados()?.movimento_ano?.batismos_infantis }}</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-surface-0 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700">
+          <span class="text-surface-600 dark:text-surface-400">Casamentos Religiosos Celebrados</span>
+          <span class="text-base font-bold text-primary">{{ dados()?.movimento_ano?.casamentos }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campos de Assinatura Canônica -->
+    <div class="pt-8 border-t border-surface-300 dark:border-surface-700 text-xs">
+      <p class="text-center italic text-surface-500 mb-10">
+        O presente relatório estatístico foi aprovado pelo Conselho da Igreja em reunião canônica e conferido com os livros de atas e assentamentos de membros.
+      </p>
+
+      <div class="grid grid-cols-2 gap-12 text-center">
+        <div>
+          <div class="border-b border-surface-400 dark:border-surface-500 pb-1 mb-2"></div>
+          <div class="font-bold text-surface-900 dark:text-surface-100">Rev. Marcos Silva</div>
+          <div class="text-surface-500">Pastor Titular • Presidente do Conselho</div>
+        </div>
+        <div>
+          <div class="border-b border-surface-400 dark:border-surface-500 pb-1 mb-2"></div>
+          <div class="font-bold text-surface-900 dark:text-surface-100">Presb. José Carlos Prado</div>
+          <div class="text-surface-500">Secretário do Conselho</div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

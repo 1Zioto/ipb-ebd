@@ -18,6 +18,9 @@ class Person extends Model
     protected $fillable = [
         'institution_id', 'full_name', 'birth_date', 'is_active', 'can_teach', 'can_superintend', 'notes',
         'is_tither', 'tither_since', 'envelope_number',
+        'canonical_status', 'roll_number', 'reception_type', 'reception_date',
+        'baptism_date', 'profession_date', 'exit_type', 'exit_date',
+        'marital_status', 'spouse_name', 'marriage_date', 'phone', 'email', 'cpf',
     ];
 
     protected function casts(): array
@@ -25,6 +28,11 @@ class Person extends Model
         return [
             'birth_date' => 'date',
             'tither_since' => 'date',
+            'reception_date' => 'date',
+            'baptism_date' => 'date',
+            'profession_date' => 'date',
+            'exit_date' => 'date',
+            'marriage_date' => 'date',
             'is_active' => 'boolean',
             'can_teach' => 'boolean',
             'can_superintend' => 'boolean',

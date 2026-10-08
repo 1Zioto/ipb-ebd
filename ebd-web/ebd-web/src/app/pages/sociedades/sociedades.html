@@ -1,0 +1,274 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+      👥 Sociedades Internas & Forças Ativas (IPB)
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Gestão integrada das forças ativas: SAF, UPH, UMP, UPA e UCP com diretorias, calendário e centros de custo
+    </p>
+  </div>
+</div>
+
+<!-- Abas de Navegação das 5 Sociedades -->
+<div class="flex flex-wrap gap-2 border-b border-surface-200 dark:border-surface-700 pb-3 mb-6">
+  @for (soc of sociedades(); track soc.sigla) {
+    <button
+      class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all border"
+      [class.bg-primary]="activeSigla === soc.sigla"
+      [class.text-primary-contrast]="activeSigla === soc.sigla"
+      [class.border-primary]="activeSigla === soc.sigla"
+      [class.bg-surface-0]="activeSigla !== soc.sigla"
+      [class.dark:bg-surface-800]="activeSigla !== soc.sigla"
+      [class.border-surface-200]="activeSigla !== soc.sigla"
+      [class.dark:border-surface-700]="activeSigla !== soc.sigla"
+      [class.text-surface-700]="activeSigla !== soc.sigla"
+      [class.dark:text-surface-200]="activeSigla !== soc.sigla"
+      (click)="selecionarSociedade(soc.sigla)"
+    >
+      <span>{{ soc.sigla }}</span>
+      <span
+        class="text-xs px-2 py-0.5 rounded-full font-semibold"
+        [class.bg-white/20]="activeSigla === soc.sigla"
+        [class.bg-surface-100]="activeSigla !== soc.sigla"
+        [class.dark:bg-surface-700]="activeSigla !== soc.sigla"
+      >
+        {{ membrosPotenciais()[soc.sigla] || 0 }} membros
+      </span>
+    </button>
+  }
+</div>
+
+@if (loading()) {
+  <div class="card p-12 text-center text-surface-500">
+    <i class="pi pi-spin pi-spinner text-3xl"></i>
+    <p class="mt-2 text-sm">Carregando dados das sociedades internas...</p>
+  </div>
+} @else if (getSociedadeAtiva(); as soc) {
+  <!-- Cartão de Identificação da Sociedade -->
+  <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl p-6 mb-6 shadow-sm">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="text-3xl font-extrabold text-primary">{{ soc.sigla }}</span>
+          <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">{{ soc.nome }}</h2>
+            <div class="text-xs text-surface-500 font-medium mt-0.5">{{ soc.faixa_etaria }}</div>
+          </div>
+        </div>
+        @if (soc.lema) {
+          <p class="text-sm italic text-surface-600 dark:text-surface-400 mt-3 mb-0">
+            "{{ soc.lema }}"
+          </p>
+        }
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        @if (soc.costCenter) {
+          <div class="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs">
+            <span class="text-surface-400 block">Centro de Custo Vinculado:</span>
+            <strong class="text-emerald-700 dark:text-emerald-300">{{ soc.costCenter.code }} — {{ soc.costCenter.name }}</strong>
+          </div>
+        }
+        <div class="px-3 py-1.5 bg-surface-100 dark:bg-surface-800 rounded-lg text-xs text-center">
+          <span class="text-surface-400 block">Membros Elegíveis:</span>
+          <strong class="text-base text-surface-900 dark:text-surface-100">{{ membrosPotenciais()[soc.sigla] || 0 }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Coluna 1: Diretoria Eleita do Ano -->
+    <div class="lg:col-span-5 space-y-4">
+      <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">
+              Diretoria Eleita ({{ soc.ano_exercicio }})
+            </h3>
+            <p class="text-xs text-surface-500 m-0">Oficiais executivos da sociedade</p>
+          </div>
+          <p-button icon="pi pi-user-plus" label="Novo Oficial" [text]="true" size="small" (onClick)="abrirNovoOficial()"></p-button>
+        </div>
+
+        <div class="space-y-3">
+          @for (d of soc.diretorias; track d.id) {
+            <div class="flex items-center justify-between p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700/60">
+              <div>
+                <span class="text-xs font-bold text-primary uppercase tracking-wider block">
+                  {{ d.cargo }}
+                </span>
+                <span class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+                  {{ d.person.full_name }}
+                </span>
+                @if (d.person.phone) {
+                  <span class="text-xs text-surface-400 block">{{ d.person.phone }}</span>
+                }
+              </div>
+              <span class="text-xs font-mono text-surface-400 bg-surface-200 dark:bg-surface-700 px-2 py-0.5 rounded">
+                {{ d.ano }}
+              </span>
+            </div>
+          } @empty {
+            <div class="text-center p-6 text-surface-400 text-sm">
+              Nenhuma diretoria cadastrada para {{ soc.sigla }} neste ano.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Coluna 2: Calendário de Reuniões e Atividades -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">
+              Calendário & Atividades
+            </h3>
+            <p class="text-xs text-surface-500 m-0">Reuniões plenárias, cultos e projetos sociais</p>
+          </div>
+          <p-button icon="pi pi-calendar-plus" label="Agendar Atividade" [text]="true" size="small" (onClick)="abrirNovaAtividade()"></p-button>
+        </div>
+
+        <div class="space-y-3">
+          @for (atv of soc.atividades; track atv.id) {
+            <div class="p-4 rounded-xl bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700/60">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <p-tag [value]="atv.tipo" severity="info"></p-tag>
+                    <span class="text-xs text-surface-500 font-medium">
+                      📅 {{ atv.data | date: 'dd/MM/yyyy' }} @if (atv.horario) { • ⏰ {{ atv.horario }} }
+                    </span>
+                  </div>
+                  <h4 class="text-sm font-bold text-surface-900 dark:text-surface-0 mt-2 mb-1">
+                    {{ atv.titulo }}
+                  </h4>
+                  @if (atv.descricao) {
+                    <p class="text-xs text-surface-600 dark:text-surface-400 m-0">{{ atv.descricao }}</p>
+                  }
+                </div>
+                @if (atv.local) {
+                  <span class="text-xs text-surface-500 bg-surface-200 dark:bg-surface-700 px-2 py-1 rounded">
+                    📍 {{ atv.local }}
+                  </span>
+                }
+              </div>
+            </div>
+          } @empty {
+            <div class="text-center p-6 text-surface-400 text-sm">
+              Nenhuma atividade agendada no momento para esta sociedade.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Novo Oficial da Diretoria -->
+<p-dialog
+  [(visible)]="diretoriaDialog"
+  [modal]="true"
+  [style]="{ width: '480px' }"
+  header="Eleger Oficial para Diretoria"
+>
+  <div class="space-y-4 pt-2">
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Cargo Eletivo *</label>
+      <select
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        [(ngModel)]="novoOficial.cargo"
+      >
+        @for (c of cargosPadrao; track c) {
+          <option [value]="c">{{ c }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Membro Eleito *</label>
+      <select
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        [(ngModel)]="novoOficial.person_id"
+      >
+        <option [ngValue]="null">Selecione o membro...</option>
+        @for (m of membros(); track m.id) {
+          <option [ngValue]="m.id">{{ m.full_name }} ({{ m.roll_number || 'S/N' }})</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Ano do Exercício</label>
+      <input type="number" pInputText class="w-full text-sm font-mono" [(ngModel)]="novoOficial.ano" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="diretoriaDialog = false"></p-button>
+    <p-button label="Salvar Oficial" icon="pi pi-check" (onClick)="salvarOficial()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Nova Atividade -->
+<p-dialog
+  [(visible)]="atividadeDialog"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  header="Agendar Atividade da Sociedade"
+>
+  <div class="space-y-4 pt-2">
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Título do Evento / Reunião *</label>
+      <input type="text" pInputText class="w-full text-sm" [(ngModel)]="novaAtividade.titulo" placeholder="Ex: Chá das Mães e Oração" />
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Tipo de Evento</label>
+        <select
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="novaAtividade.tipo"
+        >
+          @for (t of tiposAtividade; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data *</label>
+        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="novaAtividade.data" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Horário</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="novaAtividade.horario" placeholder="19:30" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Local</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="novaAtividade.local" placeholder="Salão Social" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Descrição & Detalhes</label>
+      <textarea
+        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        rows="3"
+        [(ngModel)]="novaAtividade.descricao"
+        placeholder="Informações sobre palestrante, tema, alimentos arrecadados..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="atividadeDialog = false"></p-button>
+    <p-button label="Agendar Atividade" icon="pi pi-check" (onClick)="salvarAtividade()"></p-button>
+  </ng-template>
+</p-dialog>

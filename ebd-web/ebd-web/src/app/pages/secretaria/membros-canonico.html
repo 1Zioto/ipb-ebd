@@ -1,0 +1,442 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+      🏛️ Rol Canônico de Membros
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Registro oficial em conformidade com o Manual Presbiteriano da IPB
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a routerLink="/secretaria/estatistica-presbiterio" class="p-button p-button-outlined p-button-sm">
+      <i class="pi pi-chart-pie mr-2"></i> Estatística Presbitério
+    </a>
+    <a routerLink="/secretaria/cartas" class="p-button p-button-outlined p-button-sm">
+      <i class="pi pi-envelope mr-2"></i> Cartas de Transferência
+    </a>
+  </div>
+</div>
+
+<!-- Resumo dos Status Canônicos -->
+<div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
+  <div
+    class="p-4 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-800 cursor-pointer hover:border-primary transition-all"
+    [class.ring-2]="statusFilter === ''"
+    [class.ring-primary]="statusFilter === ''"
+    (click)="filtrarPorStatus('')"
+  >
+    <div class="text-xs font-semibold text-surface-500 uppercase tracking-wider">Total Geral</div>
+    <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mt-1">{{ stats().total }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer hover:border-emerald-500 transition-all"
+    [class.ring-2]="statusFilter === 'comungante'"
+    [class.ring-emerald-500]="statusFilter === 'comungante'"
+    (click)="filtrarPorStatus('comungante')"
+  >
+    <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Comungantes</div>
+    <div class="text-2xl font-bold text-emerald-800 dark:text-emerald-200 mt-1">{{ stats().comungantes }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 cursor-pointer hover:border-blue-500 transition-all"
+    [class.ring-2]="statusFilter === 'nao_comungante'"
+    [class.ring-blue-500]="statusFilter === 'nao_comungante'"
+    (click)="filtrarPorStatus('nao_comungante')"
+  >
+    <div class="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Não-comungantes</div>
+    <div class="text-2xl font-bold text-blue-800 dark:text-blue-200 mt-1">{{ stats().nao_comungantes }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/20 cursor-pointer hover:border-red-500 transition-all"
+    [class.ring-2]="statusFilter === 'sob_disciplina'"
+    [class.ring-red-500]="statusFilter === 'sob_disciplina'"
+    (click)="filtrarPorStatus('sob_disciplina')"
+  >
+    <div class="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wider">Sob Disciplina</div>
+    <div class="text-2xl font-bold text-red-800 dark:text-red-200 mt-1">{{ stats().sob_disciplina }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer hover:border-amber-500 transition-all"
+    [class.ring-2]="statusFilter === 'jurisdicao_especial'"
+    [class.ring-amber-500]="statusFilter === 'jurisdicao_especial'"
+    (click)="filtrarPorStatus('jurisdicao_especial')"
+  >
+    <div class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Jurisdição Esp.</div>
+    <div class="text-2xl font-bold text-amber-800 dark:text-amber-200 mt-1">{{ stats().jurisdicao_especial }}</div>
+  </div>
+
+  <div
+    class="p-4 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-100/50 dark:bg-surface-800/50 cursor-pointer hover:border-surface-400 transition-all"
+    [class.ring-2]="statusFilter === 'falecido'"
+    [class.ring-surface-400]="statusFilter === 'falecido'"
+    (click)="filtrarPorStatus('falecido')"
+  >
+    <div class="text-xs font-semibold text-surface-500 uppercase tracking-wider">Falecidos</div>
+    <div class="text-2xl font-bold text-surface-700 dark:text-surface-300 mt-1">{{ stats().falecidos }}</div>
+  </div>
+</div>
+
+<!-- Filtros & Barra de Busca -->
+<div class="card p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+  <div class="flex items-center gap-3 w-full sm:w-auto">
+    <span class="p-input-icon-left w-full sm:w-80">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        pInputText
+        class="w-full text-sm"
+        placeholder="Buscar por nome, ROL ou CPF..."
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="carregarMembros()"
+      />
+    </span>
+    <p-button icon="pi pi-search" label="Buscar" (onClick)="carregarMembros()"></p-button>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <select
+      class="p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+      [(ngModel)]="statusFilter"
+      (change)="carregarMembros()"
+    >
+      @for (opt of statusOptions; track opt.value) {
+        <option [value]="opt.value">{{ opt.label }}</option>
+      }
+    </select>
+  </div>
+</div>
+
+<!-- Tabela do Rol Canônico -->
+<div class="card p-0 overflow-hidden shadow-sm rounded-xl">
+  <p-table
+    [value]="membros()"
+    [loading]="loading()"
+    [rowHover]="true"
+    [paginator]="true"
+    [rows]="15"
+    responsiveLayout="scroll"
+    styleClass="p-datatable-sm"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 110px">Nº ROL</th>
+        <th>Nome do Membro</th>
+        <th>Status Canônico</th>
+        <th>Modo de Admissão</th>
+        <th>Data Admissão</th>
+        <th>Batismo / Profissão</th>
+        <th>Estado Civil</th>
+        <th style="width: 140px; text-align: center">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-m>
+      <tr>
+        <td>
+          <span class="font-mono text-xs font-semibold px-2 py-1 bg-surface-100 dark:bg-surface-800 rounded">
+            {{ m.roll_number || 'S/N' }}
+          </span>
+        </td>
+        <td>
+          <div class="font-medium text-surface-900 dark:text-surface-0">{{ m.full_name }}</div>
+          @if (m.cpf) {
+            <span class="text-xs text-surface-400">CPF: {{ m.cpf }}</span>
+          }
+        </td>
+        <td>
+          <p-tag
+            [value]="getStatusBadge(m.canonical_status).label"
+            [severity]="getStatusBadge(m.canonical_status).severity"
+          ></p-tag>
+        </td>
+        <td>
+          <span class="text-sm text-surface-700 dark:text-surface-300">
+            {{ getModoRecepcaoLabel(m.reception_type) }}
+          </span>
+        </td>
+        <td>
+          <span class="text-sm text-surface-600 dark:text-surface-400">
+            {{ m.reception_date ? (m.reception_date | date: 'dd/MM/yyyy') : '—' }}
+          </span>
+        </td>
+        <td>
+          <div class="text-xs space-y-0.5">
+            @if (m.profession_date) {
+              <div><span class="text-surface-400">P. Fé:</span> {{ m.profession_date | date: 'dd/MM/yyyy' }}</div>
+            }
+            @if (m.baptism_date) {
+              <div><span class="text-surface-400">Batismo:</span> {{ m.baptism_date | date: 'dd/MM/yyyy' }}</div>
+            }
+            @if (!m.profession_date && !m.baptism_date) {
+              <span class="text-surface-400">—</span>
+            }
+          </div>
+        </td>
+        <td>
+          <div class="text-sm">
+            {{ m.marital_status || 'Não informado' }}
+            @if (m.spouse_name) {
+              <div class="text-xs text-surface-400">c/ {{ m.spouse_name }}</div>
+            }
+          </div>
+        </td>
+        <td class="text-center">
+          <div class="flex items-center justify-center gap-1">
+            <button
+              pButton
+              icon="pi pi-id-card"
+              class="p-button-rounded p-button-text p-button-sm p-button-info"
+              pTooltip="Ficha Ministerial"
+              (click)="abrirFichaMinisterial(m)"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-sm p-button-secondary"
+              pTooltip="Editar Canônico"
+              (click)="abrirEdicao(m)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center p-8 text-surface-500">
+          Nenhum membro encontrado no Rol Canônico com os filtros aplicados.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modal Edição Canônica -->
+<p-dialog
+  [(visible)]="editDialog"
+  [modal]="true"
+  [style]="{ width: '560px' }"
+  header="Editar Dados Canônicos do Membro"
+>
+  <div class="space-y-4 pt-2">
+    <div>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Nome Completo</label>
+      <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.full_name" readonly disabled />
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Número do ROL Oficial</label>
+        <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.roll_number" placeholder="ROL-0105" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Status Canônico</label>
+        <select
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="selectedMembro.canonical_status"
+        >
+          @for (opt of statusOptions.slice(1); track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Modo de Recepção</label>
+        <select
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="selectedMembro.reception_type"
+        >
+          <option value="profissao_fe_batismo">Profissão de Fé e Batismo</option>
+          <option value="profissao_fe">Profissão de Fé</option>
+          <option value="transferencia">Carta de Transferência</option>
+          <option value="batismo_infantil">Batismo Infantil (Não-comungante)</option>
+          <option value="jurisdicao">Jurisdição Especial</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data da Recepção</label>
+        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="selectedMembro.reception_date" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data do Batismo</label>
+        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="selectedMembro.baptism_date" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data da Profissão de Fé</label>
+        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="selectedMembro.profession_date" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Estado Civil</label>
+        <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.marital_status" placeholder="Ex: Casado(a)" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Nome do Cônjuge</label>
+        <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.spouse_name" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Telefone / WhatsApp</label>
+        <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.phone" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-surface-600 mb-1">CPF</label>
+        <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.cpf" />
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="editDialog = false"></p-button>
+    <p-button label="Salvar Alterações" icon="pi pi-check" (onClick)="salvarEdicao()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Ficha Cadastral Ministerial Individual (Padrão Oficial IPB) -->
+<p-dialog
+  [(visible)]="fichaDialog"
+  [modal]="true"
+  [style]="{ width: '750px', maxWidth: '95vw' }"
+  header="Ficha Cadastral Ministerial Individual"
+>
+  @if (fichaLoading()) {
+    <div class="p-8 text-center text-surface-500">
+      <i class="pi pi-spin pi-spinner text-3xl"></i>
+      <p class="mt-2 text-sm">Gerando ficha cadastral...</p>
+    </div>
+  } @else if (fichaData()) {
+    <div class="p-4 border border-surface-200 dark:border-surface-700 rounded-xl bg-surface-50 dark:bg-surface-900 printable-area">
+      <!-- Cabeçalho Oficial -->
+      <div class="text-center pb-4 border-b border-surface-300 dark:border-surface-700">
+        <div class="text-xs uppercase tracking-widest text-surface-500 font-bold">Igreja Presbiteriana do Brasil</div>
+        <div class="text-lg font-bold text-surface-900 dark:text-surface-0 mt-0.5">IGREJA PRESBITERIANA EM CAMPO VERDE</div>
+        <div class="text-xs text-surface-500">Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)</div>
+        <div class="inline-block mt-2 px-3 py-1 bg-surface-200 dark:bg-surface-800 rounded font-semibold text-xs text-surface-800 dark:text-surface-200 uppercase tracking-wider">
+          Ficha Cadastral Ministerial Oficial
+        </div>
+      </div>
+
+      <!-- Dados Pessoais e Canônicos -->
+      <div class="grid grid-cols-3 gap-4 py-4 border-b border-surface-200 dark:border-surface-700 text-sm">
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Nome Completo</span>
+          <strong class="text-surface-900 dark:text-surface-100">{{ fichaData()?.membro?.full_name }}</strong>
+        </div>
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Nº ROL Oficial</span>
+          <span class="font-mono font-bold">{{ fichaData()?.membro?.roll_number || 'S/N' }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Situação Canônica</span>
+          <p-tag
+            [value]="getStatusBadge(fichaData()?.membro?.canonical_status || '').label"
+            [severity]="getStatusBadge(fichaData()?.membro?.canonical_status || '').severity"
+          ></p-tag>
+        </div>
+
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">CPF</span>
+          <span>{{ fichaData()?.membro?.cpf || 'Não informado' }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Estado Civil</span>
+          <span>{{ fichaData()?.membro?.marital_status || 'Não informado' }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Cônjuge</span>
+          <span>{{ fichaData()?.membro?.spouse_name || '—' }}</span>
+        </div>
+
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Modo de Recepção</span>
+          <span>{{ getModoRecepcaoLabel(fichaData()?.membro?.reception_type) }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Data de Admissão</span>
+          <span>{{ fichaData()?.membro?.reception_date ? (fichaData()?.membro?.reception_date | date: 'dd/MM/yyyy') : '—' }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-surface-400 block font-medium">Profissão de Fé / Batismo</span>
+          <span>{{ fichaData()?.membro?.profession_date ? (fichaData()?.membro?.profession_date | date: 'dd/MM/yyyy') : (fichaData()?.membro?.baptism_date | date: 'dd/MM/yyyy') || '—' }}</span>
+        </div>
+      </div>
+
+      <!-- Cargos e Serviços na Igreja -->
+      <div class="py-4 border-b border-surface-200 dark:border-surface-700">
+        <div class="text-xs font-bold uppercase tracking-wider text-surface-600 mb-2">
+          Atuação Ministerial & Sociedades Internas
+        </div>
+        @if (fichaData()?.cargos_atuais?.length) {
+          <div class="space-y-1">
+            @for (c of fichaData()?.cargos_atuais; track c.sociedade) {
+              <div class="flex items-center justify-between text-sm bg-surface-100 dark:bg-surface-800/60 p-2 rounded">
+                <span class="font-medium text-surface-900 dark:text-surface-100">{{ c.cargo }} — {{ c.sociedade }}</span>
+                <span class="text-xs text-surface-500 font-mono">Exercício {{ c.ano }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-xs text-surface-400 mb-0">Nenhum cargo ativo registrado no exercício corrente.</p>
+        }
+      </div>
+
+      <!-- Histórico de Transferências -->
+      <div class="py-4 border-b border-surface-200 dark:border-surface-700">
+        <div class="text-xs font-bold uppercase tracking-wider text-surface-600 mb-2">
+          Movimentação de Membresia & Cartas Canônicas
+        </div>
+        @if (fichaData()?.historico_transferencias?.length) {
+          <div class="space-y-1 text-sm">
+            @for (ct of fichaData()?.historico_transferencias; track ct.id) {
+              <div class="flex items-center justify-between bg-surface-100 dark:bg-surface-800/60 p-2 rounded">
+                <div>
+                  <span class="font-semibold">{{ ct.numero_carta }} ({{ ct.tipo }}):</span>
+                  <span class="text-surface-600 dark:text-surface-300 text-xs ml-1">De {{ ct.igreja_origem }} para {{ ct.igreja_destino }}</span>
+                </div>
+                <span class="text-xs text-surface-500">{{ ct.data_emissao | date: 'dd/MM/yyyy' }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-xs text-surface-400 mb-0">Nenhuma carta de transferência registrada para este membro.</p>
+        }
+      </div>
+
+      <!-- Termo de Certificação -->
+      <div class="pt-4 text-xs text-surface-500">
+        <p class="mb-6 italic">
+          Certifico para os devidos fins que o histórico e dados canônicos acima conferem com os assentamentos constantes no Livro Rol de Membros da Igreja Presbiteriana em Campo Verde.
+        </p>
+        <div class="grid grid-cols-2 gap-8 text-center pt-6">
+          <div class="border-t border-surface-400 pt-1">
+            <div class="font-semibold text-surface-800 dark:text-surface-200">Rev. Pastor Presidente</div>
+            <div class="text-surface-400">Conselho da Igreja</div>
+          </div>
+          <div class="border-t border-surface-400 pt-1">
+            <div class="font-semibold text-surface-800 dark:text-surface-200">Presb. Secretário do Conselho</div>
+            <div class="text-surface-400">Secretaria da Igreja</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" icon="pi pi-times" [text]="true" (onClick)="fichaDialog = false"></p-button>
+    <p-button label="Imprimir Ficha" icon="pi pi-print" (onClick)="imprimirFicha()"></p-button>
+  </ng-template>
+</p-dialog>

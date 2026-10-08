@@ -63,10 +63,32 @@ export class AppMenu implements OnInit {
                 ],
             },
             {
+                label: 'Secretaria & Conselho',
+                items: [
+                    { label: 'Rol Canônico de Membros', icon: 'pi pi-fw pi-users', routerLink: ['/secretaria/membros'], visible: this.can('person.view') },
+                    { label: 'Estatística do Presbitério', icon: 'pi pi-fw pi-chart-pie', routerLink: ['/secretaria/estatistica-presbiterio'], visible: this.can('person.view') },
+                    { label: 'Cartas de Transferência', icon: 'pi pi-fw pi-envelope', routerLink: ['/secretaria/cartas'], visible: this.can('person.view') },
+                    { label: 'Livro de Atas do Conselho', icon: 'pi pi-fw pi-book', routerLink: ['/secretaria/atas'], visible: this.can('person.view') },
+                ],
+            },
+            {
+                label: 'Sociedades & Ministérios',
+                items: [
+                    { label: 'Sociedades (SAF/UPH/UMP/UPA/UCP)', icon: 'pi pi-fw pi-id-card', routerLink: ['/sociedades'], visible: this.can('person.view') },
+                ],
+            },
+            {
+                label: 'Discipulado & Biblioteca',
+                items: [
+                    { label: 'Catecúmenos & Biblioteca', icon: 'pi pi-fw pi-bookmark', routerLink: ['/discipulado-biblioteca'], visible: this.can('person.view') },
+                ],
+            },
+            {
                 label: 'Financeiro & Contábil',
                 items: [
                     { label: 'Livro Caixa', icon: 'pi pi-fw pi-wallet', routerLink: ['/financeiro/transacoes'], visible: this.can('financial.view') },
                     { label: 'Contabilidade & Balancete', icon: 'pi pi-fw pi-file-excel', routerLink: ['/financeiro/contabilidade'], visible: this.can('financial.accounting.view') },
+                    { label: 'Termo com Assinaturas', icon: 'pi pi-fw pi-file-edit', routerLink: ['/financeiro/termo-balancete'], visible: this.can('financial.accounting.view') },
                     { label: 'Plano de Contas & Custos', icon: 'pi pi-fw pi-tags', routerLink: ['/financeiro/categorias-custos'], visible: this.can('financial.view') },
                     { label: 'Contas & Caixas', icon: 'pi pi-fw pi-building', routerLink: ['/financeiro/contas'], visible: this.can('financial.view') },
                 ],

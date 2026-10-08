@@ -156,6 +156,44 @@ export const routes: Routes = [
         canActivate: [permissionGuard('financial.view')],
         loadComponent: () => import('./pages/financial/accounts-list').then((m) => m.AccountsListPage),
       },
+      {
+        path: 'financeiro/termo-balancete',
+        canActivate: [permissionGuard('financial.accounting.view')],
+        loadComponent: () => import('./pages/relatorios/termo-balancete').then((m) => m.TermoBalancetePage),
+      },
+      // ---- Secretaria & Conselho (Canônico IPB) ----
+      {
+        path: 'secretaria/membros',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/secretaria/membros-canonico').then((m) => m.MembrosCanonicoPage),
+      },
+      {
+        path: 'secretaria/estatistica-presbiterio',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/secretaria/estatistica-presbiterio').then((m) => m.EstatisticaPresbiterioPage),
+      },
+      {
+        path: 'secretaria/cartas',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/secretaria/cartas-transferencia').then((m) => m.CartasTransferenciaPage),
+      },
+      {
+        path: 'secretaria/atas',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/secretaria/atas-conselho').then((m) => m.AtasConselhoPage),
+      },
+      // ---- Sociedades Internas & Ministérios ----
+      {
+        path: 'sociedades',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/sociedades/sociedades').then((m) => m.SociedadesPage),
+      },
+      // ---- Discipulado & Biblioteca da Igreja ----
+      {
+        path: 'discipulado-biblioteca',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/discipulado/discipulado-biblioteca').then((m) => m.DiscipuladoBibliotecaPage),
+      },
     ],
   },
   {
