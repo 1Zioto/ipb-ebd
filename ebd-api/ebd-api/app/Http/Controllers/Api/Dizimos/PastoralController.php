@@ -29,7 +29,7 @@ class PastoralController extends Controller
         $query = AlertaDizimo::query()->with([
             'person:id,full_name,envelope_number,is_tither',
             'pastor:id,name',
-            'acompanhamentos' => fn ($q) => $q->latest()->take(3),
+            'acompanhamentos.responsible:id,name',
         ]);
 
         if ($request->filled('status')) {

@@ -64,17 +64,22 @@ export class PastoralAlertsPage implements OnInit {
 
   loadData(): void {
     this.loading.set(true);
-    forkJoin({
-      stats: this.dizimosService.getPastoralDashboard(),
-      alerts: this.dizimosService.getAlerts(),
-    }).subscribe({
-      next: ({ stats, alerts }) => {
-        this.stats.set(stats);
-        this.alerts.set(alerts.data);
+    this.dizimosService.getPastoralDashboard().subscribe({
+      next: (stats) => this.stats.set(stats),
+      error: (err) => console.warn('Erro ao carregar métricas pastorais:', err),
+    });
+
+    this.dizimosService.getAlerts().subscribe({
+      next: (alerts) => {
+        this.alerts.set(alerts.data || []);
         this.loading.set(false);
       },
-      error: () => {
-        this.toast.error('Erro ao carregar dados pastorais. Verifique sua conexão e tente novamente.');
+      error: (err) => {
+        console.error('Erro ao carregar alertas pastorais:', err);
+        const msg = err.status === 403
+          ? 'Você não possui permissão para gerenciar dados pastorais.'
+          : (err.error?.message || 'Erro ao carregar dados pastorais. Verifique sua conexão e tente novamente.');
+        this.toast.error(msg);
         this.loading.set(false);
       },
     });
