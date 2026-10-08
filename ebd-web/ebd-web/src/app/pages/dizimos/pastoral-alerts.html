@@ -3,36 +3,37 @@
     <h1 class="m-0 text-2xl font-semibold flex items-center gap-2">
       <i class="pi pi-heart text-primary"></i>
       Acompanhamento Pastoral
+      <p-tag value="Confidencial" severity="secondary" icon="pi pi-lock" />
     </h1>
-    <p class="text-muted-color mb-0">Painel de cuidado e assistência pastoral aos membros da igreja</p>
+    <p class="text-muted-color mb-0">Cuidado espiritual, visitas domiciliares e assistência pastoral fraterna (sem exibição de valores)</p>
   </div>
-  <p-button label="Executar análise mensal" icon="pi pi-refresh" severity="secondary" (onClick)="runEngine()" />
+  <p-button label="Atualizar Casos" icon="pi pi-refresh" severity="secondary" (onClick)="runEngine()" />
 </div>
 
 @if (stats()) {
   <div class="grid grid-cols-12 gap-4 mb-4">
     <div class="col-span-12 sm:col-span-6 xl:col-span-3">
       <div class="card mb-0">
-        <span class="text-muted-color">Pessoas acompanhadas</span>
-        <div class="text-2xl font-semibold">{{ stats()?.people_followed }}</div>
+        <span class="text-muted-color">Pessoas em Cuidado</span>
+        <div class="text-2xl font-semibold text-primary">{{ stats()?.people_followed }}</div>
       </div>
     </div>
     <div class="col-span-12 sm:col-span-6 xl:col-span-3">
       <div class="card mb-0">
-        <span class="text-muted-color">Alertas ativos</span>
+        <span class="text-muted-color">Casos Ativos</span>
         <div class="text-2xl font-semibold">{{ stats()?.active_alerts }}</div>
       </div>
     </div>
     <div class="col-span-12 sm:col-span-6 xl:col-span-3">
       <div class="card mb-0">
-        <span class="text-muted-color">Novos</span>
-        <div class="text-2xl font-semibold">{{ stats()?.new_alerts }}</div>
+        <span class="text-muted-color">Novas Demandas</span>
+        <div class="text-2xl font-semibold text-amber-500">{{ stats()?.new_alerts }}</div>
       </div>
     </div>
     <div class="col-span-12 sm:col-span-6 xl:col-span-3">
       <div class="card mb-0">
-        <span class="text-muted-color">Resolvidos</span>
-        <div class="text-2xl font-semibold">{{ stats()?.resolved_alerts }}</div>
+        <span class="text-muted-color">Casos Resolvidos</span>
+        <div class="text-2xl font-semibold text-green-500">{{ stats()?.resolved_alerts }}</div>
       </div>
     </div>
   </div>
@@ -43,7 +44,7 @@
     <p-button label="Todos ({{ alerts().length }})" [outlined]="filterStatus() !== ''" size="small" (onClick)="filterStatus.set('')" />
     <p-button label="Novos ({{ countByStatus('Novo') }})" [outlined]="filterStatus() !== 'Novo'" size="small" (onClick)="filterStatus.set('Novo')" />
     <p-button label="Em análise ({{ countByStatus('Em análise') }})" [outlined]="filterStatus() !== 'Em análise'" size="small" (onClick)="filterStatus.set('Em análise')" />
-    <p-button label="Acompanhamento ({{ countByStatus('Em acompanhamento') }})" [outlined]="filterStatus() !== 'Em acompanhamento'" size="small" (onClick)="filterStatus.set('Em acompanhamento')" />
+    <p-button label="Em acompanhamento ({{ countByStatus('Em acompanhamento') }})" [outlined]="filterStatus() !== 'Em acompanhamento'" size="small" (onClick)="filterStatus.set('Em acompanhamento')" />
     <p-button label="Resolvidos ({{ countByStatus('Resolvido') }})" [outlined]="filterStatus() !== 'Resolvido'" size="small" (onClick)="filterStatus.set('Resolvido')" />
   </div>
 
@@ -51,34 +52,26 @@
     <ng-template pTemplate="header">
       <tr>
         <th>Membro</th>
-        <th>Tipo</th>
-        <th>Referência</th>
-        <th>Variação</th>
-        <th>Detecção</th>
+        <th>Indicador Pastoral</th>
+        <th>Data da Detecção</th>
         <th>Status</th>
-        <th>Acompanhamentos</th>
+        <th>Histórico de Cuidados</th>
         <th>Ações</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-a>
       <tr>
-        <td class="font-medium">{{ a.person?.full_name }}</td>
+        <td class="font-semibold text-surface-900 dark:text-surface-0">{{ a.person?.full_name }}</td>
         <td>
-          @if (a.alert_type === 'queda_relevante') {
-            <p-tag value="Queda significativa" severity="danger" />
-          } @else if (a.alert_type === 'interrupcao_contribuicao') {
-            <p-tag value="Possível interrupção" severity="warn" />
+          @if (a.alert_type === 'interrupcao_contribuicao') {
+            <p-tag value="Afastamento / Ausência Recente" severity="danger" icon="pi pi-exclamation-triangle" />
+          } @else if (a.alert_type === 'queda_relevante') {
+            <p-tag value="Atenção Pastoral Necessária" severity="warn" icon="pi pi-heart" />
           } @else {
-            <p-tag value="Histórico recente" severity="info" />
+            <p-tag value="Acompanhamento Preventivo" severity="info" icon="pi pi-info-circle" />
           }
         </td>
-        <td>{{ a.reference_calculation?.reference_average | currency: 'BRL' }}</td>
-        <td>
-          <span [class.text-red-500]="a.variation_percentage < 0" [class.text-green-500]="a.variation_percentage > 0">
-            {{ a.variation_percentage }}%
-          </span>
-        </td>
-        <td>{{ a.detection_date | date: 'dd/MM/yyyy' }}</td>
+        <td class="text-sm text-muted-color">{{ a.detection_date | date: 'dd/MM/yyyy' }}</td>
         <td>
           <p-tag
             [value]="a.status"
@@ -96,19 +89,23 @@
               (onClick)="openHistoryModal(a)"
             />
           } @else {
-            <span class="text-xs text-muted-color">Nenhum</span>
+            <span class="text-xs text-muted-color italic">Nenhum registro</span>
           }
         </td>
         <td class="whitespace-nowrap">
-          <p-button label="Ficha" size="small" [text]="true" [routerLink]="['/dizimos/membros', a.person_id, 'historico']" />
-          <p-button label="Cuidado" size="small" icon="pi pi-heart" (onClick)="openAcompModal(a)" />
-          <p-button label="Diaconato" size="small" severity="secondary" (onClick)="openDiaconatoModal(a)" />
+          <div class="flex items-center gap-2">
+            <p-button label="Cuidado" size="small" icon="pi pi-heart" (onClick)="openAcompModal(a)" />
+            <p-button label="Diaconato" size="small" severity="secondary" icon="pi pi-send" (onClick)="openDiaconatoModal(a)" />
+          </div>
         </td>
       </tr>
     </ng-template>
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="8" class="text-center py-4 text-muted-color">Nenhum alerta encontrado no momento.</td>
+        <td colspan="6" class="text-center py-6 text-muted-color">
+          <i class="pi pi-inbox text-3xl mb-2 block"></i>
+          Nenhum caso pastoral pendente no momento.
+        </td>
       </tr>
     </ng-template>
   </p-table>
@@ -127,7 +124,7 @@
       <div class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded border border-surface-200 dark:border-surface-700">
         <div>
           <div class="text-sm font-semibold">{{ alert.person?.full_name }}</div>
-          <div class="text-xs text-muted-color">Status atual: {{ alert.status }} | Detecção: {{ alert.detection_date | date: 'dd/MM/yyyy' }}</div>
+          <div class="text-xs text-muted-color">Situação atual: {{ alert.status }} | Registrado em: {{ alert.detection_date | date: 'dd/MM/yyyy' }}</div>
         </div>
         <p-button label="Novo Cuidado" icon="pi pi-plus" size="small" (onClick)="openAcompModal(alert)" />
       </div>
@@ -206,7 +203,7 @@
     </div>
 
     <div>
-      <label class="block mb-2 font-medium text-sm">Situação do Alerta</label>
+      <label class="block mb-2 font-medium text-sm">Situação do Caso</label>
       <select class="w-full p-inputtext p-component" [(ngModel)]="alertaStatus">
         <option>Em análise</option>
         <option>Em acompanhamento</option>
@@ -222,7 +219,7 @@
         class="w-full"
         rows="4"
         [(ngModel)]="notes"
-        placeholder="Descreva a conversa, necessidades espirituais, familiares ou materiais observadas..."
+        placeholder="Descreva a conversa, necessidades espirituais, familiares ou de saúde observadas..."
       ></textarea>
     </div>
 
@@ -243,9 +240,9 @@
         <option value="">Selecione...</option>
         <option>Acompanhamento realizado</option>
         <option>Não necessita acompanhamento</option>
-        <option>Alteração normal de contribuição</option>
-        <option>Alteração na forma de contribuição</option>
-        <option>Necessita apoio assistencial</option>
+        <option>Mudança de congregação / cidade</option>
+        <option>Necessita apoio assistencial / diaconato</option>
+        <option>Visita / Aconselhamento concluído</option>
         <option>Outro</option>
       </select>
     </div>
@@ -266,7 +263,7 @@
   [style]="{ width: '34rem', maxWidth: '95vw' }"
 >
   <p-message severity="info" styleClass="mb-3 w-full">
-    O diácono receberá apenas o nome, contato e a instrução pastoral. Dados financeiros e valores permanecem em total sigilo.
+    O diácono receberá apenas o nome, contato e a instrução pastoral. Dados e históricos financeiros permanecem em absoluto sigilo.
   </p-message>
   <label class="block mb-2 font-medium text-sm">Instrução para a Junta Diaconal</label>
   <textarea pTextarea class="w-full" rows="4" [(ngModel)]="pastorNotesDiaconato"></textarea>

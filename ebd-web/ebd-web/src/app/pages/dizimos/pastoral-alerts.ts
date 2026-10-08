@@ -1,8 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
@@ -17,7 +16,7 @@ import { AlertaDizimo, PastoralDashboardStats } from '../../core/models';
 @Component({
   selector: 'app-pastoral-alerts',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, TableModule, DialogModule, InputTextModule, TextareaModule, TagModule, MessageModule],
+  imports: [CommonModule, FormsModule, ButtonModule, TableModule, DialogModule, InputTextModule, TextareaModule, TagModule, MessageModule],
   templateUrl: './pastoral-alerts.html',
 })
 export class PastoralAlertsPage implements OnInit {

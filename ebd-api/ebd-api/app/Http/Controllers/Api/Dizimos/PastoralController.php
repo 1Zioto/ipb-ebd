@@ -26,11 +26,24 @@ class PastoralController extends Controller
 
     public function alerts(Request $request): JsonResponse
     {
-        $query = AlertaDizimo::query()->with([
-            'person:id,full_name,envelope_number,is_tither',
-            'pastor:id,name',
-            'acompanhamentos.responsible:id,name',
-        ]);
+        $query = AlertaDizimo::query()
+            ->select([
+                'id',
+                'person_id',
+                'alert_type',
+                'start_date',
+                'detection_date',
+                'status',
+                'pastor_id',
+                'notes',
+                'resolved_at',
+                'created_at',
+            ])
+            ->with([
+                'person:id,full_name,envelope_number,is_tither',
+                'pastor:id,name',
+                'acompanhamentos.responsible:id,name',
+            ]);
 
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
