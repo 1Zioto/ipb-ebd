@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#090d16" />
+  <meta name="theme-color" content="#ffffff" />
   <title>IPB • Conferência de Dízimos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,25 +12,29 @@
   <script src="js/html5-qrcode.min.js"></script>
   <style>
     :root {
-      --primary: #059669;
-      --primary-dark: #047857;
-      --primary-light: #d1fae5;
-      --primary-glow: rgba(5, 150, 105, 0.25);
-      --bg: #090d16;
-      --surface: #111827;
-      --surface-card: #162032;
-      --surface-border: #1f2d45;
-      --surface-hover: #1c293d;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --danger: #ef4444;
-      --danger-bg: rgba(239, 68, 68, 0.15);
-      --warning: #f59e0b;
-      --warning-bg: rgba(245, 158, 11, 0.15);
-      --success: #10b981;
-      --success-bg: rgba(16, 185, 129, 0.15);
-      --info: #38bdf8;
-      --info-bg: rgba(56, 189, 248, 0.15);
+      --primary: #047857;
+      --primary-dark: #065f46;
+      --primary-light: #ecfdf5;
+      --primary-border: #a7f3d0;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-card: #ffffff;
+      --surface-border: #e2e8f0;
+      --surface-hover: #f1f5f9;
+      --text: #0f172a;
+      --text-body: #334155;
+      --text-muted: #64748b;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      --warning: #d97706;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      --success: #059669;
+      --success-bg: #ecfdf5;
+      --success-border: #a7f3d0;
+      --info: #0284c7;
+      --info-bg: #f0f9ff;
       --radius: 16px;
       --radius-sm: 10px;
     }
@@ -40,7 +44,6 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
 
     body {
@@ -54,6 +57,13 @@
       overflow-x: hidden;
     }
 
+    /* Permite interação e seleção de texto normal em todos os campos de entrada */
+    input, textarea, select {
+      -webkit-user-select: text !important;
+      user-select: text !important;
+      pointer-events: auto !important;
+    }
+
     .app-viewport {
       width: 100%;
       max-width: 440px;
@@ -62,14 +72,14 @@
       display: flex;
       flex-direction: column;
       position: relative;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       border-left: 1px solid var(--surface-border);
       border-right: 1px solid var(--surface-border);
       padding-bottom: 84px;
     }
 
     /* ======================================================== */
-    /* TELA DE LOGIN                                            */
+    /* TELA DE LOGIN (CLARA / IPB CLEAN)                        */
     /* ======================================================== */
     .login-container {
       display: flex;
@@ -78,29 +88,30 @@
       align-items: center;
       min-height: 100vh;
       padding: 32px 24px;
-      background: radial-gradient(circle at 50% 20%, #162438 0%, #090d16 80%);
+      background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
       z-index: 500;
       width: 100%;
       max-width: 440px;
     }
 
     .login-logo-box {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border-radius: 22px;
+      width: 110px;
+      height: 110px;
+      background: #ffffff;
+      border-radius: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 16px 32px -8px rgba(5, 150, 105, 0.5);
-      margin-bottom: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 28px -6px rgba(4, 120, 87, 0.18);
+      margin-bottom: 18px;
+      border: 1px solid #e2e8f0;
+      padding: 10px;
     }
 
-    .login-logo-box svg {
-      width: 44px;
-      height: 44px;
-      fill: #ffffff;
+    .login-logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .login-title {
@@ -109,23 +120,24 @@
       text-align: center;
       letter-spacing: -0.5px;
       margin-bottom: 4px;
-      color: #fff;
+      color: #065f46;
     }
 
     .login-subtitle {
       font-size: 13px;
       color: var(--text-muted);
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
+      font-weight: 500;
     }
 
     .login-card {
       width: 100%;
-      background: var(--surface-card);
+      background: #ffffff;
       border: 1px solid var(--surface-border);
       border-radius: var(--radius);
       padding: 24px 20px;
-      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
     }
 
     .form-group {
@@ -136,7 +148,7 @@
       display: block;
       font-size: 12px;
       font-weight: 700;
-      color: var(--text-muted);
+      color: var(--text-body);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 6px;
@@ -146,24 +158,26 @@
       position: relative;
       display: flex;
       align-items: center;
+      width: 100%;
     }
 
-    .input-wrapper i {
+    .input-wrapper i.input-icon-left {
       position: absolute;
       left: 14px;
-      color: var(--text-muted);
+      color: #94a3b8;
       font-size: 16px;
+      pointer-events: none;
     }
 
     .input-field {
       width: 100%;
-      height: 48px;
-      background: #0d131f;
-      border: 1px solid var(--surface-border);
+      height: 50px;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
       border-radius: 12px;
-      padding: 0 14px 0 42px;
-      color: #fff;
-      font-size: 14px;
+      padding: 0 44px 0 42px;
+      color: #0f172a;
+      font-size: 15px;
       font-family: inherit;
       outline: none;
       transition: all 0.2s;
@@ -171,22 +185,23 @@
 
     .input-field:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary-glow);
+      box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.15);
     }
 
     .input-toggle-pwd {
       position: absolute;
       right: 14px;
-      color: var(--text-muted);
+      color: #64748b;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 18px;
+      padding: 8px;
     }
 
     .btn-login-submit {
       width: 100%;
       height: 52px;
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: #fff;
+      background: linear-gradient(135deg, #047857 0%, #059669 100%);
+      color: #ffffff;
       border: none;
       border-radius: 14px;
       font-size: 15px;
@@ -196,20 +211,21 @@
       justify-content: center;
       gap: 10px;
       cursor: pointer;
-      box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.45);
+      box-shadow: 0 8px 20px -4px rgba(4, 120, 87, 0.35);
       margin-top: 18px;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
 
     .btn-login-submit:active {
       transform: scale(0.98);
+      filter: brightness(0.95);
     }
 
     .btn-offline-mode {
       width: 100%;
       height: 44px;
-      background: transparent;
-      color: var(--text-muted);
+      background: #f8fafc;
+      color: var(--text-body);
       border: 1px solid var(--surface-border);
       border-radius: 12px;
       font-size: 13px;
@@ -220,38 +236,26 @@
       gap: 8px;
       cursor: pointer;
       margin-top: 10px;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
 
     .btn-offline-mode:hover, .btn-offline-mode:active {
-      background: var(--surface-hover);
-      color: #fff;
+      background: #f1f5f9;
+      color: #0f172a;
     }
 
     .login-error-msg {
       background: var(--danger-bg);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
       padding: 10px 14px;
       border-radius: 10px;
-      font-size: 12px;
+      font-size: 13px;
       margin-bottom: 14px;
       display: none;
       align-items: center;
       gap: 8px;
-    }
-
-    .server-toggle-btn {
-      font-size: 11px;
-      color: var(--text-muted);
-      background: transparent;
-      border: none;
-      text-decoration: underline;
-      cursor: pointer;
-      margin-top: 14px;
-      display: block;
-      text-align: center;
-      width: 100%;
+      font-weight: 600;
     }
 
     /* ======================================================== */
@@ -261,17 +265,17 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(17, 24, 39, 0.94);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--surface-border);
-      padding: 12px 16px 8px 16px;
+      padding: 12px 16px 10px 16px;
     }
 
     .top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .church-badge {
@@ -280,29 +284,27 @@
       gap: 10px;
     }
 
-    .church-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 11px;
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
+    .church-logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      object-fit: contain;
+      background: #ffffff;
+      border: 1px solid var(--surface-border);
+      padding: 2px;
     }
 
     .church-info h1 {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
       line-height: 1.2;
+      color: #065f46;
     }
 
     .church-info span {
       font-size: 11px;
       color: var(--text-muted);
+      font-weight: 600;
     }
 
     .top-user-actions {
@@ -312,27 +314,27 @@
     }
 
     .user-pill {
-      background: #182438;
-      border: 1px solid var(--surface-border);
-      padding: 4px 8px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      padding: 5px 10px;
       border-radius: 20px;
       font-size: 11px;
-      font-weight: 600;
-      color: #cbd5e1;
+      font-weight: 700;
+      color: #065f46;
       display: flex;
       align-items: center;
-      gap: 5px;
-      max-width: 140px;
+      gap: 6px;
+      max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .btn-logout {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 8px;
-      background: transparent;
+      background: #ffffff;
       border: 1px solid var(--surface-border);
       color: var(--text-muted);
       display: flex;
@@ -344,18 +346,17 @@
 
     .btn-logout:hover, .btn-logout:active {
       background: var(--danger-bg);
-      color: #f87171;
-      border-color: rgba(239, 68, 68, 0.4);
+      color: var(--danger);
+      border-color: var(--danger-border);
     }
 
     /* HUD Totalizador */
     .hud-card {
-      background: linear-gradient(135deg, #162438 0%, #111a29 100%);
-      border: 1px solid var(--surface-border);
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
       border-radius: var(--radius);
       padding: 14px 16px;
-      margin-top: 4px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     }
 
     .hud-row {
@@ -366,7 +367,7 @@
 
     .hud-label {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
@@ -377,7 +378,7 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 26px;
       font-weight: 800;
-      color: #34d399;
+      color: #047857;
       letter-spacing: -0.5px;
       line-height: 1;
     }
@@ -388,7 +389,7 @@
     }
 
     .metric-pill {
-      background: #0d1422;
+      background: #f8fafc;
       border: 1px solid var(--surface-border);
       padding: 6px 10px;
       border-radius: 10px;
@@ -399,39 +400,39 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
       font-weight: 800;
-      color: #f8fafc;
+      color: #0f172a;
     }
 
     .metric-name {
       font-size: 9px;
       color: var(--text-muted);
       text-transform: uppercase;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .hud-reconciliation {
       margin-top: 10px;
       padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      border-top: 1px solid #f1f5f9;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 12px;
     }
 
     .reconciliation-status {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 3px 10px;
+      padding: 4px 10px;
       border-radius: 20px;
       font-weight: 700;
       font-size: 11px;
     }
 
-    .reconciliation-status.ok { background: var(--success-bg); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .reconciliation-status.diff { background: var(--warning-bg); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .reconciliation-status.error { background: var(--danger-bg); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .reconciliation-status.ok { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+    .reconciliation-status.diff { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); }
+    .reconciliation-status.error { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
 
     /* ======================================================== */
     /* CONTEÚDO DAS ABAS                                        */
@@ -439,7 +440,7 @@
     .tab-content {
       display: none;
       padding: 14px 16px;
-      animation: fadeIn 0.2s ease-in-out;
+      animation: fadeIn 0.15s ease-in-out;
     }
 
     .tab-content.active {
@@ -452,26 +453,27 @@
     }
 
     .quick-entry-card {
-      background: var(--surface-card);
+      background: #ffffff;
       border: 1px solid var(--surface-border);
       border-radius: var(--radius);
       padding: 16px;
       margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
 
     .card-title {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
       margin-bottom: 12px;
-      color: #e2e8f0;
+      color: #0f172a;
     }
 
     /* Scanner Banner CTA */
     .qr-scan-banner {
-      background: linear-gradient(135deg, #132b25 0%, #162438 100%);
+      background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
       border: 1.5px dashed #059669;
       border-radius: 14px;
       padding: 14px;
@@ -479,13 +481,13 @@
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
       margin-bottom: 14px;
     }
 
     .qr-scan-banner:active {
       transform: scale(0.98);
-      background: linear-gradient(135deg, #183830 0%, #1a2c44 100%);
+      background: #d1fae5;
     }
 
     .qr-scan-text {
@@ -497,25 +499,26 @@
     .qr-icon-round {
       width: 42px;
       height: 42px;
-      background: var(--primary);
+      background: #047857;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(4, 120, 87, 0.25);
     }
 
     .qr-titles h3 {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
-      color: #fff;
+      color: #065f46;
     }
 
     .qr-titles p {
       font-size: 11px;
-      color: var(--text-muted);
+      color: #047857;
+      font-weight: 500;
     }
 
     /* Chips de Seleção */
@@ -533,13 +536,13 @@
     }
 
     .chip-btn {
-      padding: 7px 12px;
-      background: #101826;
+      padding: 8px 14px;
+      background: #f8fafc;
       border: 1px solid var(--surface-border);
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
-      color: var(--text-muted);
+      color: var(--text-body);
       white-space: nowrap;
       cursor: pointer;
       display: flex;
@@ -549,10 +552,10 @@
     }
 
     .chip-btn.selected {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
+      background: #047857;
+      border-color: #047857;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(4, 120, 87, 0.25);
     }
 
     /* Métodos de Pagamento */
@@ -564,25 +567,25 @@
     }
 
     .pay-btn {
-      height: 44px;
-      background: #101826;
-      border: 1px solid var(--surface-border);
+      height: 46px;
+      background: #f8fafc;
+      border: 1.5px solid var(--surface-border);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--text-muted);
+      color: var(--text-body);
       cursor: pointer;
       transition: all 0.15s;
     }
 
     .pay-btn.selected {
-      background: var(--primary-glow);
-      border-color: var(--primary);
-      color: #34d399;
+      background: #ecfdf5;
+      border-color: #047857;
+      color: #065f46;
       font-weight: 800;
     }
 
@@ -600,27 +603,28 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 18px;
       font-weight: 800;
-      color: var(--primary);
+      color: #047857;
+      pointer-events: none;
     }
 
     .currency-input {
       width: 100%;
       height: 56px;
-      background: #0d1422;
-      border: 2px solid var(--surface-border);
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
       border-radius: 14px;
       padding: 0 16px 0 54px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 24px;
       font-weight: 800;
-      color: #34d399;
+      color: #065f46;
       outline: none;
       transition: all 0.2s;
     }
 
     .currency-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px var(--primary-glow);
+      border-color: #047857;
+      box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.15);
     }
 
     /* Atalhos Rápidos de Dinheiro */
@@ -633,30 +637,30 @@
     }
 
     .val-pill {
-      padding: 6px 10px;
-      background: #182233;
+      padding: 6px 12px;
+      background: #f1f5f9;
       border: 1px solid var(--surface-border);
       border-radius: 8px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
-      color: #cbd5e1;
+      color: #334155;
       cursor: pointer;
       white-space: nowrap;
     }
 
     .val-pill:active {
-      background: var(--primary);
-      color: #fff;
+      background: #047857;
+      color: #ffffff;
     }
 
     .btn-submit-entry {
       width: 100%;
       height: 52px;
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      background: linear-gradient(135deg, #047857 0%, #059669 100%);
       border: none;
       border-radius: 14px;
-      color: #fff;
+      color: #ffffff;
       font-size: 15px;
       font-weight: 800;
       display: flex;
@@ -664,8 +668,8 @@
       justify-content: center;
       gap: 8px;
       cursor: pointer;
-      box-shadow: 0 10px 20px -5px rgba(5, 150, 105, 0.4);
-      transition: all 0.2s;
+      box-shadow: 0 8px 20px -4px rgba(4, 120, 87, 0.35);
+      transition: all 0.15s;
     }
 
     .btn-submit-entry:active {
@@ -680,14 +684,14 @@
     }
 
     .entry-item {
-      background: var(--surface-card);
+      background: #ffffff;
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-sm);
       padding: 12px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: all 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
     }
 
     .entry-info {
@@ -707,14 +711,14 @@
       flex-shrink: 0;
     }
 
-    .entry-badge-icon.dinheiro { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-    .entry-badge-icon.pix { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
-    .entry-badge-icon.cartao { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .entry-badge-icon.dinheiro { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .entry-badge-icon.pix { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
+    .entry-badge-icon.cartao { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
 
     .entry-meta h4 {
       font-size: 13px;
       font-weight: 700;
-      color: #f8fafc;
+      color: #0f172a;
       margin-bottom: 2px;
     }
 
@@ -731,13 +735,13 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 15px;
       font-weight: 800;
-      color: #34d399;
+      color: #047857;
     }
 
     .btn-del-entry {
       background: transparent;
       border: none;
-      color: #64748b;
+      color: #94a3b8;
       cursor: pointer;
       font-size: 13px;
       margin-top: 4px;
@@ -758,29 +762,30 @@
     }
 
     .denom-card {
-      background: var(--surface-card);
+      background: #ffffff;
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-sm);
       padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
 
     .denom-badge {
       display: flex;
       align-items: center;
       gap: 10px;
-      width: 110px;
+      width: 120px;
     }
 
     .denom-pill {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
       padding: 6px 8px;
       border-radius: 8px;
-      min-width: 60px;
+      min-width: 64px;
       text-align: center;
     }
 
@@ -788,6 +793,7 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       color: var(--text-muted);
+      font-weight: 700;
     }
 
     .denom-counter-controls {
@@ -797,14 +803,14 @@
     }
 
     .btn-count-step {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
-      background: #1e293b;
+      background: #f1f5f9;
       border: 1px solid var(--surface-border);
-      color: #fff;
+      color: #0f172a;
       font-weight: 800;
-      font-size: 14px;
+      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -812,63 +818,65 @@
     }
 
     .btn-count-step:active {
-      background: var(--primary);
+      background: #047857;
+      color: #ffffff;
     }
 
     .btn-quick-plus {
-      font-size: 10px;
-      padding: 0 6px;
-      height: 34px;
-      background: #182438;
+      font-size: 11px;
+      padding: 0 8px;
+      height: 36px;
+      background: #f8fafc;
       border: 1px solid var(--surface-border);
       border-radius: 6px;
-      color: #94a3b8;
+      color: var(--text-body);
       font-weight: 700;
       cursor: pointer;
     }
 
     .btn-quick-plus:active {
-      color: #34d399;
-      border-color: var(--primary);
+      color: #047857;
+      border-color: #047857;
     }
 
     .denom-input-qty {
-      width: 48px;
-      height: 34px;
-      background: #0d1422;
-      border: 1px solid var(--surface-border);
+      width: 52px;
+      height: 36px;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
       border-radius: 8px;
       text-align: center;
       font-family: 'JetBrains Mono', monospace;
       font-weight: 800;
       font-size: 15px;
-      color: #f8fafc;
+      color: #0f172a;
       outline: none;
     }
 
     .denom-input-qty:focus {
-      border-color: var(--primary);
+      border-color: #047857;
     }
 
     /* Cores das Cédulas do Real */
-    .c200 { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid #64748b; }
-    .c100 { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; }
-    .c50  { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #d97706; }
-    .c20  { background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid #ca8a04; }
-    .c10  { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #dc2626; }
-    .c5   { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #9333ea; }
-    .c2   { background: rgba(20, 184, 166, 0.2); color: #2dd4bf; border: 1px solid #0d9488; }
-    .m1   { background: rgba(234, 179, 8, 0.2); color: #fbbf24; border: 1px solid #ca8a04; }
-    .moeda { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid #475569; }
+    .c200 { background: #f1f5f9; color: #475569; border: 1.5px solid #94a3b8; }
+    .c100 { background: #e0f2fe; color: #0369a1; border: 1.5px solid #38bdf8; }
+    .c50  { background: #fef3c7; color: #b45309; border: 1.5px solid #f59e0b; }
+    .c20  { background: #fef9c3; color: #854d0e; border: 1.5px solid #eab308; }
+    .c10  { background: #fee2e2; color: #b91c1c; border: 1.5px solid #ef4444; }
+    .c5   { background: #f3e8ff; color: #6b21a8; border: 1.5px solid #a855f7; }
+    .c2   { background: #ccfbf1; color: #0f766e; border: 1.5px solid #14b8a6; }
+    .m1   { background: #fef3c7; color: #b45309; border: 1.5px solid #f59e0b; }
+    .moeda { background: #f1f5f9; color: #475569; border: 1.5px solid #cbd5e1; }
 
     /* ======================================================== */
     /* ABA 3: FECHAMENTO & BATIMENTO CANÔNICO                   */
     /* ======================================================== */
     .reconciliation-card {
-      background: var(--surface-card);
+      background: #ffffff;
       border: 1px solid var(--surface-border);
       border-radius: var(--radius);
       padding: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
 
     .rec-table {
@@ -880,7 +888,7 @@
     .rec-table tr td {
       padding: 10px 0;
       font-size: 13px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid #f1f5f9;
     }
 
     .rec-table tr td:last-child {
@@ -890,7 +898,7 @@
     }
 
     .witness-box {
-      background: #0d1422;
+      background: #f8fafc;
       border: 1px solid var(--surface-border);
       border-radius: 12px;
       padding: 14px;
@@ -899,16 +907,20 @@
 
     .witness-select {
       width: 100%;
-      height: 42px;
-      background: #182233;
-      border: 1px solid var(--surface-border);
+      height: 44px;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
       border-radius: 8px;
       padding: 0 12px;
-      color: #f8fafc;
-      font-size: 13px;
+      color: #0f172a;
+      font-size: 14px;
       outline: none;
       margin-top: 4px;
       margin-bottom: 10px;
+    }
+
+    .witness-select:focus {
+      border-color: #047857;
     }
 
     .action-buttons-stack {
@@ -920,8 +932,8 @@
     .btn-sync-api {
       width: 100%;
       height: 52px;
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: #fff;
+      background: linear-gradient(135deg, #047857 0%, #059669 100%);
+      color: #ffffff;
       border: none;
       border-radius: 14px;
       font-size: 14px;
@@ -931,7 +943,7 @@
       justify-content: center;
       gap: 8px;
       cursor: pointer;
-      box-shadow: 0 10px 20px -5px rgba(5, 150, 105, 0.4);
+      box-shadow: 0 8px 20px -4px rgba(4, 120, 87, 0.35);
     }
 
     .btn-sync-api:active {
@@ -941,8 +953,8 @@
     .btn-whatsapp {
       width: 100%;
       height: 48px;
-      background: #25D366;
-      color: #fff;
+      background: #16a34a;
+      color: #ffffff;
       font-size: 14px;
       font-weight: 800;
       border-radius: 12px;
@@ -952,15 +964,16 @@
       justify-content: center;
       gap: 8px;
       cursor: pointer;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
     }
 
     .btn-outline-action {
       width: 100%;
       height: 44px;
-      background: transparent;
-      border: 1px solid var(--surface-border);
+      background: #ffffff;
+      border: 1.5px solid var(--surface-border);
       border-radius: 12px;
-      color: var(--text-muted);
+      color: var(--text-body);
       font-size: 13px;
       font-weight: 700;
       display: flex;
@@ -968,6 +981,10 @@
       justify-content: center;
       gap: 6px;
       cursor: pointer;
+    }
+
+    .btn-outline-action:active {
+      background: #f1f5f9;
     }
 
     /* ======================================================== */
@@ -979,13 +996,13 @@
       width: 100%;
       max-width: 440px;
       height: 68px;
-      background: rgba(17, 24, 39, 0.96);
-      backdrop-filter: blur(20px);
+      background: #ffffff;
       border-top: 1px solid var(--surface-border);
       display: flex;
       justify-content: space-around;
       align-items: center;
       z-index: 100;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
       padding-bottom: env(safe-area-inset-bottom);
     }
 
@@ -1001,25 +1018,25 @@
       gap: 4px;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.3px;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
 
     .nav-tab-btn i {
-      font-size: 18px;
-      transition: transform 0.2s;
+      font-size: 19px;
+      transition: transform 0.15s;
     }
 
     .nav-tab-btn.active {
-      color: #34d399;
+      color: #047857;
     }
 
     .nav-tab-btn.active i {
       transform: translateY(-2px);
-      color: #34d399;
+      color: #047857;
     }
 
     /* ======================================================== */
@@ -1028,8 +1045,8 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
       z-index: 600;
       display: none;
       align-items: center;
@@ -1039,17 +1056,17 @@
 
     .modal-overlay.open {
       display: flex;
-      animation: fadeIn 0.2s ease-out;
+      animation: fadeIn 0.15s ease-out;
     }
 
     .modal-box {
       width: 100%;
       max-width: 390px;
-      background: var(--surface-card);
+      background: #ffffff;
       border: 1px solid var(--surface-border);
       border-radius: var(--radius);
       padding: 22px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
 
     .scanner-viewfinder {
@@ -1060,7 +1077,7 @@
       position: relative;
       overflow: hidden;
       margin: 12px 0;
-      border: 2px solid var(--primary);
+      border: 2px solid #047857;
     }
 
     #qr-reader-container {
@@ -1073,14 +1090,13 @@
       bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
-      background: #1e293b;
-      color: #fff;
-      border: 1px solid var(--surface-border);
+      background: #0f172a;
+      color: #ffffff;
       padding: 10px 18px;
       border-radius: 30px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
       z-index: 999;
       display: none;
       align-items: center;
@@ -1095,11 +1111,8 @@
   <!-- ======================================================== -->
   <div id="loginScreen" class="login-container">
     <div class="login-logo-box">
-      <!-- IPB Cruz & Sarça Emblem SVG -->
-      <svg viewBox="0 0 100 100">
-        <path d="M50 10 L50 90 M25 35 L75 35" stroke="#ffffff" stroke-width="8" stroke-linecap="round" />
-        <circle cx="50" cy="50" r="18" fill="none" stroke="#a7f3d0" stroke-width="4" stroke-dasharray="4 2" />
-      </svg>
+      <!-- Logo Oficial da IPB -->
+      <img src="ipb-logo.png" alt="Logo Oficial IPB" />
     </div>
 
     <h1 class="login-title">IPB • Diaconato</h1>
@@ -1112,26 +1125,20 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Usuário ou E-mail</label>
+        <label class="form-label" for="loginUsername">Usuário ou E-mail</label>
         <div class="input-wrapper">
-          <i class="pi pi-user"></i>
-          <input type="text" id="loginUsername" class="input-field" placeholder="Ex: admin" value="admin" />
+          <i class="pi pi-user input-icon-left"></i>
+          <input type="text" id="loginUsername" class="input-field" placeholder="Digite seu usuário ou e-mail" autocomplete="username" inputmode="text" />
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Senha</label>
+        <label class="form-label" for="loginPassword">Senha</label>
         <div class="input-wrapper">
-          <i class="pi pi-lock"></i>
-          <input type="password" id="loginPassword" class="input-field" placeholder="Sua senha de acesso" value="EbdAdmin@2026" />
+          <i class="pi pi-lock input-icon-left"></i>
+          <input type="password" id="loginPassword" class="input-field" placeholder="Digite sua senha" autocomplete="current-password" inputmode="text" />
           <i class="pi pi-eye input-toggle-pwd" id="togglePasswordBtn" onclick="togglePasswordVisibility()"></i>
         </div>
-      </div>
-
-      <!-- Configurações Avançadas de API (Opcional) -->
-      <div id="serverConfigBox" style="display: none; margin-bottom: 14px; padding: 10px; background: #0d1422; border-radius: 10px;">
-        <label class="form-label" style="font-size: 10px;">URL da API EBD/IPB</label>
-        <input type="text" id="apiEndpointUrl" class="input-field" style="height: 38px; font-size: 12px;" value="https://ebd-api-five.vercel.app/api/v1" />
       </div>
 
       <button type="button" class="btn-login-submit" onclick="executarLogin()">
@@ -1141,16 +1148,12 @@
 
       <button type="button" class="btn-offline-mode" onclick="entrarModoOffline()">
         <i class="pi pi-cloud"></i>
-        <span>Modo Diaconal Offline (Sem Internet)</span>
-      </button>
-
-      <button type="button" class="server-toggle-btn" onclick="toggleServerConfig()">
-        <i class="pi pi-cog"></i> Configurar Servidor / API
+        <span>Modo Diaconal Offline (Contingência)</span>
       </button>
     </div>
 
-    <p style="margin-top: 24px; font-size: 11px; color: var(--text-muted); text-align: center;">
-      Igreja Presbiteriana do Brasil &bull; APK Diaconal v1.0
+    <p style="margin-top: 24px; font-size: 11px; color: var(--text-muted); text-align: center; font-weight: 500;">
+      Igreja Presbiteriana do Brasil &bull; Diaconato & Tesouraria
     </p>
   </div>
 
@@ -1162,15 +1165,15 @@
     <header class="top-header">
       <div class="top-bar">
         <div class="church-badge">
-          <div class="church-logo">IPB</div>
+          <img src="ipb-logo.png" class="church-logo-img" alt="IPB" />
           <div class="church-info">
             <h1 id="appChurchName">Igreja Presbiteriana</h1>
-            <span id="appMeetingName">Culto de Domingo &bull; Hoje</span>
+            <span id="appMeetingName">Culto Dominical &bull; Hoje</span>
           </div>
         </div>
         <div class="top-user-actions">
           <div class="user-pill" id="activeUserPill">
-            <i class="pi pi-user" style="color: #34d399;"></i>
+            <i class="pi pi-user" style="color: #047857;"></i>
             <span id="activeUserName">Diácono</span>
           </div>
           <button type="button" class="btn-logout" title="Sair" onclick="confirmarLogout()">
@@ -1214,7 +1217,7 @@
       <div class="quick-entry-card">
         <div class="card-title">
           <span><i class="pi pi-plus-circle" style="color: var(--primary); margin-right: 4px;"></i> Lançar Envelope / Oferta</span>
-          <span id="quickEntryId" style="font-size: 11px; color: var(--text-muted);">#001</span>
+          <span id="quickEntryId" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">#001</span>
         </div>
 
         <!-- 🚀 Bipar QR Code do Envelope com Câmera -->
@@ -1228,7 +1231,7 @@
               <p>Escaneie o código do envelope com a câmera</p>
             </div>
           </div>
-          <i class="pi pi-angle-right" style="color: #34d399; font-size: 18px;"></i>
+          <i class="pi pi-angle-right" style="color: #047857; font-size: 20px;"></i>
         </div>
 
         <!-- Categoria do Lançamento -->
@@ -1265,8 +1268,8 @@
         <!-- Membro / Ofertante -->
         <label class="form-label">Membro / Dizimista (Opcional)</label>
         <div style="margin-bottom: 12px; position: relative;">
-          <input type="text" id="memberInput" class="input-field" style="padding-left: 14px; height: 44px;" placeholder="Digite o nome ou nº do envelope..." oninput="filtrarMembros(this.value)" />
-          <div id="memberAutocompleteBox" style="position: absolute; top: 48px; left: 0; right: 0; background: #162032; border: 1px solid var(--surface-border); border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 100; display: none;"></div>
+          <input type="text" id="memberInput" class="input-field" style="padding-left: 14px; height: 46px;" placeholder="Digite o nome ou nº do envelope..." oninput="filtrarMembros(this.value)" />
+          <div id="memberAutocompleteBox" style="position: absolute; top: 50px; left: 0; right: 0; background: #ffffff; border: 1px solid var(--surface-border); border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1);"></div>
         </div>
 
         <!-- Valor Monetário -->
@@ -1293,8 +1296,8 @@
 
       <!-- Feed de Lançamentos Recentes -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Lançamentos Desta Sessão</span>
-        <span id="entriesCountLabel" style="font-size: 11px; color: var(--text-muted);">0 itens</span>
+        <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Lançamentos Desta Sessão</span>
+        <span id="entriesCountLabel" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">0 itens</span>
       </div>
 
       <div class="entries-feed" id="entriesFeed"></div>
@@ -1306,11 +1309,11 @@
     <main id="tab-cedulas" class="tab-content">
       <div class="quick-entry-card" style="padding-bottom: 10px;">
         <div class="card-title">
-          <span><i class="pi pi-calculator" style="color: #38bdf8; margin-right: 4px;"></i> Contagem de Dinheiro Físico</span>
-          <span style="font-family: 'JetBrains Mono'; color: #34d399; font-weight: 800; font-size: 16px;" id="totalDinheiroFisico">R$ 0,00</span>
+          <span><i class="pi pi-calculator" style="color: #0284c7; margin-right: 4px;"></i> Contagem de Dinheiro Físico</span>
+          <span style="font-family: 'JetBrains Mono'; color: #047857; font-weight: 800; font-size: 16px;" id="totalDinheiroFisico">R$ 0,00</span>
         </div>
-        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">
-          Contador tátil de notas e moedas físicas. Clique em +1, +5, +10 ou digite o total.
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+          Contador tátil de notas e moedas físicas. Toque em +1, +5, +10 ou digite a quantidade diretamente.
         </p>
 
         <div class="cash-grid" id="cashCounterGrid"></div>
@@ -1327,7 +1330,7 @@
     <main id="tab-fechamento" class="tab-content">
       <div class="reconciliation-card">
         <div class="card-title">
-          <span><i class="pi pi-verified" style="color: #10b981; margin-right: 4px;"></i> Batimento & Fechamento Canônico</span>
+          <span><i class="pi pi-verified" style="color: #047857; margin-right: 4px;"></i> Batimento & Fechamento Canônico</span>
           <span class="reconciliation-status ok" id="summaryStatusBadge">100% Conciliado</span>
         </div>
 
@@ -1341,8 +1344,8 @@
             <td id="recEnvelopesDinheiro">R$ 0,00</td>
           </tr>
           <tr>
-            <td style="font-weight: 700; color: #f8fafc;"><i class="pi pi-balance-scale" style="margin-right: 6px;"></i> Ofertas Soltas na Salva (Sobra):</td>
-            <td id="recDiferencaDinheiro" style="color: #34d399;">R$ 0,00</td>
+            <td style="font-weight: 700; color: #0f172a;"><i class="pi pi-balance-scale" style="margin-right: 6px;"></i> Ofertas Soltas na Salva (Sobra):</td>
+            <td id="recDiferencaDinheiro" style="color: #047857;">R$ 0,00</td>
           </tr>
           <tr>
             <td style="color: var(--text-muted);"><i class="pi pi-qrcode" style="margin-right: 6px;"></i> Total em PIX / Transferências:</td>
@@ -1353,24 +1356,24 @@
             <td id="recCartao">R$ 0,00</td>
           </tr>
           <tr style="border-top: 2px solid var(--surface-border);">
-            <td style="font-size: 14px; font-weight: 800; color: #fff;">TOTAL GERAL DA APURAÇÃO:</td>
-            <td id="recTotalGeral" style="font-size: 18px; color: #34d399;">R$ 0,00</td>
+            <td style="font-size: 14px; font-weight: 800; color: #0f172a;">TOTAL GERAL DA APURAÇÃO:</td>
+            <td id="recTotalGeral" style="font-size: 18px; color: #047857;">R$ 0,00</td>
           </tr>
         </table>
 
         <!-- Comissão Canônica de 2 Conferentes -->
         <div class="witness-box">
-          <div style="font-size: 12px; font-weight: 800; color: #fff; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
-            <i class="pi pi-shield" style="color: #f59e0b;"></i> Comissão Canônica de Conferência (IPB)
+          <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+            <i class="pi pi-shield" style="color: #d97706;"></i> Comissão Canônica de Conferência (IPB)
           </div>
-          <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px;">
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
             Mínimo 2 irmãos da Junta Diaconal / Tesouraria presentes na apuração.
           </p>
 
-          <label class="form-label" style="font-size: 10px;">1º Conferente (Diácono / Tesoureiro)</label>
+          <label class="form-label" style="font-size: 11px;">1º Conferente (Diácono / Tesoureiro)</label>
           <input type="text" id="conferente1" class="witness-select" value="Diác. Carlos Eduardo" placeholder="Nome do 1º conferente" />
 
-          <label class="form-label" style="font-size: 10px;">2º Conferente (Verificador)</label>
+          <label class="form-label" style="font-size: 11px;">2º Conferente (Verificador)</label>
           <input type="text" id="conferente2" class="witness-select" value="Diác. Marcos Vinícius" placeholder="Nome do 2º conferente" />
         </div>
 
@@ -1389,7 +1392,7 @@
             <i class="pi pi-copy"></i> Copiar Resumo da Apuração
           </button>
 
-          <button type="button" class="btn-outline-action" style="color: #f87171;" onclick="confirmarReiniciarSessao()">
+          <button type="button" class="btn-outline-action" style="color: #dc2626; border-color: #fecaca;" onclick="confirmarReiniciarSessao()">
             <i class="pi pi-trash"></i> Iniciar Nova Sessão / Limpar
           </button>
         </div>
@@ -1419,10 +1422,10 @@
   <div class="modal-overlay" id="modalScannerQR">
     <div class="modal-box">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <h3 style="font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px;">
-          <i class="pi pi-qrcode" style="color: var(--primary);"></i> Câmera QR Code
+        <h3 style="font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; color: #065f46;">
+          <i class="pi pi-qrcode"></i> Câmera QR Code
         </h3>
-        <button type="button" onclick="fecharScannerQR()" style="background: transparent; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer;">
+        <button type="button" onclick="fecharScannerQR()" style="background: transparent; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer;">
           &times;
         </button>
       </div>
@@ -1431,8 +1434,8 @@
         <div id="qr-reader-container"></div>
       </div>
 
-      <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 12px;">
-        Aponte para o QR Code impresso no envelope de dízimo.
+      <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 12px;">
+        Aponte a câmera para o QR Code do envelope de dízimo.
       </p>
 
       <!-- Botões de Simulação Rápida / Teste -->
@@ -1461,9 +1464,8 @@
   <!-- JAVASCRIPT PRINCIPAL DO APLICATIVO                       -->
   <!-- ======================================================== -->
   <script>
-    // Configurações e Estado
-    const DEFAULT_API_URL = "https://ebd-api-five.vercel.app/api/v1";
-    let apiUrl = localStorage.getItem("ipb_api_url") || DEFAULT_API_URL;
+    // Configuração Interna da API (Transparente para o usuário)
+    const API_URL = "https://ebd-api-five.vercel.app/api/v1";
     let authToken = localStorage.getItem("ipb_auth_token") || null;
     let currentUser = JSON.parse(localStorage.getItem("ipb_current_user") || "null");
     let html5QrCodeScanner = null;
@@ -1515,9 +1517,6 @@
     });
 
     function verificarSessao() {
-      const endpointInput = document.getElementById("apiEndpointUrl");
-      if (endpointInput) endpointInput.value = apiUrl;
-
       if (authToken && currentUser) {
         document.getElementById("loginScreen").style.display = "none";
         document.getElementById("mainApp").style.display = "flex";
@@ -1532,20 +1531,17 @@
 
     // Login
     async function executarLogin() {
-      const username = document.getElementById("loginUsername").value.trim();
-      const password = document.getElementById("loginPassword").value;
-      const customApi = document.getElementById("apiEndpointUrl").value.trim();
-      if (customApi) {
-        apiUrl = customApi;
-        localStorage.setItem("ipb_api_url", apiUrl);
-      }
+      const usernameInput = document.getElementById("loginUsername");
+      const passwordInput = document.getElementById("loginPassword");
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
 
       const errorMsgBox = document.getElementById("loginErrorMsg");
       const errorText = document.getElementById("loginErrorText");
       errorMsgBox.style.display = "none";
 
       if (!username || !password) {
-        errorText.textContent = "Preencha o usuário e a senha.";
+        errorText.textContent = "Por favor, preencha o usuário/e-mail e a senha.";
         errorMsgBox.style.display = "flex";
         return;
       }
@@ -1553,7 +1549,7 @@
       showToast("Conectando ao sistema IPB...");
 
       try {
-        const response = await fetch(`${apiUrl}/auth/login`, {
+        const response = await fetch(`${API_URL}/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1577,12 +1573,12 @@
           showToast(`Bem-vindo, ${currentUser.name}!`);
           verificarSessao();
         } else {
-          errorText.textContent = data.message || "Credenciais inválidas. Verifique usuário e senha.";
+          errorText.textContent = data.message || "Credenciais inválidas. Verifique usuário e senha digitados.";
           errorMsgBox.style.display = "flex";
         }
       } catch (err) {
         console.warn("Falha de conexão com a API:", err);
-        errorText.textContent = "Não foi possível conectar ao servidor. Use o 'Modo Offline' se estiver sem internet.";
+        errorText.textContent = "Sem conexão com o servidor. Você pode entrar em Modo Offline para apurar a contagem.";
         errorMsgBox.style.display = "flex";
       }
     }
@@ -1590,7 +1586,7 @@
     function entrarModoOffline() {
       authToken = "offline-mode-token";
       currentUser = {
-        name: "Diácono (Modo Offline)",
+        name: "Diácono (Offline)",
         role: "Diaconato Local",
         is_offline: true
       };
@@ -1622,17 +1618,12 @@
       }
     }
 
-    function toggleServerConfig() {
-      const box = document.getElementById("serverConfigBox");
-      box.style.display = box.style.display === "none" ? "block" : "none";
-    }
-
     // Membros & Autocomplete
     async function carregarMembrosDaAPI() {
       if (!authToken || authToken.includes("offline")) return;
 
       try {
-        const res = await fetch(`${apiUrl}/people?per_page=100`, {
+        const res = await fetch(`${API_URL}/people?per_page=100`, {
           headers: {
             "Authorization": `Bearer ${authToken}`,
             "Accept": "application/json"
@@ -1644,7 +1635,6 @@
           localStorage.setItem("ipb_membros_cache", JSON.stringify(state.membros));
         }
       } catch (e) {
-        console.log("Usando cache local de membros.");
         const cache = localStorage.getItem("ipb_membros_cache");
         if (cache) state.membros = JSON.parse(cache);
       }
@@ -1678,7 +1668,7 @@
 
       box.innerHTML = filtrados.slice(0, 6).map(m => `
         <div style="padding: 10px 14px; border-bottom: 1px solid var(--surface-border); cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="selecionarMembro(${m.id}, '${m.full_name}', '${m.envelope_number || ''}')">
-          <span style="font-size: 13px; font-weight: 600; color: #f8fafc;">${m.full_name}</span>
+          <span style="font-size: 13px; font-weight: 600; color: #0f172a;">${m.full_name}</span>
           <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono';">${m.envelope_number ? 'Env. #' + m.envelope_number : ''}</span>
         </div>
       `).join("");
@@ -1752,7 +1742,6 @@
       state.entries.unshift(novaEntrada);
       salvarEstado();
 
-      // Limpar formulário
       amountInput.value = "";
       document.getElementById("memberInput").value = "";
       state.membroSelecionado = null;
@@ -1779,8 +1768,8 @@
 
       if (state.entries.length === 0) {
         feed.innerHTML = `
-          <div style="text-align: center; padding: 24px 10px; color: var(--text-muted); font-size: 12px;">
-            <i class="pi pi-inbox" style="font-size: 24px; margin-bottom: 6px; display: block;"></i>
+          <div style="text-align: center; padding: 24px 10px; color: var(--text-muted); font-size: 13px;">
+            <i class="pi pi-inbox" style="font-size: 26px; margin-bottom: 6px; display: block; color: #94a3b8;"></i>
             Nenhum envelope lançado ainda nesta sessão.
           </div>
         `;
@@ -1910,13 +1899,11 @@
     function atualizarHUD() {
       const t = calcularTotais();
 
-      // Top HUD
       document.getElementById("hudTotal").textContent = `R$ ${t.totalGeral.toFixed(2).replace(".", ",")}`;
       document.getElementById("hudEnvelopesCount").textContent = t.totalEnvelopes;
       document.getElementById("hudPixCount").textContent = t.pixCount;
       document.getElementById("totalDinheiroFisico").textContent = `R$ ${t.totalFisico.toFixed(2).replace(".", ",")}`;
 
-      // Status do Batimento Badge
       const badge = document.getElementById("hudConciliacaoBadge");
       const summaryBadge = document.getElementById("summaryStatusBadge");
 
@@ -1943,7 +1930,6 @@
         }
       }
 
-      // Tabela de Fechamento
       document.getElementById("recFisico").textContent = `R$ ${t.totalFisico.toFixed(2).replace(".", ",")}`;
       document.getElementById("recEnvelopesDinheiro").textContent = `R$ ${t.totalEnvelopesDinheiro.toFixed(2).replace(".", ",")}`;
       document.getElementById("recDiferencaDinheiro").textContent = `R$ ${t.diferencaDinheiro.toFixed(2).replace(".", ",")}`;
@@ -1966,9 +1952,7 @@
               processarQrDecodificado(decodedText);
               fecharScannerQR();
             },
-            (errorMessage) => {
-              // frame de leitura sem detecção
-            }
+            (errorMessage) => {}
           ).catch(err => {
             console.warn("Não foi possível acessar a câmera:", err);
           });
@@ -1990,7 +1974,6 @@
 
     function processarQrDecodificado(texto) {
       showToast(`QR Code detectado: ${texto}`);
-      // Formato esperado: IPB:ENV:104:150.00:DIZIMO ou JSON ou Envelope
       try {
         if (texto.startsWith("{")) {
           const obj = JSON.parse(texto);
@@ -1999,7 +1982,6 @@
         }
       } catch (e) {}
 
-      // Fallback para texto plano
       simularLeituraQR("QR-SCAN", texto, 100, "dizimo");
     }
 
@@ -2015,7 +1997,7 @@
     // Sincronização com API
     async function sincronizarComAPI() {
       if (!authToken || authToken.includes("offline")) {
-        alert("Você está em Modo Offline. Conecte-se com sua conta de Diácono/Tesoureiro para enviar diretamente ao servidor.");
+        alert("Você está em Modo Offline. Conecte-se com sua conta de Administrador/Diácono/Tesoureiro para enviar diretamente ao servidor.");
         return;
       }
 
@@ -2030,8 +2012,7 @@
       showToast("Sincronizando com a API IPB...");
 
       try {
-        // 1. Abre a coleta
-        const resColeta = await fetch(`${apiUrl}/dizimos/coletas`, {
+        const resColeta = await fetch(`${API_URL}/dizimos/coletas`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${authToken}`,
@@ -2049,9 +2030,8 @@
         const dataColeta = await resColeta.json();
         const coletaId = dataColeta.id;
 
-        // 2. Envia os lançamentos
         for (const entry of state.entries) {
-          await fetch(`${apiUrl}/dizimos/coletas/${coletaId}/lancamentos`, {
+          await fetch(`${API_URL}/dizimos/coletas/${coletaId}/lancamentos`, {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${authToken}`,
@@ -2068,8 +2048,7 @@
           });
         }
 
-        // 3. Fecha a coleta
-        await fetch(`${apiUrl}/dizimos/coletas/${coletaId}/fechar`, {
+        await fetch(`${API_URL}/dizimos/coletas/${coletaId}/fechar`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${authToken}`,
