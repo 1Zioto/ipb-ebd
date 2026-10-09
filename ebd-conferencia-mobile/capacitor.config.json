@@ -1,0 +1,12 @@
+{
+  "appId": "br.org.ipb.conferencia",
+  "appName": "IPB Conferência",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

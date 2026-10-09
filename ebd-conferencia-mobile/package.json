@@ -1,0 +1,21 @@
+{
+  "name": "ipb-conferencia-mobile",
+  "version": "1.0.0",
+  "description": "App Android para Conferência Rápida de Dízimos e Ofertas - Igreja Presbiteriana do Brasil",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo \"Ready\"",
+    "cap:sync": "cap sync",
+    "cap:build": "cap build android",
+    "apk": "cap copy && cd android && gradlew assembleDebug"
+  },
+  "author": "IPB",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "html5-qrcode": "^2.3.8",
+    "primeicons": "^8.0.2"
+  }
+}
