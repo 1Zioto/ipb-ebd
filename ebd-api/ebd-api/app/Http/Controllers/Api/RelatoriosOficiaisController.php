@@ -61,21 +61,58 @@ class RelatoriosOficiaisController extends Controller
         ]);
     }
 
-    /** Ficha Cadastral Ministerial Individual */
+    /** Ficha Cadastral Ministerial Individual Completa */
     public function fichaMinisterial(Request $request, Person $person): JsonResponse
     {
         $person->load([
-            'families.head',
-            'enrollments.class',
-            'teachingClasses.class',
+            'families',
+            'enrollments.classRoom',
+            'teachingClasses.classRoom',
+            'sociedadeMembros.sociedade',
         ]);
+
+        $cargosAtuais = $person->sociedadeMembros
+            ->where('status', 'ativo')
+            ->map(fn($sm) => [
+                'sociedade' => $sm->sociedade ? ($sm->sociedade->sigla . ' - ' . $sm->sociedade->nome) : 'Sociedade',
+                'sigla' => $sm->sociedade?->sigla,
+                'cargo' => $sm->cargo_atual ?: ($sm->tipo_socio === 'efetivo' ? 'Sócio Efetivo' : 'Sócio Cooperador'),
+                'tipo_socio' => $sm->tipo_socio,
+                'data_admissao' => $sm->data_admissao?->format('d/m/Y'),
+            ])->values();
+
+        $classesAluno = $person->enrollments
+            ->map(fn($e) => $e->classRoom?->name)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $classesProfessor = $person->teachingClasses
+            ->map(fn($tc) => $tc->classRoom?->name)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $familias = $person->families->map(fn($f) => [
+            'id' => $f->id,
+            'name' => $f->name,
+            'relationship' => $f->pivot?->relationship,
+            'is_head' => (bool) ($f->pivot?->is_head ?? false),
+        ])->values();
 
         return response()->json([
             'person' => $person,
+            'membro' => $person, // compatibilidade
+            'cargos_atuais' => $cargosAtuais,
+            'classes_aluno' => $classesAluno,
+            'classes_professor' => $classesProfessor,
+            'familias' => $familias,
             'igreja' => 'Igreja Presbiteriana em Campo Verde',
             'presbiterio' => 'Presbitério Campo Verde (PCVD) / Sínodo Mato Grosso',
             'pastor_presidente' => 'Rev. Carlos Eduardo',
             'data_emissao' => now()->format('d/m/Y'),
+            'hora_emissao' => now()->format('H:i:s'),
+            'codigo_autenticidade' => strtoupper(substr(md5('IPB-FICHA-' . $person->id . '-' . now()->toDateString()), 0, 12)),
         ]);
     }
 }

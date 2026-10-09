@@ -74,6 +74,11 @@ class Person extends Model
             ->withPivot(['relationship', 'is_head'])->withTimestamps();
     }
 
+    public function sociedadeMembros(): HasMany
+    {
+        return $this->hasMany(SociedadeMembro::class, 'person_id');
+    }
+
     // ----- Scopes úteis -----
     public function scopeActive($q) { return $q->where('is_active', true); }
     public function scopeTeachers($q) { return $q->where('can_teach', true); }

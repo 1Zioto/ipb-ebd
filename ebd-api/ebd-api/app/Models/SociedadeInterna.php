@@ -34,6 +34,16 @@ class SociedadeInterna extends Model
         return $this->hasMany(SociedadeAtividade::class, 'sociedade_id');
     }
 
+    public function membros(): HasMany
+    {
+        return $this->hasMany(SociedadeMembro::class, 'sociedade_id');
+    }
+
+    public function atas(): HasMany
+    {
+        return $this->hasMany(SociedadeAta::class, 'sociedade_id');
+    }
+
     public function costCenter(): BelongsTo
     {
         return $this->belongsTo(FinancialCostCenter::class, 'financial_cost_center_id');

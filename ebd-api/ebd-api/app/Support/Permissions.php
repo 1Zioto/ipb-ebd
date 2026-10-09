@@ -59,6 +59,13 @@ class Permissions
         'financial.categories.manage' => 'Gerir categorias e centros de custo',
         'financial.accounting.view' => 'Ver balancete e relatórios contábeis',
         'financial.accounting.close' => 'Realizar fechamento mensal contábil',
+
+        // Módulo de Sociedades Internas & Forças Ativas (SAF, UPH, UMP, UPA, UCP)
+        'sociedade.view' => 'Ver sociedades internas e programações',
+        'sociedade.membros.manage' => 'Gerir rol de membros e arrolamento das sociedades',
+        'sociedade.atas.manage' => 'Lavrar e gerir atas das sociedades internas',
+        'sociedade.diretoria.manage' => 'Gerir diretorias das sociedades',
+        'sociedade.atividades.manage' => 'Gerir atividades e eventos das sociedades',
     ];
 
     /** Matriz papel => permissões. 'programador' recebe todas via Gate::before. */
@@ -74,6 +81,7 @@ class Permissions
             'institution.consolidated.view',
             'financial.view', 'financial.manage', 'financial.accounts.manage',
             'financial.categories.manage', 'financial.accounting.view', 'financial.accounting.close',
+            'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
         ],
         'superintendencia' => [
             'person.view', 'person.manage', 'family.view', 'family.manage', 'class.view', 'class.manage', 'enrollment.manage',
@@ -85,6 +93,7 @@ class Permissions
             'institution.view', 'institution.manage', 'institution.tree.view',
             'institution.subordinate.view', 'institution.consolidated.view', 'institution.transfer',
             'financial.view', 'financial.manage', 'financial.accounting.view',
+            'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
         ],
         'diacono' => [
             'person.view', 'family.view',
@@ -92,12 +101,29 @@ class Permissions
             'dizimos.diaconato.atender', 'dizimos.relatorios.view',
             'institution.view', 'institution.tree.view',
             'financial.view',
+            'sociedade.view',
         ],
         'professor' => [
             'person.view', 'family.view', 'class.view', 'event.view',
             'call.view', 'call.perform', 'call.edit', 'call.finalize',
             'schedule.view', 'report.view',
             'institution.view',
+            'sociedade.view',
+        ],
+        'lideranca_saf' => [
+            'person.view', 'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
+        ],
+        'lideranca_uph' => [
+            'person.view', 'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
+        ],
+        'lideranca_ump' => [
+            'person.view', 'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
+        ],
+        'lideranca_upa' => [
+            'person.view', 'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
+        ],
+        'lideranca_ucp' => [
+            'person.view', 'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
         ],
     ];
 
@@ -107,5 +133,10 @@ class Permissions
         'superintendencia' => ['Superintendência', 'Operação total da EBD'],
         'diacono' => ['Diácono / Operador', 'Operação de coletas e atendimento diaconal'],
         'professor' => ['Professor', 'Acesso restrito às classes vinculadas'],
+        'lideranca_saf' => ['Liderança SAF', 'Diretoria da Sociedade Auxiliadora Feminina'],
+        'lideranca_uph' => ['Liderança UPH', 'Diretoria da União Presbiteriana de Homens'],
+        'lideranca_ump' => ['Liderança UMP', 'Diretoria da União de Mocidade Presbiteriana'],
+        'lideranca_upa' => ['Liderança UPA', 'Diretoria da União Presbiteriana de Adolescentes'],
+        'lideranca_ucp' => ['Liderança UCP', 'Diretoria/Orientação da União de Crianças Presbiterianas'],
     ];
 }

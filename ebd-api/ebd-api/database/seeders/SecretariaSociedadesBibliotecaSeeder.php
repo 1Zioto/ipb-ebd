@@ -11,8 +11,10 @@ use App\Models\FinancialCostCenter;
 use App\Models\Institution;
 use App\Models\Person;
 use App\Models\SociedadeAtividade;
+use App\Models\SociedadeAta;
 use App\Models\SociedadeDiretoria;
 use App\Models\SociedadeInterna;
+use App\Models\SociedadeMembro;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -310,6 +312,45 @@ class SecretariaSociedadesBibliotecaSeeder extends Seeder
                     ]
                 );
             }
+
+            // Membros Iniciais (Sócios Efetivos da Diretoria e Pessoas Elegíveis)
+            foreach ($conf['diretoria'] as $dir) {
+                $targetPerson = $people[$dir['offset'] % $people->count()] ?? $people->first();
+                SociedadeMembro::firstOrCreate(
+                    [
+                        'sociedade_id' => $soc->id,
+                        'person_id' => $targetPerson->id,
+                    ],
+                    [
+                        'tipo_socio' => 'efetivo',
+                        'data_admissao' => '2026-01-10',
+                        'status' => 'ativo',
+                        'cargo_atual' => $dir['cargo'],
+                        'observacoes' => 'Eleita(o) em Assembleia Geral Eletiva',
+                    ]
+                );
+            }
+
+            // Livro de Atas da Sociedade (Primeira Ata Formal do Ano)
+            SociedadeAta::firstOrCreate(
+                [
+                    'sociedade_id' => $soc->id,
+                    'numero_ata' => 'Ata nº 01/2026',
+                ],
+                [
+                    'titulo' => "Reunião Plenária Ordinária de Abertura do Exercício ({$soc->sigla})",
+                    'tipo_reuniao' => 'Plenária Ordinária',
+                    'data_reuniao' => '2026-01-18',
+                    'horario' => '19:30',
+                    'local' => 'Salão Social da Igreja',
+                    'pauta' => '1. Oração e meditação; 2. Apresentação da diretoria do ano; 3. Votação do plano anual de trabalho.',
+                    'conteudo' => "Aos dezoito dias do mês de janeiro de dois mil e vinte e seis, às 19h30, reuniu-se ordinariamente a {$soc->nome} ({$soc->sigla}) em seu salão social. Aberta a sessão com hino e oração pela presidente, foram apresentados os oficiais eleitos para o ano de 2026. A plenária discutiu e aprovou por unanimidade o calendário de atividades e programações comunitárias. O tesoureiro apresentou o plano de despesas vinculado ao centro de custo e nada mais havendo a tratar, a reunião foi encerrada às 21h00 com oração de gratidão.",
+                    'presentes_count' => 15,
+                    'status' => 'Assinada',
+                    'visto_conselho_data' => '2026-02-15',
+                    'visto_conselho_relator' => 'Rev. Pastor Titular',
+                ]
+            );
         }
 
         // 5. Discipulado & Catecúmenos

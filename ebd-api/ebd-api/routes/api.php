@@ -256,9 +256,24 @@ Route::prefix('v1')->group(function () {
         // ---- 👥 2. Sociedades Internas & Ministérios (SAF, UPH, UMP, UPA, UCP) ----
         Route::prefix('sociedades')->group(function () {
             Route::get('/', [SociedadesController::class, 'index']);
+            Route::post('/', [SociedadesController::class, 'store']);
             Route::get('{sociedade}', [SociedadesController::class, 'show']);
+            Route::put('{sociedade}', [SociedadesController::class, 'update']);
+            Route::delete('{sociedade}', [SociedadesController::class, 'destroy']);
             Route::post('{sociedade}/diretoria', [SociedadesController::class, 'storeDiretoria']);
             Route::post('{sociedade}/atividades', [SociedadesController::class, 'storeAtividade']);
+
+            // Membros / Rol de Sócios
+            Route::get('{sociedade}/membros', [SociedadesController::class, 'getMembros']);
+            Route::post('{sociedade}/membros', [SociedadesController::class, 'storeMembro']);
+            Route::post('{sociedade}/membros/em-lote', [SociedadesController::class, 'arrolarEmLote']);
+            Route::delete('{sociedade}/membros/{membro}', [SociedadesController::class, 'deleteMembro']);
+
+            // Livro de Atas da Sociedade
+            Route::get('{sociedade}/atas', [SociedadesController::class, 'getAtas']);
+            Route::post('{sociedade}/atas', [SociedadesController::class, 'storeAta']);
+            Route::put('{sociedade}/atas/{ata}', [SociedadesController::class, 'updateAta']);
+            Route::delete('{sociedade}/atas/{ata}', [SociedadesController::class, 'deleteAta']);
         });
 
         // ---- 📖 5. Discipulado & Biblioteca da Igreja ----
