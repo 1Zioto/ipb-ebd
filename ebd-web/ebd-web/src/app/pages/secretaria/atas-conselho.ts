@@ -10,6 +10,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, AtaConselho } from '../../core/secretaria.service';
+import { PastorInfo } from '../../core/models';
 
 @Component({
   selector: 'app-atas-conselho',
@@ -33,6 +34,7 @@ export class AtasConselhoPage implements OnInit {
   private msg = inject(MessageService);
 
   atas = signal<AtaConselho[]>([]);
+  pastores = signal<PastorInfo[]>([]);
   loading = signal<boolean>(true);
 
   tipoFilter = '';
@@ -46,7 +48,7 @@ export class AtasConselhoPage implements OnInit {
     data_reuniao: new Date().toISOString().substring(0, 10),
     horario: '19:30',
     local: 'Gabinete Pastoral / Sala do Conselho',
-    pastor_presidente: 'Rev. Marcos Silva',
+    pastor_presidente: 'Rev. Pastor Presidente',
     secretario_conselho: 'Presb. José Carlos Prado',
     ata_original: '',
     status: 'Aprovada',
@@ -58,6 +60,15 @@ export class AtasConselhoPage implements OnInit {
 
   ngOnInit(): void {
     this.carregarAtas();
+    this.secService.getPastores().subscribe({
+      next: (data) => {
+        this.pastores.set(data);
+        const titular = data.find((p) => p.is_pastor_titular) || data[0];
+        if (titular && !this.isEditing) {
+          this.formAta.pastor_presidente = titular.titulo_pastoral || titular.nome;
+        }
+      },
+    });
   }
 
   carregarAtas(): void {
@@ -83,13 +94,14 @@ export class AtasConselhoPage implements OnInit {
     this.isEditing = false;
     const ano = new Date().getFullYear();
     const seq = 100 + this.atas().length + 1;
+    const titular = this.pastores().find((p) => p.is_pastor_titular) || this.pastores()[0];
     this.formAta = {
       numero_ata: `Ata nº ${seq}/${ano}`,
       tipo: 'Ordinária',
       data_reuniao: new Date().toISOString().substring(0, 10),
       horario: '19:30',
       local: 'Gabinete Pastoral / Sala do Conselho',
-      pastor_presidente: 'Rev. Marcos Silva',
+      pastor_presidente: titular ? (titular.titulo_pastoral || titular.nome) : 'Rev. Pastor Presidente',
       secretario_conselho: 'Presb. José Carlos Prado',
       abertura: 'O Presidente abriu os trabalhos com leitura bíblica e oração.',
       pauta: '1. Expediente; 2. Relatório de finanças; 3. Assuntos pastorais.',

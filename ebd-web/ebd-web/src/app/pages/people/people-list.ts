@@ -13,7 +13,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AuthService } from '../../core/auth.service';
 import { PeopleService } from '../../core/people.service';
 import { SecretariaService, FichaMinisterial } from '../../core/secretaria.service';
-import { Person } from '../../core/models';
+import { Person, PastorInfo } from '../../core/models';
 
 @Component({
   selector: 'app-people-list',
@@ -55,6 +55,8 @@ export class PeopleListPage implements OnInit {
   fichaDialog = signal(false);
   fichaLoading = signal(false);
   fichaData = signal<FichaMinisterial | null>(null);
+  pastoresDisponiveis = signal<PastorInfo[]>([]);
+  selectedPastorId = signal<number | null>(null);
 
   async ngOnInit() {
     await this.load();
@@ -139,9 +141,15 @@ export class PeopleListPage implements OnInit {
   abrirFicha(p: Person): void {
     this.fichaDialog.set(true);
     this.fichaLoading.set(true);
-    this.secSvc.getFichaMinisterial(p.id).subscribe({
+    this.secSvc.getFichaMinisterial(p.id, this.selectedPastorId() || undefined).subscribe({
       next: (data) => {
         this.fichaData.set(data);
+        if (data.pastores && data.pastores.length > 0) {
+          this.pastoresDisponiveis.set(data.pastores);
+        }
+        if (data.pastor_responsavel?.id) {
+          this.selectedPastorId.set(data.pastor_responsavel.id);
+        }
         this.fichaLoading.set(false);
       },
       error: () => {
@@ -149,6 +157,25 @@ export class PeopleListPage implements OnInit {
         this.error.set('Não foi possível carregar a ficha completa do membro.');
       },
     });
+  }
+
+  trocarPastor(pastorId: any): void {
+    const id = Number(pastorId);
+    this.selectedPastorId.set(id);
+    const pastor = this.pastoresDisponiveis().find((x) => x.id === id);
+    if (pastor && this.fichaData()) {
+      const cur = this.fichaData()!;
+      this.fichaData.set({
+        ...cur,
+        pastor_presidente: pastor.titulo_pastoral || pastor.nome,
+        pastor_responsavel: {
+          id: pastor.id,
+          nome: pastor.titulo_pastoral || pastor.nome,
+          cargo: pastor.cargo_pastoral || 'Pastor da Igreja',
+          is_titular: pastor.is_pastor_titular,
+        },
+      });
+    }
   }
 
   imprimirFicha(): void {

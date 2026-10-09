@@ -12,10 +12,23 @@ export interface AuthUser {
     type: string;
   } | null;
   is_active: boolean;
+  is_pastor?: boolean;
+  titulo_pastoral?: string | null;
+  cargo_pastoral?: string | null;
+  is_pastor_titular?: boolean;
   roles: string[];
   role_ids?: number[];
   permissions: string[];
   is_programmer: boolean;
+}
+
+export interface PastorInfo {
+  id: number;
+  nome: string;
+  titulo_pastoral: string;
+  cargo_pastoral: string;
+  is_pastor_titular: boolean;
+  display: string;
 }
 
 export interface Institution {

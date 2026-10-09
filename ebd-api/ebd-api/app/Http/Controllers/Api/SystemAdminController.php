@@ -29,11 +29,20 @@ class SystemAdminController extends Controller
             'password' => ['required', 'string', 'min:8'],
             'person_id' => ['nullable', 'integer', 'exists:people,id'],
             'is_active' => ['boolean'],
+            'is_pastor' => ['sometimes', 'boolean'],
+            'titulo_pastoral' => ['nullable', 'string', 'max:150'],
+            'cargo_pastoral' => ['nullable', 'string', 'max:120'],
+            'is_pastor_titular' => ['sometimes', 'boolean'],
             'role_ids' => ['required', 'array', 'min:1'],
             'role_ids.*' => ['integer', 'exists:roles,id'],
         ]);
         $roleIds = $data['role_ids'];
         unset($data['role_ids']);
+
+        if (!empty($data['is_pastor_titular'])) {
+            User::query()->update(['is_pastor_titular' => false]);
+        }
+
         $user = User::create($data);
         $user->roles()->sync($roleIds);
         Audit::log('user.created', 'user', $user->id, null, ['name' => $user->name, 'roles' => $roleIds]);
@@ -49,6 +58,10 @@ class SystemAdminController extends Controller
             'password' => ['nullable', 'string', 'min:8'],
             'person_id' => ['nullable', 'integer', 'exists:people,id'],
             'is_active' => ['boolean'],
+            'is_pastor' => ['sometimes', 'boolean'],
+            'titulo_pastoral' => ['nullable', 'string', 'max:150'],
+            'cargo_pastoral' => ['nullable', 'string', 'max:120'],
+            'is_pastor_titular' => ['sometimes', 'boolean'],
             'role_ids' => ['sometimes', 'array', 'min:1'],
             'role_ids.*' => ['integer', 'exists:roles,id'],
         ]);
@@ -59,6 +72,14 @@ class SystemAdminController extends Controller
         $roleIds = $data['role_ids'] ?? null;
         unset($data['role_ids']);
         if (empty($data['password'])) unset($data['password']);
+
+        if (!empty($data['is_pastor_titular'])) {
+            User::where('id', '!=', $user->id)->update(['is_pastor_titular' => false]);
+        }
+        if (isset($data['is_pastor']) && !$data['is_pastor']) {
+            $data['is_pastor_titular'] = false;
+        }
+
         $user->update($data);
         if ($roleIds !== null) $user->roles()->sync($roleIds);
         Audit::log('user.updated', 'user', $user->id, $old, ['name' => $user->name, 'username' => $user->username, 'is_active' => $user->is_active, 'roles' => $roleIds]);

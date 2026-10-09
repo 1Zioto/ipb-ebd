@@ -16,6 +16,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'person_id', 'institution_id', 'name', 'username', 'email', 'password', 'is_active', 'last_login_at',
+        'is_pastor', 'titulo_pastoral', 'cargo_pastoral', 'is_pastor_titular',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -25,6 +26,8 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_pastor' => 'boolean',
+            'is_pastor_titular' => 'boolean',
             'last_login_at' => 'datetime',
         ];
     }

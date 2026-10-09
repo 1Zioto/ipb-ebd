@@ -61,6 +61,10 @@ export class UsersAdminPage implements OnInit {
     password: '',
     role_ids: [] as number[],
     is_active: true,
+    is_pastor: false,
+    titulo_pastoral: '',
+    cargo_pastoral: '',
+    is_pastor_titular: false,
   };
 
   ngOnInit() {
@@ -97,6 +101,10 @@ export class UsersAdminPage implements OnInit {
       password: '',
       role_ids: [],
       is_active: true,
+      is_pastor: false,
+      titulo_pastoral: '',
+      cargo_pastoral: '',
+      is_pastor_titular: false,
     };
     this.error.set(null);
     this.successMsg.set(null);
@@ -120,6 +128,10 @@ export class UsersAdminPage implements OnInit {
       password: '',
       role_ids: matchedRoleIds,
       is_active: user.is_active,
+      is_pastor: !!user.is_pastor,
+      titulo_pastoral: user.titulo_pastoral || '',
+      cargo_pastoral: user.cargo_pastoral || '',
+      is_pastor_titular: !!user.is_pastor_titular,
     };
     this.error.set(null);
     this.successMsg.set(null);
@@ -157,6 +169,13 @@ export class UsersAdminPage implements OnInit {
     this.saving.set(true);
     this.error.set(null);
 
+    const pastoralPayload = {
+      is_pastor: this.form.is_pastor,
+      titulo_pastoral: this.form.is_pastor ? (this.form.titulo_pastoral.trim() || this.form.name.trim()) : null,
+      cargo_pastoral: this.form.is_pastor ? (this.form.cargo_pastoral.trim() || 'Pastor da Igreja') : null,
+      is_pastor_titular: this.form.is_pastor ? this.form.is_pastor_titular : false,
+    };
+
     if (isEditing) {
       const payload: any = {
         name: this.form.name.trim(),
@@ -164,6 +183,7 @@ export class UsersAdminPage implements OnInit {
         email: this.form.email.trim() ? this.form.email.trim() : null,
         role_ids: this.form.role_ids,
         is_active: this.form.is_active,
+        ...pastoralPayload,
       };
       if (this.form.password.trim()) {
         payload.password = this.form.password;
@@ -189,6 +209,7 @@ export class UsersAdminPage implements OnInit {
         password: this.form.password,
         role_ids: this.form.role_ids,
         is_active: this.form.is_active,
+        ...pastoralPayload,
       };
 
       this.service.createUser(payload).subscribe({

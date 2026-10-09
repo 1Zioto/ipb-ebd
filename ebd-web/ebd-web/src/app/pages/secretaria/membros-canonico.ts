@@ -9,6 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, CanonicalMember, CanonicalStats, FichaMinisterial } from '../../core/secretaria.service';
+import { PastorInfo } from '../../core/models';
 
 import { StatCardComponent } from '../../shared/components/stat-card';
 
@@ -65,6 +66,8 @@ export class MembrosCanonicoPage implements OnInit {
   fichaDialog = false;
   fichaLoading = signal<boolean>(false);
   fichaData = signal<FichaMinisterial | null>(null);
+  pastoresDisponiveis = signal<PastorInfo[]>([]);
+  selectedPastorId = signal<number | null>(null);
 
   ngOnInit(): void {
     this.carregarMembros();
@@ -129,9 +132,15 @@ export class MembrosCanonicoPage implements OnInit {
   abrirFichaMinisterial(membro: CanonicalMember): void {
     this.fichaDialog = true;
     this.fichaLoading.set(true);
-    this.secService.getFichaMinisterial(membro.id).subscribe({
+    this.secService.getFichaMinisterial(membro.id, this.selectedPastorId() || undefined).subscribe({
       next: (data) => {
         this.fichaData.set(data);
+        if (data.pastores && data.pastores.length > 0) {
+          this.pastoresDisponiveis.set(data.pastores);
+        }
+        if (data.pastor_responsavel?.id) {
+          this.selectedPastorId.set(data.pastor_responsavel.id);
+        }
         this.fichaLoading.set(false);
       },
       error: () => {
@@ -143,6 +152,25 @@ export class MembrosCanonicoPage implements OnInit {
         });
       },
     });
+  }
+
+  trocarPastor(pastorId: any): void {
+    const id = Number(pastorId);
+    this.selectedPastorId.set(id);
+    const pastor = this.pastoresDisponiveis().find((x) => x.id === id);
+    if (pastor && this.fichaData()) {
+      const cur = this.fichaData()!;
+      this.fichaData.set({
+        ...cur,
+        pastor_presidente: pastor.titulo_pastoral || pastor.nome,
+        pastor_responsavel: {
+          id: pastor.id,
+          nome: pastor.titulo_pastoral || pastor.nome,
+          cargo: pastor.cargo_pastoral || 'Pastor da Igreja',
+          is_titular: pastor.is_pastor_titular,
+        },
+      });
+    }
   }
 
   imprimirFicha(): void {

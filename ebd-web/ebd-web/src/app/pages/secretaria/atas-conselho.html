@@ -198,8 +198,20 @@
 
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <label class="block text-xs font-medium text-surface-600 mb-1">Pastor Presidente</label>
-        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="formAta.pastor_presidente" />
+        <label class="block text-xs font-medium text-surface-600 mb-1">Pastor Presidente / Responsável</label>
+        <input
+          type="text"
+          pInputText
+          class="w-full text-sm"
+          [(ngModel)]="formAta.pastor_presidente"
+          list="pastores-atas-list"
+          placeholder="Selecione ou digite o nome do pastor..."
+        />
+        <datalist id="pastores-atas-list">
+          @for (p of pastores(); track p.id) {
+            <option [value]="p.titulo_pastoral || p.nome">{{ p.cargo_pastoral }} {{ p.is_pastor_titular ? '(Titular)' : '' }}</option>
+          }
+        </datalist>
       </div>
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Secretário do Conselho</label>

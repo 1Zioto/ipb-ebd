@@ -290,6 +290,7 @@ Route::prefix('v1')->group(function () {
 
         // ---- 📊 6. Relatórios Oficiais com Assinaturas ----
         Route::prefix('relatorios-oficiais')->group(function () {
+            Route::get('pastores', [RelatoriosOficiaisController::class, 'pastores']);
             Route::get('termo-balancete', [RelatoriosOficiaisController::class, 'termoBalancete']);
             Route::get('ficha-ministerial/{person}', [RelatoriosOficiaisController::class, 'fichaMinisterial']);
         });

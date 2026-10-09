@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PastorInfo } from './models';
 
 export interface CanonicalStats {
   total: number;
@@ -188,6 +189,13 @@ export interface EmprestimoLivro {
   observacoes?: string;
 }
 
+export interface PastorResponsavel {
+  id: number | null;
+  nome: string;
+  cargo: string;
+  is_titular: boolean;
+}
+
 export interface TermoBalancete {
   ano: number;
   mes: number;
@@ -199,6 +207,8 @@ export interface TermoBalancete {
   saidas: number;
   saldo_atual: number;
   parecer_texto: string;
+  pastores?: PastorInfo[];
+  pastor_responsavel?: PastorResponsavel;
   assinaturas: { titulo: string; nome: string }[];
   data_emissao: string;
 }
@@ -213,6 +223,8 @@ export interface FichaMinisterial {
   historico_transferencias?: CartaTransferencia[];
   igreja?: string;
   presbiterio?: string;
+  pastores?: PastorInfo[];
+  pastor_responsavel?: PastorResponsavel;
   pastor_presidente?: string;
   data_emissao?: string;
   hora_emissao?: string;
@@ -389,14 +401,21 @@ export class SecretariaService {
   }
 
   // 📊 Relatórios Oficiais com Assinaturas
-  getTermoBalancete(year?: number, month?: number): Observable<TermoBalancete> {
+  getPastores(): Observable<PastorInfo[]> {
+    return this.http.get<PastorInfo[]>(`${this.api}/relatorios-oficiais/pastores`);
+  }
+
+  getTermoBalancete(year?: number, month?: number, pastorId?: number): Observable<TermoBalancete> {
     let p = new HttpParams();
     if (year) p = p.set('year', year.toString());
     if (month) p = p.set('month', month.toString());
+    if (pastorId) p = p.set('pastor_id', pastorId.toString());
     return this.http.get<TermoBalancete>(`${this.api}/relatorios-oficiais/termo-balancete`, { params: p });
   }
 
-  getFichaMinisterial(personId: number): Observable<FichaMinisterial> {
-    return this.http.get<FichaMinisterial>(`${this.api}/relatorios-oficiais/ficha-ministerial/${personId}`);
+  getFichaMinisterial(personId: number, pastorId?: number): Observable<FichaMinisterial> {
+    let p = new HttpParams();
+    if (pastorId) p = p.set('pastor_id', pastorId.toString());
+    return this.http.get<FichaMinisterial>(`${this.api}/relatorios-oficiais/ficha-ministerial/${personId}`, { params: p });
   }
 }

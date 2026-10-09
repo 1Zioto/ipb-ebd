@@ -14,6 +14,7 @@ import { MessageService } from 'primeng/api';
 import { SecretariaService, SociedadeInterna, SociedadeMembro, SociedadeAta, CanonicalMember, FichaMinisterial } from '../../core/secretaria.service';
 import { StatCardComponent } from '../../shared/components/stat-card';
 import { AuthService } from '../../core/auth.service';
+import { PastorInfo } from '../../core/models';
 
 @Component({
   selector: 'app-sociedades',
@@ -546,14 +547,22 @@ export class SociedadesPage implements OnInit {
   fichaDialog = false;
   fichaLoading = signal(false);
   fichaData = signal<FichaMinisterial | null>(null);
+  pastoresDisponiveis = signal<PastorInfo[]>([]);
+  selectedPastorId = signal<number | null>(null);
 
   abrirFicha(p?: { id: number } | null): void {
     if (!p?.id) return;
     this.fichaDialog = true;
     this.fichaLoading.set(true);
-    this.secService.getFichaMinisterial(p.id).subscribe({
+    this.secService.getFichaMinisterial(p.id, this.selectedPastorId() || undefined).subscribe({
       next: (data) => {
         this.fichaData.set(data);
+        if (data.pastores && data.pastores.length > 0) {
+          this.pastoresDisponiveis.set(data.pastores);
+        }
+        if (data.pastor_responsavel?.id) {
+          this.selectedPastorId.set(data.pastor_responsavel.id);
+        }
         this.fichaLoading.set(false);
       },
       error: () => {
@@ -561,6 +570,25 @@ export class SociedadesPage implements OnInit {
         this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar a ficha completa do membro.' });
       },
     });
+  }
+
+  trocarPastor(pastorId: any): void {
+    const id = Number(pastorId);
+    this.selectedPastorId.set(id);
+    const pastor = this.pastoresDisponiveis().find((x) => x.id === id);
+    if (pastor && this.fichaData()) {
+      const cur = this.fichaData()!;
+      this.fichaData.set({
+        ...cur,
+        pastor_presidente: pastor.titulo_pastoral || pastor.nome,
+        pastor_responsavel: {
+          id: pastor.id,
+          nome: pastor.titulo_pastoral || pastor.nome,
+          cargo: pastor.cargo_pastoral || 'Pastor da Igreja',
+          is_titular: pastor.is_pastor_titular,
+        },
+      });
+    }
   }
 
   imprimirFicha(): void {
