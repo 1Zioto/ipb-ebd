@@ -1,2 +1,70 @@
 @use 'primeicons/primeicons.css';
 @use './layout/layout.scss';
+@use './layout/tokens_bridge';
+
+// Estilos de Impressão Oficial & Exportação para PDF
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+
+  // Oculta componentes de navegação do template Sakai e diálogos
+  .layout-topbar,
+  .layout-sidebar,
+  .layout-footer,
+  .layout-main-topbar,
+  .p-dialog-header,
+  .p-dialog-footer,
+  .p-dialog-mask:not(:has(#ficha-impressao-ipb)),
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt;
+  }
+
+  .p-dialog {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    position: static !important;
+    transform: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  .p-dialog-content {
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  .p-dialog-mask {
+    position: static !important;
+    background: transparent !important;
+  }
+
+  // Apenas o documento timbrado deve aparecer com visual clássico e nítido
+  #ficha-impressao-ipb {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 2px solid #059669 !important;
+    border-radius: 8px !important;
+    padding: 15mm !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+}
+
+

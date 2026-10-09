@@ -1,21 +1,27 @@
-<p-toast></p-toast>
-
 <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
   <div>
     <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
       👥 Sociedades Internas & Forças Ativas (IPB)
     </h1>
     <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
-      Gestão integrada das forças ativas: SAF, UPH, UMP, UPA e UCP com diretorias, calendário e centros de custo
+      Gestão canônica das forças ativas: SAF, UPH, UMP, UPA, UCP e demais ministérios com Rol de Sócios, Livro de Atas, Diretoria e Programação
     </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <p-button
+      label="Nova Sociedade"
+      icon="pi pi-plus"
+      (onClick)="abrirNovaSociedade()"
+    />
   </div>
 </div>
 
-<!-- Abas de Navegação das 5 Sociedades -->
-<div class="flex flex-wrap gap-2 border-b border-surface-200 dark:border-surface-700 pb-3 mb-6">
+<!-- Abas das Sociedades Internas -->
+<div class="flex flex-wrap items-center gap-2 border-b border-surface-200 dark:border-surface-700 pb-3 mb-6">
   @for (soc of sociedades(); track soc.sigla) {
     <button
-      class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all border"
+      type="button"
+      class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all border cursor-pointer"
       [class.bg-primary]="activeSigla === soc.sigla"
       [class.text-primary-contrast]="activeSigla === soc.sigla"
       [class.border-primary]="activeSigla === soc.sigla"
@@ -34,10 +40,20 @@
         [class.bg-surface-100]="activeSigla !== soc.sigla"
         [class.dark:bg-surface-700]="activeSigla !== soc.sigla"
       >
-        {{ membrosPotenciais()[soc.sigla] || 0 }} membros
+        {{ soc.membros_count ?? 0 }} sócios
       </span>
     </button>
   }
+
+  <button
+    type="button"
+    class="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs text-primary border border-dashed border-primary/40 hover:bg-primary/5 transition-all cursor-pointer"
+    (click)="abrirNovaSociedade()"
+    title="Criar nova sociedade interna ou departamento"
+  >
+    <i class="pi pi-plus"></i>
+    <span>Nova Sociedade</span>
+  </button>
 </div>
 
 @if (loading()) {
@@ -47,14 +63,16 @@
   </div>
 } @else if (getSociedadeAtiva(); as soc) {
   <!-- Cartão de Identificação da Sociedade -->
-  <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl p-6 mb-6 shadow-sm">
+  <div class="card p-6 mb-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <div class="flex items-center gap-3">
-          <span class="text-3xl font-extrabold text-primary">{{ soc.sigla }}</span>
+          <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-xl">
+            {{ soc.sigla }}
+          </div>
           <div>
             <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">{{ soc.nome }}</h2>
-            <div class="text-xs text-surface-500 font-medium mt-0.5">{{ soc.faixa_etaria }}</div>
+            <div class="text-xs text-surface-500 font-medium mt-0.5">Público-alvo: {{ soc.faixa_etaria }}</div>
           </div>
         </div>
         @if (soc.lema) {
@@ -66,122 +84,760 @@
 
       <div class="flex flex-wrap items-center gap-3">
         @if (soc.costCenter) {
-          <div class="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs">
-            <span class="text-surface-400 block">Centro de Custo Vinculado:</span>
+          <div class="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs">
+            <span class="text-surface-400 block font-medium">Centro de Custo:</span>
             <strong class="text-emerald-700 dark:text-emerald-300">{{ soc.costCenter.code }} — {{ soc.costCenter.name }}</strong>
           </div>
         }
-        <div class="px-3 py-1.5 bg-surface-100 dark:bg-surface-800 rounded-lg text-xs text-center">
-          <span class="text-surface-400 block">Membros Elegíveis:</span>
-          <strong class="text-base text-surface-900 dark:text-surface-100">{{ membrosPotenciais()[soc.sigla] || 0 }}</strong>
+        <div class="px-3 py-1.5 bg-surface-100 dark:bg-surface-800 border border-surface rounded-xl text-xs text-center">
+          <span class="text-surface-400 block font-medium">Sócios Cadastrados:</span>
+          <strong class="text-base text-surface-900 dark:text-surface-100">{{ membros().length }}</strong>
+        </div>
+        <div class="px-3 py-1.5 bg-surface-100 dark:bg-surface-800 border border-surface rounded-xl text-xs text-center">
+          <span class="text-surface-400 block font-medium">Atas no Livro:</span>
+          <strong class="text-base text-surface-900 dark:text-surface-100">{{ atas().length }}</strong>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <!-- Coluna 1: Diretoria Eleita do Ano -->
-    <div class="lg:col-span-5 space-y-4">
-      <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">
-              Diretoria Eleita ({{ soc.ano_exercicio }})
-            </h3>
-            <p class="text-xs text-surface-500 m-0">Oficiais executivos da sociedade</p>
-          </div>
-          <p-button icon="pi pi-user-plus" label="Novo Oficial" [text]="true" size="small" (onClick)="abrirNovoOficial()"></p-button>
+  <!-- Sub-Navegação por Abas da Sociedade -->
+  <div class="flex items-center gap-2 border-b border-surface-200 dark:border-surface-700 mb-6">
+    <button
+      type="button"
+      class="px-4 py-2.5 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+      [class.border-primary]="activeTab === 'membros'"
+      [class.text-primary]="activeTab === 'membros'"
+      [class.border-transparent]="activeTab !== 'membros'"
+      [class.text-surface-600]="activeTab !== 'membros'"
+      [class.dark:text-surface-400]="activeTab !== 'membros'"
+      (click)="activeTab = 'membros'"
+    >
+      <i class="pi pi-users"></i>
+      Rol de Sócios ({{ membros().length }})
+    </button>
+
+    <button
+      type="button"
+      class="px-4 py-2.5 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+      [class.border-primary]="activeTab === 'atas'"
+      [class.text-primary]="activeTab === 'atas'"
+      [class.border-transparent]="activeTab !== 'atas'"
+      [class.text-surface-600]="activeTab !== 'atas'"
+      [class.dark:text-surface-400]="activeTab !== 'atas'"
+      (click)="activeTab = 'atas'"
+    >
+      <i class="pi pi-book"></i>
+      Livro de Atas ({{ atas().length }})
+    </button>
+
+    <button
+      type="button"
+      class="px-4 py-2.5 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+      [class.border-primary]="activeTab === 'diretoria'"
+      [class.text-primary]="activeTab === 'diretoria'"
+      [class.border-transparent]="activeTab !== 'diretoria'"
+      [class.text-surface-600]="activeTab !== 'diretoria'"
+      [class.dark:text-surface-400]="activeTab !== 'diretoria'"
+      (click)="activeTab = 'diretoria'"
+    >
+      <i class="pi pi-id-card"></i>
+      Diretoria Eleita ({{ soc.diretorias?.length ?? 0 }})
+    </button>
+
+    <button
+      type="button"
+      class="px-4 py-2.5 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+      [class.border-primary]="activeTab === 'atividades'"
+      [class.text-primary]="activeTab === 'atividades'"
+      [class.border-transparent]="activeTab !== 'atividades'"
+      [class.text-surface-600]="activeTab !== 'atividades'"
+      [class.dark:text-surface-400]="activeTab !== 'atividades'"
+      (click)="activeTab = 'atividades'"
+    >
+      <i class="pi pi-calendar"></i>
+      Programação & Eventos ({{ soc.atividades?.length ?? 0 }})
+    </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- ABA 1: 👥 ROL DE SÓCIOS / MEMBROS                              -->
+  <!-- ============================================================== -->
+  @if (activeTab === 'membros') {
+    <div class="space-y-4">
+      <!-- Toolbar de Membros -->
+      <div class="card p-4 mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3 flex-1">
+          <p-iconfield styleClass="w-full md:w-80">
+            <p-inputicon styleClass="pi pi-search text-muted-color" />
+            <input
+              pInputText
+              type="text"
+              placeholder="Buscar sócio por nome ou cargo..."
+              class="w-full"
+              [(ngModel)]="membroBusca"
+            />
+          </p-iconfield>
+
+          <select
+            [(ngModel)]="tipoFilter"
+            class="bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl px-3 py-2 text-xs font-semibold outline-none cursor-pointer"
+          >
+            <option value="">Todos os Tipos de Sócios</option>
+            <option value="efetivo">Apenas Sócios Efetivos</option>
+            <option value="cooperador">Apenas Sócios Cooperadores</option>
+          </select>
         </div>
 
-        <div class="space-y-3">
-          @for (d of soc.diretorias; track d.id) {
-            <div class="flex items-center justify-between p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700/60">
-              <div>
-                <span class="text-xs font-bold text-primary uppercase tracking-wider block">
-                  {{ d.cargo }}
-                </span>
-                <span class="text-sm font-semibold text-surface-900 dark:text-surface-100">
-                  {{ d.person.full_name }}
-                </span>
-                @if (d.person.phone) {
-                  <span class="text-xs text-surface-400 block">{{ d.person.phone }}</span>
-                }
-              </div>
-              <span class="text-xs font-mono text-surface-400 bg-surface-200 dark:bg-surface-700 px-2 py-0.5 rounded">
-                {{ d.ano }}
-              </span>
-            </div>
-          } @empty {
-            <div class="text-center p-6 text-surface-400 text-sm">
-              Nenhuma diretoria cadastrada para {{ soc.sigla }} neste ano.
-            </div>
-          }
+        <div class="flex items-center gap-2">
+          <p-button
+            label="Arrolar em Lote"
+            icon="pi pi-user-plus"
+            [outlined]="true"
+            size="small"
+            (onClick)="abrirLoteDialog()"
+          />
+          <p-button
+            label="Novo Sócio"
+            icon="pi pi-plus"
+            size="small"
+            (onClick)="abrirNovoMembro()"
+          />
         </div>
       </div>
-    </div>
 
-    <!-- Coluna 2: Calendário de Reuniões e Atividades -->
-    <div class="lg:col-span-7 space-y-4">
-      <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">
-              Calendário & Atividades
-            </h3>
-            <p class="text-xs text-surface-500 m-0">Reuniões plenárias, cultos e projetos sociais</p>
-          </div>
-          <p-button icon="pi pi-calendar-plus" label="Agendar Atividade" [text]="true" size="small" (onClick)="abrirNovaAtividade()"></p-button>
-        </div>
+      <!-- Tabela do Rol de Sócios -->
+      <div class="card p-0 overflow-hidden border border-surface">
+        <p-table [value]="membrosFiltrados()" [loading]="membrosLoading()" [tableStyle]="{ 'min-width': '50rem' }" [rows]="10" [paginator]="true">
+          <ng-template pTemplate="header">
+            <tr class="bg-surface-ground">
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Sócio(a)</th>
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Tipo de Sócio</th>
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Cargo / Função</th>
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Data Admissão</th>
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Status</th>
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color text-right">Ações</th>
+            </tr>
+          </ng-template>
 
-        <div class="space-y-3">
-          @for (atv of soc.atividades; track atv.id) {
-            <div class="p-4 rounded-xl bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700/60">
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <p-tag [value]="atv.tipo" severity="info"></p-tag>
-                    <span class="text-xs text-surface-500 font-medium">
-                      📅 {{ atv.data | date: 'dd/MM/yyyy' }} @if (atv.horario) { • ⏰ {{ atv.horario }} }
-                    </span>
-                  </div>
-                  <h4 class="text-sm font-bold text-surface-900 dark:text-surface-0 mt-2 mb-1">
-                    {{ atv.titulo }}
-                  </h4>
-                  @if (atv.descricao) {
-                    <p class="text-xs text-surface-600 dark:text-surface-400 m-0">{{ atv.descricao }}</p>
-                  }
+          <ng-template pTemplate="body" let-m>
+            <tr class="border-b border-surface hover:bg-surface-hover/50 transition cursor-pointer group" (click)="abrirFicha(m.person)">
+              <td class="py-3 px-4">
+                <div class="font-bold text-sm text-surface-900 dark:text-surface-0 group-hover:text-primary transition-colors flex items-center gap-1.5">
+                  {{ m.person?.full_name }}
+                  <i class="pi pi-id-card text-xs text-primary/70 opacity-60 group-hover:opacity-100 transition-opacity" title="Clique para ver ficha completa"></i>
                 </div>
-                @if (atv.local) {
-                  <span class="text-xs text-surface-500 bg-surface-200 dark:bg-surface-700 px-2 py-1 rounded">
-                    📍 {{ atv.local }}
-                  </span>
-                }
-              </div>
-            </div>
-          } @empty {
-            <div class="text-center p-6 text-surface-400 text-sm">
-              Nenhuma atividade agendada no momento para esta sociedade.
-            </div>
-          }
-        </div>
+                <div class="text-xs text-muted-color">
+                  {{ m.person?.phone || m.person?.email || 'Membro da Igreja' }}
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                <p-tag
+                  [value]="m.tipo_socio === 'efetivo' ? 'Sócio Efetivo' : 'Sócio Cooperador'"
+                  [severity]="m.tipo_socio === 'efetivo' ? 'success' : 'info'"
+                />
+              </td>
+              <td class="py-3 px-4 font-medium text-xs">
+                <span [class.text-primary]="m.cargo_atual" [class.font-bold]="m.cargo_atual">
+                  {{ m.cargo_atual || 'Sócio Ativo' }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-xs text-surface-600 dark:text-surface-400">
+                {{ m.data_admissao | date: 'dd/MM/yyyy' }}
+              </td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  {{ m.status | uppercase }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right whitespace-nowrap" (click)="$event.stopPropagation()">
+                <div class="flex items-center justify-end gap-1">
+                  <p-button
+                    icon="pi pi-id-card"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="info"
+                    size="small"
+                    pTooltip="Ver Dossiê / PDF Oficial"
+                    (onClick)="abrirFicha(m.person)"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="danger"
+                    size="small"
+                    pTooltip="Remover da sociedade"
+                    (onClick)="excluirMembro(m)"
+                  />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-muted-color text-sm">
+                Nenhum sócio arrolado nesta sociedade ainda. Clique em "Arrolar em Lote" ou "Novo Sócio".
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
     </div>
-  </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- ABA 2: 📖 LIVRO DE ATAS                                       -->
+  <!-- ============================================================== -->
+  @if (activeTab === 'atas') {
+    <div class="space-y-4">
+      <div class="card p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">
+            Livro de Atas da {{ soc.sigla }}
+          </h3>
+          <p class="text-xs text-muted-color m-0">
+            Registro oficial de reuniões plenárias, eleições e decisões de diretoria
+          </p>
+        </div>
+        <p-button
+          label="Lavrar Nova Ata"
+          icon="pi pi-pencil"
+          size="small"
+          (onClick)="abrirNovaAta()"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @for (ata of atas(); track ata.id) {
+          <div class="card p-5 border border-surface hover:border-primary/50 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-extrabold text-primary text-base">{{ ata.numero_ata }}</span>
+                <p-tag [value]="ata.tipo_reuniao" severity="secondary" />
+              </div>
+
+              <h4 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0 line-clamp-1">
+                {{ ata.titulo }}
+              </h4>
+
+              <div class="flex items-center gap-4 text-xs text-muted-color mt-2 mb-3">
+                <span><i class="pi pi-calendar mr-1"></i>{{ ata.data_reuniao | date: 'dd/MM/yyyy' }}</span>
+                <span><i class="pi pi-clock mr-1"></i>{{ ata.horario || '19:30' }}</span>
+                <span><i class="pi pi-users mr-1"></i>{{ ata.presentes_count }} presentes</span>
+              </div>
+
+              <p class="text-xs text-surface-600 dark:text-surface-400 line-clamp-3 mb-4 leading-relaxed">
+                {{ ata.conteudo }}
+              </p>
+            </div>
+
+            <div class="pt-3 border-t border-surface flex items-center justify-between">
+              <div>
+                @if (ata.visto_conselho_data) {
+                  <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400" title="Examinada e visada pelo Conselho">
+                    <i class="pi pi-check-circle"></i> Visto do Conselho
+                  </span>
+                } @else {
+                  <span class="text-[11px] text-muted-color">Aguardando visto do Conselho</span>
+                }
+              </div>
+
+              <div class="flex items-center gap-1">
+                <p-button
+                  icon="pi pi-eye"
+                  label="Ler Ata"
+                  [text]="true"
+                  size="small"
+                  (onClick)="visualizarAta(ata)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [text]="true"
+                  severity="danger"
+                  size="small"
+                  (onClick)="excluirAta(ata)"
+                />
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="col-span-2 card p-10 text-center text-muted-color text-sm">
+            Nenhuma ata registrada no Livro de Atas desta sociedade ainda.
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- ABA 3: 👥 DIRETORIA ELEITA                                     -->
+  <!-- ============================================================== -->
+  @if (activeTab === 'diretoria') {
+    <div class="card p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-lg font-bold text-surface-900 dark:text-surface-0 m-0">
+            Diretoria Executiva & Orientação ({{ soc.ano_exercicio }})
+          </h3>
+          <p class="text-xs text-muted-color m-0">Oficiais eleitos em Assembleia Geral da {{ soc.sigla }}</p>
+        </div>
+        <p-button icon="pi pi-plus" label="Novo Oficial" size="small" (onClick)="abrirNovoOficial()"></p-button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (d of soc.diretorias; track d.id) {
+          <div class="p-4 rounded-2xl bg-surface-ground border border-surface flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-primary text-primary-contrast flex items-center justify-center font-bold text-sm">
+              <i class="pi pi-user"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <span class="text-[11px] font-bold text-primary uppercase tracking-wider block">
+                {{ d.cargo }}
+              </span>
+              <div class="font-bold text-sm text-surface-900 dark:text-surface-0 truncate">
+                {{ d.person.full_name }}
+              </div>
+              <div class="text-xs text-muted-color truncate">
+                {{ d.person.phone || d.person.email || 'Exercício ' + d.ano }}
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="col-span-3 text-center py-6 text-muted-color text-sm">
+            Nenhum oficial cadastrado para a diretoria deste ano.
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================== -->
+  <!-- ABA 4: 📅 PROGRAMAÇÃO & EVENTOS                                -->
+  <!-- ============================================================== -->
+  @if (activeTab === 'atividades') {
+    <div class="card p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-lg font-bold text-surface-900 dark:text-surface-0 m-0">
+            Calendário & Programação Oficial
+          </h3>
+          <p class="text-xs text-muted-color m-0">Reuniões plenárias, cultos, chás e projetos da {{ soc.sigla }}</p>
+        </div>
+        <p-button icon="pi pi-calendar-plus" label="Nova Atividade" size="small" (onClick)="abrirNovaAtividade()"></p-button>
+      </div>
+
+      <div class="space-y-3">
+        @for (a of soc.atividades; track a.id) {
+          <div class="p-4 rounded-xl bg-surface-ground border border-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-surface-900 dark:text-surface-0">{{ a.titulo }}</span>
+                <p-tag [value]="a.tipo" severity="info" />
+              </div>
+              @if (a.descricao) {
+                <p class="text-xs text-surface-600 dark:text-surface-400 mt-1 mb-0">{{ a.descricao }}</p>
+              }
+            </div>
+            <div class="text-right text-xs text-muted-color whitespace-nowrap">
+              <div><i class="pi pi-calendar mr-1"></i>{{ a.data | date: 'dd/MM/yyyy' }} &bull; {{ a.horario || '19:30' }}</div>
+              <div><i class="pi pi-map-marker mr-1"></i>{{ a.local || 'Salão Social' }}</div>
+            </div>
+          </div>
+        } @empty {
+          <div class="text-center py-6 text-muted-color text-sm">
+            Nenhuma atividade programada para esta sociedade ainda.
+          </div>
+        }
+      </div>
+    </div>
+  }
 }
 
-<!-- Modal Novo Oficial da Diretoria -->
-<p-dialog
-  [(visible)]="diretoriaDialog"
-  [modal]="true"
-  [style]="{ width: '480px' }"
-  header="Eleger Oficial para Diretoria"
->
-  <div class="space-y-4 pt-2">
+<!-- ============================================================== -->
+<!-- MODAL: NOVO SÓCIO INDIVIDUAL                                   -->
+<!-- ============================================================== -->
+<p-dialog header="Arrolar Novo Sócio na Sociedade" [(visible)]="membroDialog" [modal]="true" [style]="{ width: '480px' }">
+  <div class="flex flex-col gap-4 pt-2">
     <div>
-      <label class="block text-xs font-medium text-surface-600 mb-1">Cargo Eletivo *</label>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Membro da Igreja *</label>
+      <p-select
+        [options]="pessoasOpcoes()"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label,name"
+        filterPlaceholder="Digite para buscar membro..."
+        [showClear]="true"
+        placeholder="Selecione ou pesquise o membro..."
+        [(ngModel)]="novoMembro.person_id"
+        styleClass="w-full"
+        appendTo="body"
+      />
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Tipo de Sócio *</label>
       <select
-        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+        [(ngModel)]="novoMembro.tipo_socio"
+        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm font-medium outline-none"
+      >
+        <option value="efetivo">Sócio Efetivo (Comungante Pleno)</option>
+        <option value="cooperador">Sócio Cooperador (Não-comungante / Visitante)</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Cargo / Função (Opcional)</label>
+      <input
+        pInputText
+        class="w-full"
+        [(ngModel)]="novoMembro.cargo_atual"
+        placeholder="Ex: Sócia Efetiva, Secretária, etc."
+      />
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Data de Admissão</label>
+      <input
+        type="date"
+        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
+        [(ngModel)]="novoMembro.data_admissao"
+      />
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Observações</label>
+      <input
+        pInputText
+        class="w-full"
+        [(ngModel)]="novoMembro.observacoes"
+        placeholder="Observações complementares..."
+      />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Cancelar" [text]="true" (onClick)="membroDialog = false" />
+      <p-button label="Arrolar Sócio" icon="pi pi-check" (onClick)="salvarMembro()" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: CRIAR NOVA SOCIEDADE INTERNA                             -->
+<!-- ============================================================== -->
+<p-dialog
+  header="Criar Nova Sociedade Interna"
+  [(visible)]="novaSociedadeDialog"
+  [modal]="true"
+  [style]="{ width: '520px', maxWidth: '95vw' }"
+>
+  <div class="flex flex-col gap-4 pt-2">
+    <div class="p-3 bg-primary/10 rounded-xl text-xs text-primary font-medium">
+      <i class="pi pi-info-circle mr-1"></i>
+      Cadastre uma nova sociedade interna ou força ativa da igreja local (ex: SAF, UPH, UMP, UPA, UCP ou novos departamentos/sociedades).
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Sigla *</label>
+        <input
+          pInputText
+          class="w-full font-bold uppercase"
+          [(ngModel)]="novaSociedadeForm.sigla"
+          placeholder="Ex: SAF, UPH"
+          required
+        />
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Nome Completo *</label>
+        <input
+          pInputText
+          class="w-full"
+          [(ngModel)]="novaSociedadeForm.nome"
+          placeholder="Ex: Sociedade Auxiliadora Feminina"
+          required
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Público-Alvo / Faixa Etária</label>
+        <input
+          pInputText
+          class="w-full"
+          [(ngModel)]="novaSociedadeForm.faixa_etaria"
+          placeholder="Ex: Mulheres a partir de 25 anos"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Ano de Exercício</label>
+        <input
+          type="number"
+          class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
+          [(ngModel)]="novaSociedadeForm.ano_exercicio"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Lema Eclesiástico Oficial</label>
+      <input
+        pInputText
+        class="w-full"
+        [(ngModel)]="novaSociedadeForm.lema"
+        placeholder="Ex: Sê tu uma bênção."
+      />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Cancelar" [text]="true" (onClick)="novaSociedadeDialog = false" />
+      <p-button
+        label="Criar Sociedade"
+        icon="pi pi-check"
+        [loading]="salvandoSociedade()"
+        (onClick)="salvarNovaSociedade()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: ARROLAMENTO EM LOTE DE PESSOAS ELEGÍVEIS                -->
+<!-- ============================================================== -->
+<p-dialog header="Arrolamento em Lote — {{ activeSigla }}" [(visible)]="loteDialog" [modal]="true" [style]="{ width: '640px' }">
+  <div class="flex flex-col gap-4 pt-2">
+    <div class="p-3 bg-primary/10 rounded-xl text-xs text-primary font-medium">
+      <i class="pi pi-info-circle mr-1"></i>
+      Pessoas da igreja sugeridas automaticamente com base no perfil e faixa etária da <strong>{{ activeSigla }}</strong>.
+      Selecione as pessoas que deseja arrolar como sócios oficiais da sociedade.
+    </div>
+
+    <!-- Campo de busca rápida no lote -->
+    <p-iconfield styleClass="w-full">
+      <p-inputicon styleClass="pi pi-search text-muted-color" />
+      <input
+        pInputText
+        type="text"
+        placeholder="Pesquisar pessoa na lista por nome..."
+        class="w-full"
+        [(ngModel)]="loteBusca"
+      />
+    </p-iconfield>
+
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-bold uppercase text-muted-color">Arrolar como:</label>
+        <select
+          [(ngModel)]="loteTipo"
+          class="bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-lg px-2.5 py-1 text-xs font-bold outline-none"
+        >
+          <option value="efetivo">Sócio Efetivo</option>
+          <option value="cooperador">Sócio Cooperador</option>
+        </select>
+      </div>
+
+      <button
+        type="button"
+        (click)="toggleSelecionarTodosLote()"
+        class="text-xs font-bold text-primary hover:underline cursor-pointer bg-transparent border-none"
+      >
+        {{ loteSelecionados.length === pessoasElegiveisParaLote().length ? 'Desmarcar Todos' : 'Marcar Todos' }}
+      </button>
+    </div>
+
+    <div class="max-h-80 overflow-y-auto border border-surface rounded-2xl divide-y divide-surface">
+      @for (p of pessoasElegiveisFiltradas(); track p.id) {
+        <label class="flex items-center gap-3 p-3 hover:bg-surface-hover/50 cursor-pointer transition">
+          <input
+            type="checkbox"
+            [checked]="loteSelecionados.includes(p.id)"
+            (change)="toggleSelecaoLote(p.id)"
+            class="rounded border-surface text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+          />
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-sm text-surface-900 dark:text-surface-0">{{ p.full_name }}</div>
+            <div class="text-xs text-muted-color">
+              {{ p.canonical_status || 'Membro' }} &bull; {{ p.age ? p.age + ' anos' : 'Idade não inf.' }}
+            </div>
+          </div>
+        </label>
+      } @empty {
+        <div class="p-6 text-center text-xs text-muted-color">
+          @if (loteBusca) {
+            Nenhuma pessoa encontrada com o termo "{{ loteBusca }}".
+          } @else {
+            Todas as pessoas elegíveis para este perfil já estão arroladas nesta sociedade!
+          }
+        </div>
+      }
+    </div>
+
+    <div class="text-xs text-muted-color font-medium">
+      {{ loteSelecionados.length }} pessoa(s) selecionada(s) para arrolamento.
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Cancelar" [text]="true" (onClick)="loteDialog = false" />
+      <p-button
+        label="Confirmar Arrolamento"
+        icon="pi pi-check-circle"
+        [disabled]="loteSelecionados.length === 0"
+        (onClick)="salvarLote()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: LAVRAR NOVA ATA                                         -->
+<!-- ============================================================== -->
+<p-dialog header="Lavrar Nova Ata da Sociedade — {{ activeSigla }}" [(visible)]="ataDialog" [modal]="true" [style]="{ width: '720px' }">
+  <div class="flex flex-col gap-4 pt-2">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Número da Ata *</label>
+        <input pInputText class="w-full" [(ngModel)]="novaAta.numero_ata" placeholder="Ex: Ata nº 01/2026" required />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Tipo de Reunião *</label>
+        <p-select [options]="tiposReuniaoAta" optionLabel="label" optionValue="value" [(ngModel)]="novaAta.tipo_reuniao" styleClass="w-full" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Data da Reunião *</label>
+        <input type="date" class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none" [(ngModel)]="novaAta.data_reuniao" required />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Título da Ata *</label>
+      <input pInputText class="w-full" [(ngModel)]="novaAta.titulo" placeholder="Ex: Reunião Plenária Ordinária de Abertura" required />
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Horário</label>
+        <input pInputText class="w-full" [(ngModel)]="novaAta.horario" placeholder="19:30" />
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Local</label>
+        <input pInputText class="w-full" [(ngModel)]="novaAta.local" placeholder="Salão Social" />
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Quórum (Presentes)</label>
+        <input type="number" class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none" [(ngModel)]="novaAta.presentes_count" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Pauta da Reunião</label>
+      <textarea
+        rows="2"
+        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-xs outline-none resize-y"
+        [(ngModel)]="novaAta.pauta"
+        placeholder="1. Abertura; 2. Leitura da ata; 3. Votação de projetos..."
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Texto Canônico Completo da Ata *</label>
+      <textarea
+        rows="8"
+        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-3 text-sm font-mono leading-relaxed outline-none resize-y"
+        [(ngModel)]="novaAta.conteudo"
+        placeholder="Redija o texto oficial da ata..."
+        required
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Cancelar" [text]="true" (onClick)="ataDialog = false" />
+      <p-button label="Salvar no Livro de Atas" icon="pi pi-check" (onClick)="salvarAta()" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: VISUALIZAR ATA FORMAL / IMPRESSÃO                       -->
+<!-- ============================================================== -->
+<p-dialog header="Registro de Ata Oficial" [(visible)]="visualizarAtaDialog" [modal]="true" [style]="{ width: '700px' }">
+  @if (ataSelecionada(); as ata) {
+    <div class="p-6 bg-surface-0 dark:bg-surface-900 border border-surface rounded-2xl print:border-none print:p-0">
+      <div class="text-center pb-4 border-b border-surface mb-6">
+        <h3 class="text-xs uppercase font-extrabold tracking-widest text-muted-color m-0">Igreja Presbiteriana do Brasil</h3>
+        <h2 class="text-lg font-black text-surface-900 dark:text-surface-0 mt-1 mb-0">{{ activeSigla }} &bull; {{ ata.numero_ata }}</h2>
+        <div class="text-xs text-primary font-bold mt-1">{{ ata.tipo_reuniao }}</div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-muted-color mb-6 pb-2 border-b border-surface">
+        <div><strong>Data:</strong> {{ ata.data_reuniao | date: 'dd/MM/yyyy' }} às {{ ata.horario || '19:30' }}</div>
+        <div><strong>Local:</strong> {{ ata.local || 'Salão da Igreja' }}</div>
+        <div><strong>Presentes:</strong> {{ ata.presentes_count }} sócios</div>
+      </div>
+
+      <h4 class="text-sm font-bold text-surface-900 dark:text-surface-0 mb-3">{{ ata.titulo }}</h4>
+
+      <div class="text-sm text-surface-800 dark:text-surface-200 whitespace-pre-line leading-relaxed font-serif text-justify mb-8">
+        {{ ata.conteudo }}
+      </div>
+
+      <!-- Assinaturas Formais -->
+      <div class="grid grid-cols-2 gap-8 pt-8 border-t border-surface text-center text-xs">
+        <div>
+          <div class="border-t border-surface-400 w-44 mx-auto mb-1"></div>
+          <span class="font-bold text-surface-900 dark:text-surface-0 block">Presidente da Sessão</span>
+          <span class="text-muted-color">{{ activeSigla }}</span>
+        </div>
+        <div>
+          <div class="border-t border-surface-400 w-44 mx-auto mb-1"></div>
+          <span class="font-bold text-surface-900 dark:text-surface-0 block">Secretária(o)</span>
+          <span class="text-muted-color">Lavrou a presente ata</span>
+        </div>
+      </div>
+
+      @if (ata.visto_conselho_data) {
+        <div class="mt-6 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-center text-emerald-800 dark:text-emerald-300">
+          <i class="pi pi-verified mr-1"></i>
+          Examinada e aprovada pelo Conselho da Igreja em {{ ata.visto_conselho_data | date: 'dd/MM/yyyy' }}.
+          @if (ata.visto_conselho_relator) { (Relator: {{ ata.visto_conselho_relator }}) }
+        </div>
+      }
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between items-center w-full pt-3">
+      <p-button label="Imprimir Termo" icon="pi pi-print" [outlined]="true" (onClick)="imprimirAta()" />
+      <p-button label="Fechar" (onClick)="visualizarAtaDialog = false" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: NOVO OFICIAL DA DIRETORIA                               -->
+<!-- ============================================================== -->
+<p-dialog header="Registrar Oficial na Diretoria" [(visible)]="diretoriaDialog" [modal]="true" [style]="{ width: '450px' }">
+  <div class="flex flex-col gap-4 pt-2">
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Cargo / Função *</label>
+      <select
         [(ngModel)]="novoOficial.cargo"
+        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm font-medium outline-none"
       >
         @for (c of cargosPadrao; track c) {
           <option [value]="c">{{ c }}</option>
@@ -190,49 +846,63 @@
     </div>
 
     <div>
-      <label class="block text-xs font-medium text-surface-600 mb-1">Membro Eleito *</label>
-      <select
-        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Membro Eleito *</label>
+      <p-select
+        [options]="pessoasOpcoes()"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label,name"
+        filterPlaceholder="Digite para buscar membro..."
+        [showClear]="true"
+        placeholder="Selecione ou pesquise o membro..."
         [(ngModel)]="novoOficial.person_id"
-      >
-        <option [ngValue]="null">Selecione o membro...</option>
-        @for (m of membros(); track m.id) {
-          <option [ngValue]="m.id">{{ m.full_name }} ({{ m.roll_number || 'S/N' }})</option>
-        }
-      </select>
+        styleClass="w-full"
+        appendTo="body"
+      />
     </div>
 
     <div>
-      <label class="block text-xs font-medium text-surface-600 mb-1">Ano do Exercício</label>
-      <input type="number" pInputText class="w-full text-sm font-mono" [(ngModel)]="novoOficial.ano" />
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Ano de Exercício</label>
+      <input type="number" class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none" [(ngModel)]="novoOficial.ano" />
     </div>
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="diretoriaDialog = false"></p-button>
-    <p-button label="Salvar Oficial" icon="pi pi-check" (onClick)="salvarOficial()"></p-button>
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Cancelar" [text]="true" (onClick)="diretoriaDialog = false" />
+      <p-button label="Salvar Oficial" icon="pi pi-check" (onClick)="salvarOficial()" />
+    </div>
   </ng-template>
 </p-dialog>
 
-<!-- Modal Nova Atividade -->
-<p-dialog
-  [(visible)]="atividadeDialog"
-  [modal]="true"
-  [style]="{ width: '520px' }"
-  header="Agendar Atividade da Sociedade"
->
-  <div class="space-y-4 pt-2">
+<!-- ============================================================== -->
+<!-- MODAL: NOVA ATIVIDADE / EVENTO                                 -->
+<!-- ============================================================== -->
+<p-dialog header="Nova Atividade da Sociedade" [(visible)]="atividadeDialog" [modal]="true" [style]="{ width: '480px' }">
+  <div class="flex flex-col gap-4 pt-2">
     <div>
-      <label class="block text-xs font-medium text-surface-600 mb-1">Título do Evento / Reunião *</label>
-      <input type="text" pInputText class="w-full text-sm" [(ngModel)]="novaAtividade.titulo" placeholder="Ex: Chá das Mães e Oração" />
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Título da Atividade *</label>
+      <input pInputText class="w-full" [(ngModel)]="novaAtividade.titulo" placeholder="Ex: Chá das Mães" required />
     </div>
 
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <label class="block text-xs font-medium text-surface-600 mb-1">Tipo de Evento</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Data *</label>
+        <input type="date" class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none" [(ngModel)]="novaAtividade.data" required />
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Horário</label>
+        <input pInputText class="w-full" [(ngModel)]="novaAtividade.horario" placeholder="19:30" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Tipo</label>
         <select
-          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
           [(ngModel)]="novaAtividade.tipo"
+          class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
         >
           @for (t of tiposAtividade; track t) {
             <option [value]="t">{{ t }}</option>
@@ -240,35 +910,408 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-surface-600 mb-1">Data *</label>
-        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="novaAtividade.data" />
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block text-xs font-medium text-surface-600 mb-1">Horário</label>
-        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="novaAtividade.horario" placeholder="19:30" />
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-surface-600 mb-1">Local</label>
-        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="novaAtividade.local" placeholder="Salão Social" />
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Local</label>
+        <input pInputText class="w-full" [(ngModel)]="novaAtividade.local" placeholder="Salão Social" />
       </div>
     </div>
 
     <div>
-      <label class="block text-xs font-medium text-surface-600 mb-1">Descrição & Detalhes</label>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Descrição / Detalhes</label>
       <textarea
-        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
         rows="3"
+        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-xs outline-none resize-y"
         [(ngModel)]="novaAtividade.descricao"
-        placeholder="Informações sobre palestrante, tema, alimentos arrecadados..."
+        placeholder="Informações adicionais..."
       ></textarea>
     </div>
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="atividadeDialog = false"></p-button>
-    <p-button label="Agendar Atividade" icon="pi pi-check" (onClick)="salvarAtividade()"></p-button>
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Cancelar" [text]="true" (onClick)="atividadeDialog = false" />
+      <p-button label="Agendar Atividade" icon="pi pi-check" (onClick)="salvarAtividade()" />
+    </div>
   </ng-template>
 </p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: DOSSIÊ COMPLETO DO MEMBRO & GERADOR DE PDF OFICIAL IPB  -->
+<!-- ============================================================== -->
+<p-dialog
+  [(visible)]="fichaDialog"
+  [modal]="true"
+  [style]="{ width: '880px', maxWidth: '96vw' }"
+  header="Dossiê do Membro & Ficha Oficial IPB"
+>
+  @if (fichaLoading()) {
+    <div class="p-12 text-center text-surface-500">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+      <p class="mt-3 text-sm font-medium">Carregando todas as informações do membro...</p>
+    </div>
+  } @else if (fichaData(); as f) {
+    @let membro = f.membro || f.person;
+    <div class="space-y-6 pt-1">
+      
+      <!-- HERO HEADER DO MEMBRO -->
+      <div class="p-5 bg-gradient-to-r from-emerald-950/40 via-surface-card to-surface-card border border-surface rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-primary text-primary-contrast flex items-center justify-center text-2xl font-black shadow-lg">
+            {{ getIniciais(membro.full_name) }}
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <h2 class="text-xl font-black text-surface-900 dark:text-surface-0 m-0 leading-tight">
+                {{ membro.full_name }}
+              </h2>
+              <p-tag
+                [value]="getStatusBadge(membro.canonical_status).label"
+                [severity]="getStatusBadge(membro.canonical_status).severity"
+              />
+              @if (membro.is_active === false) {
+                <p-tag value="Inativo" severity="secondary" />
+              }
+            </div>
+            <div class="text-xs text-muted-color flex flex-wrap items-center gap-2">
+              <span class="font-mono font-bold text-surface-700 dark:text-surface-300">
+                {{ membro.roll_number || 'ROL S/N' }}
+              </span>
+              <span>&bull;</span>
+              <span>{{ membro.age ? membro.age + ' anos' : 'Idade não informada' }}</span>
+              @if (membro.birth_date) {
+                <span>({{ membro.birth_date | date: 'dd/MM/yyyy' }})</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Botão de Ação Rápida no Topo -->
+        <div class="flex items-center gap-2 shrink-0">
+          <p-button
+            label="Gerar PDF Oficial"
+            icon="pi pi-file-pdf"
+            severity="danger"
+            (onClick)="imprimirFicha()"
+            title="Exportar como PDF oficial timbrado da IPB"
+          />
+        </div>
+      </div>
+
+      <!-- GRADE DE INFORMAÇÕES DETALHADAS EM 4 CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- CARD 1: ASSENTAMENTOS CANÔNICOS & ECLESIÁSTICOS -->
+        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+            <i class="pi pi-book"></i> Assentamentos Canônicos (IPB)
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="text-muted-color block mb-0.5">Nº do ROL Oficial</span>
+              <span class="font-mono font-bold text-surface-900 dark:text-surface-100 text-sm">
+                {{ membro.roll_number || 'Sem número' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Situação Canônica</span>
+              <span class="font-bold text-surface-900 dark:text-surface-100 capitalize">
+                {{ getStatusBadge(membro.canonical_status).label }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Modo de Recepção</span>
+              <span class="font-semibold text-surface-800 dark:text-surface-200">
+                {{ getModoRecepcaoLabel(membro.reception_type) }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Data de Recepção</span>
+              <span class="font-semibold text-surface-800 dark:text-surface-200">
+                {{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Profissão de Fé</span>
+              <span class="font-semibold text-surface-800 dark:text-surface-200">
+                {{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : '—' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Data do Batismo</span>
+              <span class="font-semibold text-surface-800 dark:text-surface-200">
+                {{ membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: DADOS PESSOAIS, CONTATO & FAMÍLIA -->
+        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+            <i class="pi pi-user"></i> Dados Pessoais & Família
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="text-muted-color block mb-0.5">CPF</span>
+              <span class="font-mono font-medium text-surface-800 dark:text-surface-200">
+                {{ membro.cpf || 'Não informado' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Estado Civil</span>
+              <span class="font-semibold text-surface-800 dark:text-surface-200">
+                {{ membro.marital_status || 'Não informado' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Cônjuge</span>
+              <span class="font-semibold text-surface-800 dark:text-surface-200">
+                {{ membro.spouse_name || '—' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Data Casamento</span>
+              <span class="font-semibold text-surface-800 dark:text-surface-200">
+                {{ membro.marriage_date ? (membro.marriage_date | date: 'dd/MM/yyyy') : '—' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">Telefone / WhatsApp</span>
+              @if (membro.phone) {
+                <a (click)="abrirWhatsApp(membro.phone)" class="text-emerald-500 font-bold hover:underline cursor-pointer flex items-center gap-1">
+                  <i class="pi pi-whatsapp"></i> {{ membro.phone }}
+                </a>
+              } @else {
+                <span class="text-muted-color">—</span>
+              }
+            </div>
+            <div>
+              <span class="text-muted-color block mb-0.5">E-mail</span>
+              @if (membro.email) {
+                <a [href]="'mailto:' + membro.email" class="text-primary font-medium hover:underline truncate block">
+                  {{ membro.email }}
+                </a>
+              } @else {
+                <span class="text-muted-color">—</span>
+              }
+            </div>
+          </div>
+
+          @if (f.familias && f.familias.length > 0) {
+            <div class="mt-3 pt-3 border-t border-surface text-xs">
+              <span class="text-muted-color block mb-1">Família Cadastrada:</span>
+              <div class="flex flex-wrap gap-1">
+                @for (fam of f.familias; track fam.id) {
+                  <p-tag [value]="fam.name + (fam.relationship ? ' (' + fam.relationship + ')' : '')" severity="warn" icon="pi pi-home" />
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- CARD 3: ESCOLA BÍBLICA DOMINICAL & MINISTÉRIOS -->
+        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+            <i class="pi pi-bookmark"></i> Escola Dominical & Atuação
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between pb-2 border-b border-surface">
+              <span class="text-muted-color">Habilitação EBD:</span>
+              <div class="flex gap-1">
+                <p-tag [value]="membro.can_teach ? 'Pode Lecionar' : 'Não leciona'" [severity]="membro.can_teach ? 'success' : 'secondary'" />
+                <p-tag [value]="membro.can_superintend ? 'Pode Superintender' : 'Não superintende'" [severity]="membro.can_superintend ? 'info' : 'secondary'" />
+              </div>
+            </div>
+
+            <div>
+              <span class="text-muted-color block mb-1">Classes em que é Aluno:</span>
+              @if (f.classes_aluno && f.classes_aluno.length > 0) {
+                <div class="flex flex-wrap gap-1">
+                  @for (c of f.classes_aluno; track c) {
+                    <span class="px-2 py-0.5 rounded bg-surface-ground border border-surface font-semibold text-surface-800 dark:text-surface-200">{{ c }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="text-muted-color italic">Nenhuma matrícula ativa nesta sessão.</span>
+              }
+            </div>
+
+            <div>
+              <span class="text-muted-color block mb-1">Classes que Leciona:</span>
+              @if (f.classes_professor && f.classes_professor.length > 0) {
+                <div class="flex flex-wrap gap-1">
+                  @for (c of f.classes_professor; track c) {
+                    <span class="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold">{{ c }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="text-muted-color italic">Nenhuma classe designada como professor.</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 4: SOCIEDADES INTERNAS & TESOURARIA -->
+        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+            <i class="pi pi-id-card"></i> Sociedades & Dízimos
+          </div>
+          <div class="space-y-3 text-xs">
+            <div>
+              <span class="text-muted-color block mb-1">Sociedades Internas (SAF / UPH / UMP / UPA / UCP):</span>
+              @if (f.cargos_atuais && f.cargos_atuais.length > 0) {
+                <div class="space-y-1">
+                  @for (c of f.cargos_atuais; track c.sociedade) {
+                    <div class="flex items-center justify-between p-2 rounded bg-surface-ground border border-surface">
+                      <strong class="text-surface-900 dark:text-surface-100">{{ c.sociedade }}</strong>
+                      <span class="text-primary font-bold">{{ c.cargo }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <span class="text-muted-color italic">Nenhum vínculo de sociedade interna registrado.</span>
+              }
+            </div>
+
+            <div class="pt-2 border-t border-surface">
+              <span class="text-muted-color block mb-1">Tesouraria & Dízimos:</span>
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-muted-color">Dizimista Ativo:</span>
+                  <strong class="ml-1 text-surface-900 dark:text-surface-100">
+                    {{ membro.is_tither ? 'Sim' : 'Não' }}
+                  </strong>
+                </div>
+                <div>
+                  <span class="text-muted-color">Nº do Envelope:</span>
+                  <span class="ml-1 font-mono font-black text-amber-500">
+                    {{ membro.envelope_number ? '#' + membro.envelope_number : 'Sem envelope' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- OBSERVACÕES -->
+      @if (membro.notes) {
+        <div class="p-4 bg-surface-card border border-surface rounded-2xl text-xs">
+          <span class="text-muted-color block font-bold mb-1">Observações Cadastrais:</span>
+          <p class="m-0 text-surface-700 dark:text-surface-300 italic">{{ membro.notes }}</p>
+        </div>
+      }
+
+      <!-- ========================================================== -->
+      <!-- DOCUMENTO OFICIAL TIMBRADO PARA IMPRESSÃO / SALVAR EM PDF  -->
+      <!-- ========================================================== -->
+      <div id="ficha-impressao-ipb" class="p-6 bg-surface-0 text-surface-900 border-2 border-primary/30 rounded-2xl shadow-sm text-xs print:p-0 print:border-none">
+        
+        <!-- Timbre da Igreja Presbiteriana do Brasil -->
+        <div class="text-center pb-4 border-b-2 border-primary/20 mb-4">
+          <div class="flex items-center justify-center gap-2 mb-1">
+            <span class="font-extrabold uppercase tracking-widest text-primary text-sm">Igreja Presbiteriana do Brasil</span>
+          </div>
+          <h2 class="text-base font-black uppercase text-surface-900 m-0 tracking-tight">
+            {{ f.igreja || 'Igreja Presbiteriana em Campo Verde' }}
+          </h2>
+          <div class="text-xs text-surface-600 mt-0.5">
+            {{ f.presbiterio || 'Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)' }}
+          </div>
+          <div class="mt-2 inline-block px-4 py-1 bg-primary/10 text-primary font-black uppercase tracking-wider rounded-md text-xs">
+            Ficha Cadastral Canônica e Ministerial Oficial
+          </div>
+        </div>
+
+        <!-- Matriz de Assentamento Canônico e Pessoal -->
+        <div class="grid grid-cols-3 gap-3 py-3 border-b border-surface-200">
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Nome Completo do Membro</span>
+            <strong class="text-surface-900 text-sm">{{ membro.full_name }}</strong>
+          </div>
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Nº do ROL Oficial</span>
+            <strong class="font-mono text-sm text-surface-900">{{ membro.roll_number || 'S/N' }}</strong>
+          </div>
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Situação Canônica</span>
+            <span class="font-bold text-surface-900">{{ getStatusBadge(membro.canonical_status).label }}</span>
+          </div>
+
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Data de Nascimento / Idade</span>
+            <span>{{ membro.birth_date ? (membro.birth_date | date: 'dd/MM/yyyy') : '—' }} ({{ membro.age ? membro.age + ' anos' : '—' }})</span>
+          </div>
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">CPF</span>
+            <span>{{ membro.cpf || 'Não informado' }}</span>
+          </div>
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Estado Civil / Cônjuge</span>
+            <span>{{ membro.marital_status || '—' }} @if (membro.spouse_name) { (c/ {{ membro.spouse_name }}) }</span>
+          </div>
+
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Modo de Admissão</span>
+            <span>{{ getModoRecepcaoLabel(membro.reception_type) }}</span>
+          </div>
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Data da Admissão</span>
+            <span>{{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—' }}</span>
+          </div>
+          <div>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Profissão de Fé / Batismo</span>
+            <span>{{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : (membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—') }}</span>
+          </div>
+        </div>
+
+        <!-- Termo de Fé e Certidão do Conselho -->
+        <div class="pt-4 text-surface-600 leading-relaxed text-justify">
+          <p class="mb-4">
+            Certifico para todos os devidos fins eclesiásticos que o histórico, registros batismais e assentamentos canônicos acima conferem fielmente com os livros oficiais de Atas e Rol de Membros arquivados na Secretaria desta Igreja, encontrando-se o referido irmão em plena comunhão e submissão aos símbolos de fé da Igreja Presbiteriana do Brasil.
+          </p>
+
+          <div class="flex items-center justify-between text-[11px] text-surface-500 mb-6 pb-2 border-b border-surface-200">
+            <div>
+              <strong>Emissão:</strong> {{ f.data_emissao || 'Hoje' }} às {{ f.hora_emissao || '10:00' }}
+            </div>
+            <div>
+              <strong>Autenticidade:</strong> <span class="font-mono font-bold">{{ f.codigo_autenticidade || 'IPB-VERIFIED' }}</span>
+            </div>
+          </div>
+
+          <!-- Linhas de Assinatura Canônica -->
+          <div class="grid grid-cols-2 gap-8 text-center pt-4">
+            <div>
+              <div class="border-t border-surface-400 w-48 mx-auto mb-1"></div>
+              <strong class="text-surface-900 block text-xs">{{ f.pastor_presidente || 'Rev. Pastor Presidente' }}</strong>
+              <span class="text-[10px] text-surface-500">Presidente do Conselho da Igreja</span>
+            </div>
+            <div>
+              <div class="border-t border-surface-400 w-48 mx-auto mb-1"></div>
+              <strong class="text-surface-900 block text-xs">Presb. Secretário do Conselho</strong>
+              <span class="text-[10px] text-surface-500">Secretaria da Igreja Presbiteriana</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-between w-full pt-3">
+      <p-button label="Fechar" icon="pi pi-times" [text]="true" (onClick)="fichaDialog = false" />
+      <div class="flex items-center gap-2">
+        <p-button
+          label="Gerar PDF Oficial / Imprimir"
+          icon="pi pi-file-pdf"
+          severity="danger"
+          (onClick)="imprimirFicha()"
+        />
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>
+

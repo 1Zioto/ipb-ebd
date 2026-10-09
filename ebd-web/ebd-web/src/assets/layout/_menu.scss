@@ -79,6 +79,21 @@
     }
 }
 
+.menu-search-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--surface-overlay);
+    padding: 0.25rem 0.25rem 0.65rem 0.25rem;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid var(--surface-border);
+    transition: all 0.2s ease;
+}
+
+.layout-sidebar.is-collapsed .menu-search-wrapper {
+    display: none !important;
+}
+
 .layout-menu {
     margin: 0;
     padding: 0;

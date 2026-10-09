@@ -10,6 +10,8 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, CanonicalMember, CanonicalStats, FichaMinisterial } from '../../core/secretaria.service';
 
+import { StatCardComponent } from '../../shared/components/stat-card';
+
 @Component({
   selector: 'app-membros-canonico',
   standalone: true,
@@ -22,6 +24,7 @@ import { SecretariaService, CanonicalMember, CanonicalStats, FichaMinisterial } 
     InputTextModule,
     DialogModule,
     ToastModule,
+    StatCardComponent,
   ],
   providers: [MessageService],
   templateUrl: './membros-canonico.html',
@@ -146,6 +149,30 @@ export class MembrosCanonicoPage implements OnInit {
     window.print();
   }
 
+  abrirEdicaoDeFicha(): void {
+    const data = this.fichaData();
+    const membro = data?.membro || data?.person;
+    if (membro) {
+      this.fichaDialog = false;
+      this.abrirEdicao(membro);
+    }
+  }
+
+  getIniciais(nome?: string): string {
+    if (!nome) return 'MB';
+    const parts = nome.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  abrirWhatsApp(telefone?: string): void {
+    if (!telefone) return;
+    const num = telefone.replace(/\D/g, '');
+    if (num) {
+      window.open(`https://wa.me/55${num}`, '_blank');
+    }
+  }
+
   getStatusBadge(st: string): { label: string; severity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' } {
     switch (st) {
       case 'comungante':
@@ -159,7 +186,7 @@ export class MembrosCanonicoPage implements OnInit {
       case 'falecido':
         return { label: 'Falecido', severity: 'secondary' };
       default:
-        return { label: st, severity: 'secondary' };
+        return { label: st || 'Comungante', severity: 'secondary' };
     }
   }
 

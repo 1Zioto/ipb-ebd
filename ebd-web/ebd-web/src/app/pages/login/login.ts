@@ -7,13 +7,26 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { AuthService } from '../../core/auth.service';
 import { AppFloatingConfigurator } from '../../layout/component/app.floatingconfigurator';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, PasswordModule, SelectModule, MessageModule, AppFloatingConfigurator],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    InputTextModule,
+    PasswordModule,
+    SelectModule,
+    MessageModule,
+    IconFieldModule,
+    InputIconModule,
+    AppFloatingConfigurator,
+  ],
   templateUrl: './login.html',
 })
 export class LoginPage {

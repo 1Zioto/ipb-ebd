@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -8,17 +9,32 @@ import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
 import { AuthService } from '../../core/auth.service';
 import { PeopleService } from '../../core/people.service';
+import { SecretariaService, FichaMinisterial } from '../../core/secretaria.service';
 import { Person } from '../../core/models';
 
 @Component({
   selector: 'app-people-list',
-  imports: [FormsModule, ButtonModule, TableModule, DialogModule, InputTextModule, TagModule, CheckboxModule, TextareaModule, MessageModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    TableModule,
+    DialogModule,
+    InputTextModule,
+    TagModule,
+    CheckboxModule,
+    TextareaModule,
+    MessageModule,
+    TooltipModule,
+  ],
   templateUrl: './people-list.html',
 })
 export class PeopleListPage implements OnInit {
   private peopleSvc = inject(PeopleService);
+  private secSvc = inject(SecretariaService);
   private auth = inject(AuthService);
 
   people = signal<Person[]>([]);
@@ -34,6 +50,11 @@ export class PeopleListPage implements OnInit {
   editing = signal<Person | null>(null);
   form = signal<Partial<Person>>(this.emptyForm());
   saving = signal(false);
+
+  // Modal de Dossiê Completo & Geração de PDF Oficial
+  fichaDialog = signal(false);
+  fichaLoading = signal(false);
+  fichaData = signal<FichaMinisterial | null>(null);
 
   async ngOnInit() {
     await this.load();
@@ -112,6 +133,83 @@ export class PeopleListPage implements OnInit {
       await this.load();
     } catch {
       this.error.set('Erro ao inativar.');
+    }
+  }
+
+  abrirFicha(p: Person): void {
+    this.fichaDialog.set(true);
+    this.fichaLoading.set(true);
+    this.secSvc.getFichaMinisterial(p.id).subscribe({
+      next: (data) => {
+        this.fichaData.set(data);
+        this.fichaLoading.set(false);
+      },
+      error: () => {
+        this.fichaLoading.set(false);
+        this.error.set('Não foi possível carregar a ficha completa do membro.');
+      },
+    });
+  }
+
+  imprimirFicha(): void {
+    window.print();
+  }
+
+  abrirEdicaoDeFicha(): void {
+    const data = this.fichaData();
+    const membro = data?.membro || data?.person;
+    if (membro) {
+      this.fichaDialog.set(false);
+      this.openEdit(membro as unknown as Person);
+    }
+  }
+
+  getIniciais(nome?: string): string {
+    if (!nome) return 'MB';
+    const parts = nome.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  abrirWhatsApp(telefone?: string): void {
+    if (!telefone) return;
+    const num = telefone.replace(/\D/g, '');
+    if (num) {
+      window.open(`https://wa.me/55${num}`, '_blank');
+    }
+  }
+
+  getStatusBadge(st?: string): { label: string; severity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' } {
+    switch (st) {
+      case 'comungante':
+        return { label: 'Comungante', severity: 'success' };
+      case 'nao_comungante':
+        return { label: 'Não-comungante', severity: 'info' };
+      case 'sob_disciplina':
+        return { label: 'Sob Disciplina', severity: 'danger' };
+      case 'jurisdicao_especial':
+        return { label: 'Jurisdição Especial', severity: 'warn' };
+      case 'falecido':
+        return { label: 'Falecido', severity: 'secondary' };
+      default:
+        return { label: st || 'Comungante', severity: 'secondary' };
+    }
+  }
+
+  getModoRecepcaoLabel(tp?: string): string {
+    switch (tp) {
+      case 'profissao_fe_batismo':
+        return 'Profissão de Fé e Batismo';
+      case 'profissao_fe':
+        return 'Profissão de Fé';
+      case 'transferencia':
+        return 'Carta de Transferência';
+      case 'batismo_infantil':
+        return 'Batismo Infantil';
+      case 'jurisdicao':
+        return 'Jurisdição do Conselho';
+      default:
+        return tp || 'Não informado';
     }
   }
 }

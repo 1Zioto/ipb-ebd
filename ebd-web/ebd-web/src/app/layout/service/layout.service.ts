@@ -1,3 +1,16 @@
+/**
+ * ============================================================================
+ * DIRETRIZ ARQUITETURAL MANDATÓRIA - GOVERNANÇA DO TEMPLATE SAKAI (PrimeNG)
+ * ============================================================================
+ * ⚠️ REGRA CRÍTICA:
+ * ESTE ARQUIVO FAZ PARTE DO NÚCLEO DO TEMPLATE OFICIAL SAKAI (PrimeNG).
+ * NUNCA MODIFIQUE A ESTRUTURA BASE, NEM REMOVA OU SUBSTITUA ESTE TEMPLATE.
+ * 
+ * CASO SEJA SOLICITADA QUALQUER ALTERAÇÃO ESTRUTURAL OU SUBSTITUIÇÃO DO TEMPLATE,
+ * É OBRIGATÓRIO SOLICITAR AUTORIZAÇÃO PRÉVIA E EXPLÍCITA DO USUÁRIO ANTES DE PROSSEGUIR.
+ * ============================================================================
+ */
+
 import { Injectable, effect, signal, computed } from '@angular/core';
 
 export interface LayoutConfig {
@@ -112,8 +125,10 @@ export class LayoutService {
         const _config = config || this.layoutConfig();
         if (_config.darkTheme) {
             document.documentElement.classList.add('app-dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
         } else {
             document.documentElement.classList.remove('app-dark');
+            document.documentElement.setAttribute('data-theme', 'light');
         }
         if (typeof localStorage !== 'undefined') {
             localStorage.setItem('ebd_theme', _config.darkTheme ? 'dark' : 'light');

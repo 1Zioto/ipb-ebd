@@ -21,6 +21,11 @@ export interface CanonicalMember {
   phone?: string;
   email?: string;
   cpf?: string;
+  is_active?: boolean;
+  can_teach?: boolean;
+  can_superintend?: boolean;
+  is_tither?: boolean;
+  envelope_number?: string;
   canonical_status: 'comungante' | 'nao_comungante' | 'sob_disciplina' | 'jurisdicao_especial' | 'falecido';
   roll_number?: string;
   reception_type?: string;
@@ -87,6 +92,46 @@ export interface AtaConselho {
   status: 'Rascunho' | 'Aprovada' | 'Assinada';
 }
 
+export interface SociedadeMembro {
+  id: number;
+  sociedade_id: number;
+  person_id: number;
+  tipo_socio: 'efetivo' | 'cooperador';
+  data_admissao?: string;
+  status: 'ativo' | 'inativo' | 'licenciado';
+  cargo_atual?: string;
+  observacoes?: string;
+  person?: {
+    id: number;
+    full_name: string;
+    phone?: string;
+    email?: string;
+    canonical_status?: string;
+    birth_date?: string;
+  };
+}
+
+export interface SociedadeAta {
+  id: number;
+  sociedade_id: number;
+  numero_ata: string;
+  titulo: string;
+  tipo_reuniao: string;
+  data_reuniao: string;
+  horario?: string;
+  local?: string;
+  presidente_id?: number;
+  presidente?: { id: number; full_name: string };
+  secretario_id?: number;
+  secretario?: { id: number; full_name: string };
+  pauta?: string;
+  conteudo: string;
+  presentes_count: number;
+  status: 'Rascunho' | 'Aprovada' | 'Assinada';
+  visto_conselho_data?: string;
+  visto_conselho_relator?: string;
+}
+
 export interface SociedadeInterna {
   id: number;
   sigla: string;
@@ -96,6 +141,10 @@ export interface SociedadeInterna {
   ano_exercicio: number;
   diretorias?: { id: number; cargo: string; ano: number; person: { id: number; full_name: string; phone?: string; email?: string } }[];
   atividades?: { id: number; titulo: string; data: string; horario?: string; tipo: string; local?: string; descricao?: string }[];
+  membros?: SociedadeMembro[];
+  atas?: SociedadeAta[];
+  membros_count?: number;
+  atas_count?: number;
   costCenter?: { id: number; code: string; name: string };
 }
 
@@ -155,15 +204,19 @@ export interface TermoBalancete {
 }
 
 export interface FichaMinisterial {
+  person?: CanonicalMember;
   membro: CanonicalMember;
-  cargos_atuais: { sociedade: string; cargo: string; ano: number }[];
-  historico_transferencias: CartaTransferencia[];
-  situacao_canonica: {
-    rol: string;
-    status: string;
-    admissao: string;
-    modo_admissao: string;
-  };
+  cargos_atuais: { sociedade: string; sigla?: string; cargo: string; tipo_socio?: string; data_admissao?: string; ano?: number }[];
+  classes_aluno?: string[];
+  classes_professor?: string[];
+  familias?: { id: number; name: string; relationship?: string; is_head?: boolean }[];
+  historico_transferencias?: CartaTransferencia[];
+  igreja?: string;
+  presbiterio?: string;
+  pastor_presidente?: string;
+  data_emissao?: string;
+  hora_emissao?: string;
+  codigo_autenticidade?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -237,12 +290,58 @@ export class SecretariaService {
     return this.http.get<SociedadeInterna>(`${this.api}/sociedades/${id}`);
   }
 
+  createSociedade(data: Partial<SociedadeInterna>): Observable<SociedadeInterna> {
+    return this.http.post<SociedadeInterna>(`${this.api}/sociedades`, data);
+  }
+
+  updateSociedade(id: number, data: Partial<SociedadeInterna>): Observable<SociedadeInterna> {
+    return this.http.put<SociedadeInterna>(`${this.api}/sociedades/${id}`, data);
+  }
+
+  deleteSociedade(id: number): Observable<any> {
+    return this.http.delete(`${this.api}/sociedades/${id}`);
+  }
+
   addSociedadeDiretoria(sociedadeId: number, data: { cargo: string; person_id: number; ano?: number }): Observable<any> {
     return this.http.post(`${this.api}/sociedades/${sociedadeId}/diretoria`, data);
   }
 
   addSociedadeAtividade(sociedadeId: number, data: { titulo: string; data: string; horario?: string; tipo?: string; local?: string; descricao?: string }): Observable<any> {
     return this.http.post(`${this.api}/sociedades/${sociedadeId}/atividades`, data);
+  }
+
+  // 👥 Rol de Sócios / Membros da Sociedade
+  getSociedadeMembros(sociedadeId: number): Observable<{ sociedade_id: number; total: number; efetivos: number; cooperadores: number; data: SociedadeMembro[] }> {
+    return this.http.get<any>(`${this.api}/sociedades/${sociedadeId}/membros`);
+  }
+
+  addSociedadeMembro(sociedadeId: number, data: any): Observable<SociedadeMembro> {
+    return this.http.post<SociedadeMembro>(`${this.api}/sociedades/${sociedadeId}/membros`, data);
+  }
+
+  arrolarMembrosEmLote(sociedadeId: number, data: { person_ids: number[]; tipo_socio?: string }): Observable<{ message: string; adicionados: number }> {
+    return this.http.post<any>(`${this.api}/sociedades/${sociedadeId}/membros/em-lote`, data);
+  }
+
+  removeSociedadeMembro(sociedadeId: number, membroId: number): Observable<any> {
+    return this.http.delete(`${this.api}/sociedades/${sociedadeId}/membros/${membroId}`);
+  }
+
+  // 📖 Livro de Atas da Sociedade
+  getSociedadeAtas(sociedadeId: number): Observable<{ sociedade_id: number; total: number; data: SociedadeAta[] }> {
+    return this.http.get<any>(`${this.api}/sociedades/${sociedadeId}/atas`);
+  }
+
+  addSociedadeAta(sociedadeId: number, data: any): Observable<SociedadeAta> {
+    return this.http.post<SociedadeAta>(`${this.api}/sociedades/${sociedadeId}/atas`, data);
+  }
+
+  updateSociedadeAta(sociedadeId: number, ataId: number, data: any): Observable<SociedadeAta> {
+    return this.http.put<SociedadeAta>(`${this.api}/sociedades/${sociedadeId}/atas/${ataId}`, data);
+  }
+
+  deleteSociedadeAta(sociedadeId: number, ataId: number): Observable<any> {
+    return this.http.delete(`${this.api}/sociedades/${sociedadeId}/atas/${ataId}`);
   }
 
   // 📖 Discipulado & Catecúmenos

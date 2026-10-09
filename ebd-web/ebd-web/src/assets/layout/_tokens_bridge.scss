@@ -1,0 +1,87 @@
+/* ============================================================================
+ * EBD / IPB - Harmonização de Tokens de Superfície e Design System Sakai
+ * ============================================================================
+ * Este arquivo unifica os tokens legados e utilitários do sistema com os
+ * tokens oficiais do tema Sakai / PrimeNG v21 (--p-* e var(--surface-*)).
+ * ============================================================================ */
+
+:root {
+  /* Marca e Destaque vinculados ao Tema Ativo do Sakai (Aura) */
+  --primary: var(--p-primary-color, #10b981);
+  --primary-contrast: var(--p-primary-contrast-color, #ffffff);
+  --primary-hover: var(--p-primary-hover-color, #059669);
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+
+  /* Superfícies e Fundos vinculados ao Sakai */
+  --bg: var(--surface-ground, var(--p-surface-50, #f8fafc));
+  --surface: var(--surface-card, #ffffff);
+  --surface-2: var(--p-surface-100, #f1f5f9);
+  --border: var(--surface-border, var(--p-content-border-color, #e2e8f0));
+  --border-subtle: color-mix(in srgb, var(--border) 60%, transparent);
+  --hover: var(--surface-hover, var(--p-content-hover-background, #f8fafc));
+
+  /* Tipografia vinculada ao PrimeNG */
+  --text: var(--text-color, var(--p-text-color, #0f172a));
+  --text-2: var(--p-surface-700, #334155);
+  --muted: var(--text-color-secondary, var(--p-text-muted-color, #64748b));
+  --muted-2: var(--p-surface-400, #94a3b8);
+
+  /* Feedback Semântico Harmonizado */
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --success-ink: #065f46;
+
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --danger-ink: #991b1b;
+
+  --warn: #f59e0b;
+  --warn-bg: #fffbeb;
+  --warn-border: #fde68a;
+  --warn-ink: #92400e;
+
+  --info: #3b82f6;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+  --info-ink: #1e40af;
+
+  /* Formas e Sombras */
+  --radius: var(--content-border-radius, 12px);
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+}
+
+:root[class*='app-dark'], html[data-theme='dark'] {
+  --bg: var(--surface-ground, var(--p-surface-950, #090d16));
+  --surface: var(--surface-card, var(--p-surface-900, #111827));
+  --surface-2: var(--p-surface-800, #1f2937);
+  --border: var(--surface-border, var(--p-content-border-color, #374151));
+  --border-subtle: color-mix(in srgb, var(--border) 70%, transparent);
+  --hover: var(--surface-hover, var(--p-content-hover-background, #1f2937));
+
+  --text: var(--text-color, var(--p-text-color, #f9fafb));
+  --text-2: var(--p-surface-300, #d1d5db);
+  --muted: var(--text-color-secondary, var(--p-text-muted-color, #9ca3af));
+  --muted-2: var(--p-surface-500, #6b7280);
+
+  --success-bg: rgba(16, 185, 129, 0.12);
+  --success-border: rgba(16, 185, 129, 0.3);
+  --success-ink: #6ee7b7;
+
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --danger-border: rgba(239, 68, 68, 0.3);
+  --danger-ink: #fca5a5;
+
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --warn-border: rgba(245, 158, 11, 0.3);
+  --warn-ink: #fcd34d;
+
+  --info-bg: rgba(59, 130, 246, 0.12);
+  --info-border: rgba(59, 130, 246, 0.3);
+  --info-ink: #93c5fd;
+}
