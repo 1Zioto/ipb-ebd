@@ -15,6 +15,7 @@ import { SecretariaService, SociedadeInterna, SociedadeMembro, SociedadeAta, Can
 import { StatCardComponent } from '../../shared/components/stat-card';
 import { AuthService } from '../../core/auth.service';
 import { PastorInfo } from '../../core/models';
+import { PdfService } from '../../core/pdf.service';
 
 @Component({
   selector: 'app-sociedades',
@@ -38,6 +39,7 @@ import { PastorInfo } from '../../core/models';
 export class SociedadesPage implements OnInit {
   private secService = inject(SecretariaService);
   private msg = inject(MessageService);
+  private pdfSvc = inject(PdfService);
   auth = inject(AuthService);
 
   sociedades = signal<SociedadeInterna[]>([]);
@@ -592,7 +594,9 @@ export class SociedadesPage implements OnInit {
   }
 
   imprimirFicha(): void {
-    window.print();
+    const membro = this.fichaData()?.membro || this.fichaData()?.person;
+    const nome = membro?.full_name ? membro.full_name.trim().replace(/\s+/g, '-').toLowerCase() : 'membro';
+    this.pdfSvc.gerarPdfEmNovaAba('ficha-impressao-ipb', `ficha-sociedade-${nome}`);
   }
 
   getIniciais(nome?: string): string {

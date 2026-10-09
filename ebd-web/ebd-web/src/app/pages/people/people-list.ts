@@ -14,6 +14,7 @@ import { AuthService } from '../../core/auth.service';
 import { PeopleService } from '../../core/people.service';
 import { SecretariaService, FichaMinisterial } from '../../core/secretaria.service';
 import { Person, PastorInfo } from '../../core/models';
+import { PdfService } from '../../core/pdf.service';
 
 @Component({
   selector: 'app-people-list',
@@ -36,6 +37,7 @@ export class PeopleListPage implements OnInit {
   private peopleSvc = inject(PeopleService);
   private secSvc = inject(SecretariaService);
   private auth = inject(AuthService);
+  private pdfSvc = inject(PdfService);
 
   people = signal<Person[]>([]);
   total = signal(0);
@@ -179,7 +181,9 @@ export class PeopleListPage implements OnInit {
   }
 
   imprimirFicha(): void {
-    window.print();
+    const membro = this.fichaData()?.membro || this.fichaData()?.person;
+    const nome = membro?.full_name ? membro.full_name.trim().replace(/\s+/g, '-').toLowerCase() : 'membro';
+    this.pdfSvc.gerarPdfEmNovaAba('ficha-impressao-ipb', `ficha-ministerial-${nome}`);
   }
 
   abrirEdicaoDeFicha(): void {

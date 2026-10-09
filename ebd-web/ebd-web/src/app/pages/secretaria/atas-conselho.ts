@@ -11,6 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, AtaConselho } from '../../core/secretaria.service';
 import { PastorInfo } from '../../core/models';
+import { PdfService } from '../../core/pdf.service';
 
 @Component({
   selector: 'app-atas-conselho',
@@ -32,6 +33,7 @@ import { PastorInfo } from '../../core/models';
 export class AtasConselhoPage implements OnInit {
   private secService = inject(SecretariaService);
   private msg = inject(MessageService);
+  private pdfSvc = inject(PdfService);
 
   atas = signal<AtaConselho[]>([]);
   pastores = signal<PastorInfo[]>([]);
@@ -174,6 +176,7 @@ export class AtasConselhoPage implements OnInit {
   }
 
   imprimir(): void {
-    window.print();
+    const num = this.selectedAta?.numero_ata ? this.selectedAta.numero_ata.replace(/[^a-zA-Z0-9]/g, '-') : 'ata';
+    this.pdfSvc.gerarPdfEmNovaAba('ata-impressao-ipb', `ata-conselho-${num}`);
   }
 }

@@ -6,6 +6,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, TermoBalancete } from '../../core/secretaria.service';
 import { PastorInfo } from '../../core/models';
+import { PdfService } from '../../core/pdf.service';
 
 @Component({
   selector: 'app-termo-balancete',
@@ -17,6 +18,7 @@ import { PastorInfo } from '../../core/models';
 export class TermoBalancetePage implements OnInit {
   private secService = inject(SecretariaService);
   private msg = inject(MessageService);
+  private pdfSvc = inject(PdfService);
 
   ano = 2026;
   mes = 9;
@@ -71,6 +73,8 @@ export class TermoBalancetePage implements OnInit {
   }
 
   imprimir(): void {
-    window.print();
+    const mes = this.termo()?.mes_extenso || this.mes;
+    const ano = this.ano;
+    this.pdfSvc.gerarPdfEmNovaAba('termo-impressao-ipb', `termo-balancete-${mes}-${ano}`);
   }
 }

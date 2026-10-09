@@ -279,7 +279,7 @@
   header="Livro Oficial de Atas do Conselho da Igreja"
 >
   @if (selectedAta) {
-    <div class="p-8 border border-surface-200 dark:border-surface-700 rounded-xl bg-surface-0 dark:bg-surface-900 printable-document">
+    <div id="ata-impressao-ipb" class="p-8 border border-surface-200 dark:border-surface-700 rounded-xl bg-surface-0 dark:bg-surface-900 printable-document">
       <!-- Cabeçalho Oficial -->
       <div class="text-center pb-6 border-b border-surface-300 dark:border-surface-700">
         <div class="text-xs font-bold tracking-widest text-surface-500 uppercase">Igreja Presbiteriana do Brasil</div>
@@ -369,6 +369,6 @@
     @if (selectedAta && selectedAta.status !== 'Aprovada' && selectedAta.status !== 'Assinada') {
       <p-button label="Aprovar Ata" icon="pi pi-check" severity="success" (onClick)="aprovarAta(selectedAta)"></p-button>
     }
-    <p-button label="Imprimir Ata Oficial" icon="pi pi-print" (onClick)="imprimir()"></p-button>
+    <p-button label="Gerar PDF Oficial" icon="pi pi-file-pdf" severity="danger" (onClick)="imprimir()"></p-button>
   </ng-template>
 </p-dialog>

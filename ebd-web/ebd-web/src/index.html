@@ -11,5 +11,13 @@
 </head>
 <body>
   <app-root></app-root>
+  <script src="html2pdf.bundle.min.js"></script>
+  <script>
+    if (!window.html2pdf) {
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      document.head.appendChild(s);
+    }
+  </script>
 </body>
 </html>

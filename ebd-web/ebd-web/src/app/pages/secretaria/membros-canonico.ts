@@ -10,6 +10,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, CanonicalMember, CanonicalStats, FichaMinisterial } from '../../core/secretaria.service';
 import { PastorInfo } from '../../core/models';
+import { PdfService } from '../../core/pdf.service';
 
 import { StatCardComponent } from '../../shared/components/stat-card';
 
@@ -33,6 +34,7 @@ import { StatCardComponent } from '../../shared/components/stat-card';
 export class MembrosCanonicoPage implements OnInit {
   private secService = inject(SecretariaService);
   private msg = inject(MessageService);
+  private pdfSvc = inject(PdfService);
 
   membros = signal<CanonicalMember[]>([]);
   stats = signal<CanonicalStats>({
@@ -174,7 +176,9 @@ export class MembrosCanonicoPage implements OnInit {
   }
 
   imprimirFicha(): void {
-    window.print();
+    const membro = this.fichaData()?.membro || this.fichaData()?.person;
+    const nome = membro?.full_name ? membro.full_name.trim().replace(/\s+/g, '-').toLowerCase() : 'membro';
+    this.pdfSvc.gerarPdfEmNovaAba('ficha-impressao-ipb', `ficha-ministerial-${nome}`);
   }
 
   abrirEdicaoDeFicha(): void {
