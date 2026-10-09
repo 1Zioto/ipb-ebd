@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>IPB • Conferência Rápida de Dízimos com QR Code (Mobile)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css">
+  <style>
+    :root {
+      --primary: #059669;
+      --primary-dark: #047857;
+      --primary-light: #d1fae5;
+      --primary-glow: rgba(5, 150, 105, 0.2);
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-card: #162032;
+      --surface-border: #1f2d45;
+      --surface-hover: #1c293d;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.12);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --info: #38bdf8;
+      --radius: 18px;
+      --radius-sm: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app-viewport {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+      border-left: 1px solid var(--surface-border);
+      border-right: 1px solid var(--surface-border);
+      padding-bottom: 84px;
+    }
+
+    /* Topo Sticky com HUD */
+    .top-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(17, 24, 39, 0.94);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 12px 16px 8px 16px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .church-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .church-logo {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 11px;
+      color: #fff;
+    }
+
+    .church-info h1 {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .church-info span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .session-tag {
+      background: var(--primary-glow);
+      color: var(--primary);
+      border: 1px solid rgba(5, 150, 105, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hud-card {
+      background: linear-gradient(135deg, #162438 0%, #111a29 100%);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-top: 4px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .hud-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .hud-total {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #34d399;
+      letter-spacing: -0.5px;
+    }
+
+    .hud-metrics {
+      display: flex;
+      gap: 12px;
+    }
+
+    .metric-pill {
+      text-align: right;
+    }
+
+    .metric-val {
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .metric-name {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .hud-reconciliation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--surface-border);
+      font-size: 11px;
+    }
+
+    .reconciliation-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .reconciliation-status.ok {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .reconciliation-status.diff {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    /* Conteúdo das Abas */
+    .tab-content {
+      display: none;
+      padding: 16px;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .quick-entry-card {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+    }
+
+    /* Bipar Envelope QR Code Banner */
+    .qr-scan-banner {
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.2) 0%, rgba(56, 189, 248, 0.15) 100%);
+      border: 1.5px dashed #059669;
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .qr-scan-banner:active {
+      transform: scale(0.98);
+      filter: brightness(1.2);
+    }
+
+    .qr-scan-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qr-icon-round {
+      width: 38px;
+      height: 38px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+    }
+
+    .qr-scan-text h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .qr-scan-text p {
+      font-size: 11px;
+      color: #a7f3d0;
+    }
+
+    .qr-badge-fast {
+      background: #059669;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    /* Campo de Busca de Membro com Autocomplete */
+    .search-box-wrapper {
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 48px;
+      background: #0d1422;
+      border: 1.5px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 14px;
+      padding: 0 42px 0 14px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .search-icon-right {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 52px;
+      left: 0;
+      right: 0;
+      background: #1e2a3e;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      z-index: 100;
+      max-height: 200px;
+      overflow-y: auto;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .autocomplete-item:hover, .autocomplete-item.active {
+      background: var(--primary-glow);
+      color: #fff;
+    }
+
+    .autocomplete-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .autocomplete-badge {
+      font-size: 10px;
+      color: var(--text-muted);
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .member-options-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-anonimo {
+      flex: 1;
+      height: 34px;
+      background: transparent;
+      border: 1px dashed var(--surface-border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .btn-anonimo.active {
+      background: var(--warning-bg);
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+
+    /* Entrada de Valor Grande & Pílulas */
+    .amount-display-container {
+      background: #0d1422;
+      border: 1.5px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .currency-symbol {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .amount-input-big {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      text-align: right;
+      width: 100%;
+      outline: none;
+    }
+
+    .quick-values-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .quick-val-btn {
+      height: 38px;
+      background: #182233;
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .quick-val-btn:active {
+      transform: scale(0.95);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* Forma de Pagamento */
+    .payment-type-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .pay-btn {
+      height: 52px;
+      background: #182233;
+      border: 1.5px solid var(--surface-border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .pay-btn i {
+      font-size: 16px;
+    }
+
+    .pay-btn.selected {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+      color: #34d399;
+    }
+
+    .destination-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .dest-chip {
+      padding: 6px 12px;
+      background: #182233;
+      border: 1px solid var(--surface-border);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .dest-chip.selected {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .btn-submit-entry {
+      width: 100%;
+      height: 54px;
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 10px 20px -5px rgba(5, 150, 105, 0.4);
+      margin-top: 14px;
+      transition: all 0.2s;
+    }
+
+    .btn-submit-entry:active {
+      transform: scale(0.98);
+      filter: brightness(0.95);
+    }
+
+    .entries-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .entry-item {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+
+    .entry-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .entry-badge-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .entry-badge-icon.dinheiro { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .entry-badge-icon.pix { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .entry-badge-icon.cartao { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+    .entry-meta h4 {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .entry-meta span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .entry-values {
+      text-align: right;
+    }
+
+    .entry-amount {
+      font-size: 15px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #fff;
+    }
+
+    .entry-dest {
+      font-size: 10px;
+      color: var(--primary);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .btn-remove-entry {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      padding: 6px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .btn-remove-entry:hover {
+      color: var(--danger);
+    }
+
+    /* ABA 2: CONTADORA DE CÉDULAS */
+    .cash-counter-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cash-denomination-row {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .denom-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 120px;
+    }
+
+    .bill-tag {
+      width: 44px;
+      height: 28px;
+      background: #1e293b;
+      border: 1.5px solid #334155;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #f1f5f9;
+    }
+
+    .bill-tag.c200 { background: #3b372f; border-color: #85724b; color: #ecd089; }
+    .bill-tag.c100 { background: #172a3a; border-color: #2b567a; color: #76c5f0; }
+    .bill-tag.c50  { background: #382417; border-color: #7b4e28; color: #f0a36b; }
+    .bill-tag.c20  { background: #3a3215; border-color: #756221; color: #f0db66; }
+    .bill-tag.c10  { background: #381b1b; border-color: #772b2b; color: #f27272; }
+    .bill-tag.c5   { background: #2f1b38; border-color: #6a3282; color: #c881e8; }
+    .bill-tag.c2   { background: #17332f; border-color: #2b6c61; color: #6ee7b7; }
+    .bill-tag.moeda { border-radius: 50%; width: 28px; height: 28px; background: #334155; }
+
+    .denom-subtotal {
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .denom-stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-btn {
+      width: 38px;
+      height: 38px;
+      background: #1e293b;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .step-btn:active {
+      background: var(--primary);
+    }
+
+    .step-input {
+      width: 48px;
+      height: 38px;
+      background: #090e18;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      text-align: center;
+      outline: none;
+    }
+
+    /* ABA 3: CONCILIAÇÃO & FECHAMENTO */
+    .reconciliation-card {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .reconciliation-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+    }
+
+    .reconciliation-table td {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--surface-border);
+      font-size: 13px;
+    }
+
+    .reconciliation-table td:last-child {
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+
+    .witness-card {
+      background: #111a29;
+      border: 1.5px dashed var(--surface-border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .witness-select {
+      width: 100%;
+      height: 44px;
+      background: #0d1422;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      color: #fff;
+      padding: 0 10px;
+      font-size: 13px;
+      margin-top: 6px;
+      outline: none;
+    }
+
+    .qr-audit-box {
+      margin-top: 14px;
+      background: #0d1422;
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qr-code-canvas {
+      width: 72px;
+      height: 72px;
+      background: #fff;
+      padding: 4px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Navegação Inferior */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      max-width: 440px;
+      height: 68px;
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .nav-tab-btn {
+      flex: 1;
+      height: 100%;
+      background: transparent;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      transition: all 0.2s;
+    }
+
+    .nav-tab-btn i {
+      font-size: 18px;
+      transition: transform 0.2s;
+    }
+
+    .nav-tab-btn.active {
+      color: #34d399;
+    }
+
+    .nav-tab-btn.active i {
+      transform: translateY(-2px);
+      color: #34d399;
+    }
+
+    /* Modais */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 380px;
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+
+    /* MODAL DO SCANNER QR CODE */
+    .scanner-viewfinder {
+      width: 100%;
+      height: 240px;
+      background: #000;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      margin: 14px 0;
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scanner-laser {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #10b981, transparent);
+      box-shadow: 0 0 12px #10b981;
+      animation: laserScan 2s infinite ease-in-out;
+    }
+
+    @keyframes laserScan {
+      0% { top: 10%; opacity: 0.3; }
+      50% { top: 85%; opacity: 1; }
+      100% { top: 10%; opacity: 0.3; }
+    }
+
+    .scanner-target-box {
+      width: 170px;
+      height: 170px;
+      border: 2px dashed rgba(255,255,255,0.4);
+      border-radius: 14px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.6);
+      font-size: 11px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .scanner-sim-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .btn-sim-bip {
+      background: #182233;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s;
+    }
+
+    .btn-sim-bip:hover, .btn-sim-bip:active {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+      color: #34d399;
+    }
+
+    .btn-whatsapp {
+      width: 100%;
+      height: 48px;
+      background: #25D366;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      border-radius: 12px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      margin-top: 14px;
+    }
+
+    .btn-close-modal {
+      width: 100%;
+      height: 44px;
+      background: transparent;
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-viewport">
+    <!-- Topo Fixo com HUD -->
+    <header class="top-header">
+      <div class="top-bar">
+        <div class="church-badge">
+          <div class="church-logo">IPB</div>
+          <div class="church-info">
+            <h1>Conferência de Dízimos</h1>
+            <span>Culto Dominical Noturno &bull; 09/10/2026</span>
+          </div>
+        </div>
+        <div class="session-tag">
+          <span style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+          Ao Vivo
+        </div>
+      </div>
+
+      <!-- HUD Dinâmico de Apuração -->
+      <div class="hud-card">
+        <div class="hud-row">
+          <div>
+            <div class="hud-label">Total Apurado na Sessão</div>
+            <div class="hud-total" id="hudTotal">R$ 0,00</div>
+          </div>
+          <div class="hud-metrics">
+            <div class="metric-pill">
+              <div class="metric-val" id="hudEnvelopesCount">0</div>
+              <div class="metric-name">Envelopes</div>
+            </div>
+            <div class="metric-pill">
+              <div class="metric-val" id="hudPixCount">0</div>
+              <div class="metric-name">PIX/Cartão</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-reconciliation">
+          <span class="text-muted" style="color: var(--text-muted);">Batimento Físico vs Envelopes:</span>
+          <span class="reconciliation-status ok" id="hudConciliacaoBadge">
+            <i class="pi pi-check-circle"></i> 100% Conciliado (R$ 0,00)
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================================== -->
+    <!-- ABA 1: LANÇAMENTO RÁPIDO DE ENVELOPES                      -->
+    <!-- ========================================================== -->
+    <main id="tab-envelopes" class="tab-content active">
+      <div class="quick-entry-card">
+        <div class="card-title">
+          <span><i class="pi pi-plus-circle" style="color: var(--primary); margin-right: 4px;"></i> Lançar Envelope / Oferta</span>
+          <span id="quickEntryId" style="font-size: 11px; color: var(--text-muted);">#001</span>
+        </div>
+
+        <!-- 🚀 Bipar QR Code do Envelope (Atalho Principal) -->
+        <div class="qr-scan-banner" onclick="abrirScannerQR()">
+          <div class="qr-scan-text">
+            <div class="qr-icon-round">
+              <i class="pi pi-qrcode"></i>
+            </div>
+            <div>
+              <h4>Bipar Envelope com QR Code</h4>
+              <p>Identifica membro em 0.2s pela câmera</p>
+            </div>
+          </div>
+          <span class="qr-badge-fast">Rápido ⚡</span>
+        </div>
+
+        <!-- 1. Membro Dizimista com Autocomplete -->
+        <div class="form-group">
+          <label class="form-label">Membro Dizimista</label>
+          <div class="search-box-wrapper">
+            <input 
+              type="text" 
+              id="membroInput" 
+              class="search-input" 
+              placeholder="Ou digite nome / nº envelope..." 
+              autocomplete="off"
+              oninput="handleMembroSearch(this.value)"
+            />
+            <i class="pi pi-search search-icon-right"></i>
+            <div id="autocompleteList" class="autocomplete-list"></div>
+          </div>
+
+          <div class="member-options-row">
+            <button type="button" class="btn-anonimo" id="btnAnonimo" onclick="toggleAnonimo()">
+              <i class="pi pi-user-minus"></i> Oferta / Envelope Não Identificado
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Valor com Pílulas Rápidas -->
+        <div class="form-group">
+          <label class="form-label">Valor Declarado (R$)</label>
+          <div class="amount-display-container">
+            <span class="currency-symbol">R$</span>
+            <input 
+              type="text" 
+              id="valorInput" 
+              class="amount-input-big" 
+              placeholder="0,00" 
+              inputmode="decimal"
+              oninput="formatMoedaInput(this)"
+            />
+          </div>
+          <div class="quick-values-grid">
+            <button type="button" class="quick-val-btn" onclick="addValorRapido(50)">+50</button>
+            <button type="button" class="quick-val-btn" onclick="addValorRapido(100)">+100</button>
+            <button type="button" class="quick-val-btn" onclick="addValorRapido(200)">+200</button>
+            <button type="button" class="quick-val-btn" onclick="addValorRapido(500)">+500</button>
+          </div>
+        </div>
+
+        <!-- 3. Forma de Pagamento -->
+        <div class="form-group">
+          <label class="form-label">Forma de Pagamento</label>
+          <div class="payment-type-selector">
+            <button type="button" class="pay-btn selected" data-pay="dinheiro" onclick="selectPay(this, 'dinheiro')">
+              <i class="pi pi-money-bill"></i>
+              <span>Espécie</span>
+            </button>
+            <button type="button" class="pay-btn" data-pay="pix" onclick="selectPay(this, 'pix')">
+              <i class="pi pi-qrcode"></i>
+              <span>PIX</span>
+            </button>
+            <button type="button" class="pay-btn" data-pay="cartao" onclick="selectPay(this, 'cartao')">
+              <i class="pi pi-credit-card"></i>
+              <span>Cartão</span>
+            </button>
+            <button type="button" class="pay-btn" data-pay="cheque" onclick="selectPay(this, 'cheque')">
+              <i class="pi pi-file"></i>
+              <span>Cheque</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Destinação -->
+        <div class="form-group">
+          <label class="form-label">Destinação Eclesiástica</label>
+          <div class="destination-chips">
+            <div class="dest-chip selected" onclick="selectDest(this, 'Dízimo Geral')">Dízimo Geral</div>
+            <div class="dest-chip" onclick="selectDest(this, 'Oferta Alçada')">Oferta Alçada</div>
+            <div class="dest-chip" onclick="selectDest(this, 'Missões')">Missões</div>
+            <div class="dest-chip" onclick="selectDest(this, 'Construção')">Construção</div>
+            <div class="dest-chip" onclick="selectDest(this, 'Diaconia')">Diaconia</div>
+          </div>
+        </div>
+
+        <!-- Botão Primário -->
+        <button type="button" class="btn-submit-entry" onclick="salvarLancamento()">
+          <i class="pi pi-check"></i> Confirmar Envelope (1 Toque)
+        </button>
+      </div>
+
+      <!-- Feed dos Envelopes já Lançados -->
+      <div class="card-title">
+        <span><i class="pi pi-history"></i> Envelopes Conferidos (<span id="feedCount">0</span>)</span>
+        <span style="font-size: 11px; color: var(--text-muted);">Mais recentes primeiro</span>
+      </div>
+
+      <div class="entries-feed" id="entriesFeed"></div>
+    </main>
+
+    <!-- ========================================================== -->
+    <!-- ABA 2: CONTADORA DE CÉDULAS & MOEDAS (FÍSICO)              -->
+    <!-- ========================================================== -->
+    <main id="tab-cedulas" class="tab-content">
+      <div class="quick-entry-card" style="padding-bottom: 8px;">
+        <div class="card-title">
+          <span><i class="pi pi-calculator" style="color: #38bdf8; margin-right: 4px;"></i> Contadora de Cédulas & Moedas</span>
+          <span style="font-family: 'JetBrains Mono'; color: #34d399; font-weight: 800;" id="totalDinheiroFisico">R$ 0,00</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">
+          Conte as notas e moedas físicas recolhidas. Toque em + / - para somar sem calculadora externa.
+        </p>
+
+        <div class="cash-counter-grid" id="cashCounterGrid"></div>
+      </div>
+    </main>
+
+    <!-- ========================================================== -->
+    <!-- ABA 3: BATIMENTO, CONCILIAÇÃO & FECHAMENTO CANÔNICO        -->
+    <!-- ========================================================== -->
+    <main id="tab-fechamento" class="tab-content">
+      <div class="reconciliation-card">
+        <div class="card-title">
+          <span><i class="pi pi-verified" style="color: #10b981; margin-right: 4px;"></i> Termo de Apuração & Batimento</span>
+          <span class="reconciliation-status ok" id="summaryStatusBadge">Conciliado</span>
+        </div>
+
+        <table class="reconciliation-table">
+          <tr>
+            <td style="color: var(--text-muted);"><i class="pi pi-money-bill" style="margin-right: 6px;"></i> Total em Dinheiro Físico (Contado):</td>
+            <td id="recFisico">R$ 0,00</td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);"><i class="pi pi-envelope" style="margin-right: 6px;"></i> Envelopes Marcados como Dinheiro:</td>
+            <td id="recEnvelopesDinheiro">R$ 0,00</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 700; color: #f8fafc;"><i class="pi pi-balance-scale" style="margin-right: 6px;"></i> Ofertas Soltas / Sobra em Espécie:</td>
+            <td id="recDiferencaDinheiro" style="color: #34d399;">R$ 0,00</td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);"><i class="pi pi-qrcode" style="margin-right: 6px;"></i> Total em PIX / Transferências:</td>
+            <td id="recPix">R$ 0,00</td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);"><i class="pi pi-credit-card" style="margin-right: 6px;"></i> Total em Cartões / Maquininha:</td>
+            <td id="recCartao">R$ 0,00</td>
+          </tr>
+          <tr style="border-top: 2px solid var(--surface-border);">
+            <td style="font-size: 15px; font-weight: 800; color: #fff;">TOTAL GERAL DA APURAÇÃO:</td>
+            <td id="recTotalGeral" style="font-size: 18px; color: #34d399;">R$ 0,00</td>
+          </tr>
+        </table>
+
+        <!-- QR Code do Termo de Auditoria -->
+        <div class="qr-audit-box">
+          <div class="qr-code-canvas">
+            <svg viewBox="0 0 100 100" width="100%" height="100%">
+              <rect width="100" height="100" fill="#fff" />
+              <!-- Matriz QR Code SVG representativa -->
+              <rect x="10" y="10" width="24" height="24" fill="#000" />
+              <rect x="14" y="14" width="16" height="16" fill="#fff" />
+              <rect x="18" y="18" width="8" height="8" fill="#000" />
+              
+              <rect x="66" y="10" width="24" height="24" fill="#000" />
+              <rect x="70" y="14" width="16" height="16" fill="#fff" />
+              <rect x="74" y="18" width="8" height="8" fill="#000" />
+              
+              <rect x="10" y="66" width="24" height="24" fill="#000" />
+              <rect x="14" y="70" width="16" height="16" fill="#fff" />
+              <rect x="18" y="74" width="8" height="8" fill="#000" />
+
+              <rect x="42" y="15" width="8" height="8" fill="#000" />
+              <rect x="52" y="25" width="8" height="8" fill="#000" />
+              <rect x="42" y="42" width="16" height="16" fill="#059669" />
+              <rect x="68" y="45" width="10" height="6" fill="#000" />
+              <rect x="45" y="68" width="12" height="12" fill="#000" />
+              <rect x="65" y="68" width="8" height="18" fill="#000" />
+            </svg>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 800; color: #fff;">QR Code de Autenticidade</div>
+            <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-top: 2px;">
+              O Conselho da Igreja e o Conselho Fiscal podem escanear este QR Code para verificar a ata digital de contagem.
+            </p>
+          </div>
+        </div>
+
+        <!-- 2 Conferentes Canônicos -->
+        <div class="witness-card">
+          <div class="card-title" style="margin-bottom: 6px;">
+            <span><i class="pi pi-shield"></i> Comissão de Conferência (Canônico IPB)</span>
+            <span style="font-size: 10px; color: #f59e0b;">2 Conferentes Mínimos</span>
+          </div>
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+            A Constituição da IPB preconiza a conferência por no mínimo dois irmãos da junta diaconal ou tesouraria.
+          </p>
+
+          <label class="form-label">1º Conferente (Diácono / Tesoureiro)</label>
+          <select class="witness-select" id="conferente1">
+            <option value="Diác. Carlos Eduardo">Diác. Carlos Eduardo</option>
+            <option value="Diác. Marcos Vinícius">Diác. Marcos Vinícius</option>
+            <option value="Presb. Roberto Santos">Presb. Roberto Santos</option>
+          </select>
+
+          <label class="form-label" style="margin-top: 10px;">2º Conferente (Diácono / Junta Diaconal)</label>
+          <select class="witness-select" id="conferente2">
+            <option value="Diác. Lucas Ferreira">Diác. Lucas Ferreira</option>
+            <option value="Presb. Antônio Lima">Presb. Antônio Lima</option>
+            <option value="Diác. Thiago Ribeiro">Diác. Thiago Ribeiro</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-submit-entry" style="background: linear-gradient(135deg, #047857 0%, #065f46 100%);" onclick="abrirModalFechamento()">
+          <i class="pi pi-lock"></i> Fechar Conferência & Gerar Termo
+        </button>
+      </div>
+    </main>
+
+    <!-- Navegação Inferior -->
+    <nav class="bottom-nav">
+      <button type="button" class="nav-tab-btn active" onclick="switchTab('envelopes', this)">
+        <i class="pi pi-envelope"></i>
+        <span>Envelopes</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchTab('cedulas', this)">
+        <i class="pi pi-calculator"></i>
+        <span>Cédulas</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchTab('fechamento', this)">
+        <i class="pi pi-verified"></i>
+        <span>Fechamento</span>
+      </button>
+    </nav>
+
+    <!-- ========================================================== -->
+    <!-- MODAL DO LEITOR DE QR CODE                                 -->
+    <!-- ========================================================== -->
+    <div class="modal-overlay" id="modalScannerQR">
+      <div class="modal-box" style="padding: 20px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <h3 style="font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+            <i class="pi pi-qrcode" style="color: var(--primary);"></i> Leitor de QR Code
+          </h3>
+          <button type="button" onclick="fecharScannerQR()" style="background: transparent; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer;">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted);">
+          Aponte a câmera para a etiqueta com QR Code no envelope de dízimo:
+        </p>
+
+        <!-- Visor da Câmera / Scanner -->
+        <div class="scanner-viewfinder">
+          <video id="cameraVideo" style="width: 100%; height: 100%; object-fit: cover; display: none;" playsinline></video>
+          <div class="scanner-laser"></div>
+          <div class="scanner-target-box" id="scannerTargetPlaceholder">
+            <div>
+              <i class="pi pi-camera" style="font-size: 28px; color: var(--primary); display: block; margin-bottom: 6px;"></i>
+              Posicione o QR Code do envelope dentro do quadro
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px;">
+          Ou teste com envelopes simulados abaixo:
+        </p>
+
+        <!-- Botões de Simulação com Som de Bipe -->
+        <div class="scanner-sim-buttons">
+          <button type="button" class="btn-sim-bip" onclick="simularLeituraQR(3)">
+            <span><i class="pi pi-user" style="color: var(--primary); margin-right: 6px;"></i> Carlos Eduardo (Env #103)</span>
+            <span style="color: #34d399; font-size: 10px;">Bipar &bull; 0.2s</span>
+          </button>
+          <button type="button" class="btn-sim-bip" onclick="simularLeituraQR(6)">
+            <span><i class="pi pi-user" style="color: var(--primary); margin-right: 6px;"></i> Fernanda Costa (Env #106)</span>
+            <span style="color: #34d399; font-size: 10px;">Bipar &bull; 0.2s</span>
+          </button>
+          <button type="button" class="btn-sim-bip" onclick="simularLeituraQR(14)">
+            <span><i class="pi pi-user" style="color: var(--primary); margin-right: 6px;"></i> Presb. Roberto (Env #114)</span>
+            <span style="color: #34d399; font-size: 10px;">Bipar &bull; 0.2s</span>
+          </button>
+        </div>
+
+        <button type="button" class="btn-close-modal" onclick="fecharScannerQR()">
+          Fechar Leitor
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL DE FECHAMENTO & WHATSAPP -->
+    <div class="modal-overlay" id="modalFechamento">
+      <div class="modal-box">
+        <div class="success-icon-badge">
+          <i class="pi pi-check"></i>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Conferência Fechada!</h3>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
+          Termo de conferência lavrado com sucesso no Livro Caixa com assinatura digital dos dois conferentes.
+        </p>
+
+        <div style="background: #0d1422; border-radius: 12px; padding: 12px; text-align: left; font-size: 11px; font-family: 'JetBrains Mono'; line-height: 1.6; color: #cbd5e1;" id="termoResumoTexto"></div>
+
+        <button type="button" class="btn-whatsapp" onclick="compartilharWhatsApp()">
+          <i class="pi pi-whatsapp"></i> Enviar Resumo no WhatsApp da Diretoria
+        </button>
+
+        <button type="button" class="btn-close-modal" onclick="fecharModal()">
+          Concluir e Voltar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DADOS MOCKADOS DE MEMBROS
+    const membrosMock = [
+      { id: 1, nome: "Aldo Silva", env: 101, status: "Comungante" },
+      { id: 2, nome: "Beatriz Nogueira", env: 102, status: "Comungante" },
+      { id: 3, nome: "Carlos Eduardo da Silva", env: 103, status: "Diácono" },
+      { id: 4, nome: "Débora Ribeiro", env: 104, status: "Comungante" },
+      { id: 5, nome: "Elias Ferreira", env: 105, status: "Presbítero" },
+      { id: 6, nome: "Fernanda Costa", env: 106, status: "Comungante" },
+      { id: 7, nome: "Gabriel Meireles", env: 107, status: "Comungante" },
+      { id: 8, nome: "Helena Albuquerque", env: 108, status: "Comungante" },
+      { id: 9, nome: "Igor Guimarães", env: 109, status: "Não-comungante" },
+      { id: 10, nome: "Juliana Mendes", env: 110, status: "Comungante" },
+      { id: 11, nome: "Lucas Ferreira", env: 111, status: "Diácono" },
+      { id: 12, nome: "Marcos Vinícius", env: 112, status: "Diácono" },
+      { id: 13, nome: "Paulo Afonso Santos", env: 113, status: "Pastor Titular" },
+      { id: 14, nome: "Roberto Santos", env: 114, status: "Presbítero" }
+    ];
+
+    const denominacoes = [
+      { val: 200, label: "R$ 200", tagClass: "c200", tipo: "cedula" },
+      { val: 100, label: "R$ 100", tagClass: "c100", tipo: "cedula" },
+      { val: 50,  label: "R$ 50",  tagClass: "c50",  tipo: "cedula" },
+      { val: 20,  label: "R$ 20",  tagClass: "c20",  tipo: "cedula" },
+      { val: 10,  label: "R$ 10",  tagClass: "c10",  tipo: "cedula" },
+      { val: 5,   label: "R$ 5",   tagClass: "c5",   tipo: "cedula" },
+      { val: 2,   label: "R$ 2",   tagClass: "c2",   tipo: "cedula" },
+      { val: 1,   label: "R$ 1",   tagClass: "moeda", tipo: "moeda" },
+      { val: 0.50, label: "50¢",   tagClass: "moeda", tipo: "moeda" },
+      { val: 0.25, label: "25¢",   tagClass: "moeda", tipo: "moeda" },
+      { val: 0.10, label: "10¢",   tagClass: "moeda", tipo: "moeda" },
+    ];
+
+    let estado = {
+      envelopes: [
+        { id: 1, nome: "Carlos Eduardo da Silva", env: 103, valor: 350.00, forma: "dinheiro", dest: "Dízimo Geral", hora: "20:15" },
+        { id: 2, nome: "Fernanda Costa", env: 106, valor: 200.00, forma: "pix", dest: "Dízimo Geral", hora: "20:18" },
+        { id: 3, nome: "Não identificado (Oferta)", env: null, valor: 85.50, forma: "dinheiro", dest: "Oferta Alçada", hora: "20:22" }
+      ],
+      cedulasQtd: {
+        200: 1, 100: 2, 50: 1, 20: 3, 10: 2, 5: 1, 2: 0, 1: 5, 0.5: 1, 0.25: 0, 0.1: 0
+      },
+      currentPay: "dinheiro",
+      currentDest: "Dízimo Geral",
+      isAnonimo: false,
+      selectedMembro: null,
+      cameraStream: null
+    };
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderCashCounter();
+      renderEntries();
+      atualizarTotais();
+    });
+
+    // Som de Bipe Óptico Realista Sintetizado
+    function tocarBipeLeitor() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1400, audioCtx.currentTime); // 1.4kHz bip
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+      } catch(e) {}
+
+      if (navigator.vibrate) {
+        navigator.vibrate(60);
+      }
+    }
+
+    // MODAL SCANNER QR CODE
+    function abrirScannerQR() {
+      document.getElementById('modalScannerQR').classList.add('open');
+      const video = document.getElementById('cameraVideo');
+      const placeholder = document.getElementById('scannerTargetPlaceholder');
+
+      // Tenta abrir a câmera traseira do celular
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .then(stream => {
+            estado.cameraStream = stream;
+            video.srcObject = stream;
+            video.style.display = 'block';
+            placeholder.style.display = 'none';
+            video.play();
+          })
+          .catch(() => {
+            video.style.display = 'none';
+            placeholder.style.display = 'flex';
+          });
+      }
+    }
+
+    function fecharScannerQR() {
+      document.getElementById('modalScannerQR').classList.remove('open');
+      if (estado.cameraStream) {
+        estado.cameraStream.getTracks().forEach(t => t.stop());
+        estado.cameraStream = null;
+      }
+    }
+
+    function simularLeituraQR(membroId) {
+      tocarBipeLeitor();
+      fecharScannerQR();
+      selecionarMembro(membroId);
+
+      // Flash visual no campo
+      const input = document.getElementById('membroInput');
+      input.style.borderColor = "#10b981";
+      setTimeout(() => input.style.borderColor = "", 1000);
+    }
+
+    function switchTab(tabName, el) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      el.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handleMembroSearch(query) {
+      const listEl = document.getElementById('autocompleteList');
+      if (!query.trim()) {
+        listEl.style.display = 'none';
+        return;
+      }
+
+      const q = query.toLowerCase();
+      const filtrados = membrosMock.filter(m => 
+        m.nome.toLowerCase().includes(q) || (m.env && m.env.toString().includes(q))
+      );
+
+      if (filtrados.length === 0) {
+        listEl.innerHTML = `<div class="autocomplete-item"><span style="color: var(--text-muted); font-size: 12px;">Nenhum membro encontrado.</span></div>`;
+        listEl.style.display = 'block';
+        return;
+      }
+
+      listEl.innerHTML = filtrados.map(m => `
+        <div class="autocomplete-item" onclick="selecionarMembro(${m.id})">
+          <div>
+            <div class="autocomplete-name">${m.nome}</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Env #${m.env} &bull; ${m.status}</div>
+          </div>
+          <span class="autocomplete-badge">Env #${m.env}</span>
+        </div>
+      `).join('');
+
+      listEl.style.display = 'block';
+    }
+
+    function selecionarMembro(id) {
+      const membro = membrosMock.find(m => m.id === id);
+      if (membro) {
+        estado.selectedMembro = membro;
+        estado.isAnonimo = false;
+        document.getElementById('btnAnonimo').classList.remove('active');
+        document.getElementById('membroInput').value = `${membro.nome} (Env #${membro.env})`;
+        document.getElementById('autocompleteList').style.display = 'none';
+        document.getElementById('valorInput').focus();
+      }
+    }
+
+    function toggleAnonimo() {
+      estado.isAnonimo = !estado.isAnonimo;
+      const btn = document.getElementById('btnAnonimo');
+      const input = document.getElementById('membroInput');
+
+      if (estado.isAnonimo) {
+        btn.classList.add('active');
+        input.value = "Oferta / Dízimo Não Identificado";
+        input.disabled = true;
+        estado.selectedMembro = null;
+        document.getElementById('valorInput').focus();
+      } else {
+        btn.classList.remove('active');
+        input.value = "";
+        input.disabled = false;
+        input.focus();
+      }
+    }
+
+    function formatMoedaInput(input) {
+      let v = input.value.replace(/\D/g, "");
+      if (!v) {
+        input.value = "";
+        return;
+      }
+      v = (parseInt(v, 10) / 100).toFixed(2);
+      input.value = v.replace(".", ",");
+    }
+
+    function addValorRapido(valorDelta) {
+      const input = document.getElementById('valorInput');
+      let atual = parseFloat(input.value.replace(",", ".") || 0);
+      atual += valorDelta;
+      input.value = atual.toFixed(2).replace(".", ",");
+    }
+
+    function selectPay(el, tipo) {
+      document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      estado.currentPay = tipo;
+    }
+
+    function selectDest(el, dest) {
+      document.querySelectorAll('.dest-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      estado.currentDest = dest;
+    }
+
+    function salvarLancamento() {
+      const valorStr = document.getElementById('valorInput').value.replace(",", ".");
+      const valor = parseFloat(valorStr);
+
+      if (!valor || isNaN(valor) || valor <= 0) {
+        alert("Por favor, informe o valor do envelope!");
+        document.getElementById('valorInput').focus();
+        return;
+      }
+
+      const nomeMembro = estado.isAnonimo 
+        ? "Não identificado (Oferta)" 
+        : (estado.selectedMembro ? estado.selectedMembro.nome : document.getElementById('membroInput').value.trim() || "Não identificado");
+
+      const numEnv = estado.selectedMembro ? estado.selectedMembro.env : null;
+
+      const novo = {
+        id: Date.now(),
+        nome: nomeMembro,
+        env: numEnv,
+        valor: valor,
+        forma: estado.currentPay,
+        dest: estado.currentDest,
+        hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      estado.envelopes.unshift(novo);
+
+      // Limpar formulário para o próximo lançamento
+      document.getElementById('valorInput').value = "";
+      document.getElementById('membroInput').value = "";
+      document.getElementById('membroInput').disabled = false;
+      document.getElementById('btnAnonimo').classList.remove('active');
+      estado.isAnonimo = false;
+      estado.selectedMembro = null;
+
+      renderEntries();
+      atualizarTotais();
+
+      const btn = document.querySelector('.btn-submit-entry');
+      btn.style.transform = "scale(0.96)";
+      setTimeout(() => btn.style.transform = "none", 150);
+    }
+
+    function removerLancamento(id) {
+      if (confirm("Deseja remover este envelope lançado?")) {
+        estado.envelopes = estado.envelopes.filter(e => e.id !== id);
+        renderEntries();
+        atualizarTotais();
+      }
+    }
+
+    function renderEntries() {
+      const feed = document.getElementById('entriesFeed');
+      document.getElementById('feedCount').innerText = estado.envelopes.length;
+      document.getElementById('quickEntryId').innerText = `#00${estado.envelopes.length + 1}`;
+
+      if (estado.envelopes.length === 0) {
+        feed.innerHTML = `
+          <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 12px; background: var(--surface-card); border-radius: var(--radius-sm);">
+            Nenhum envelope lançado nesta sessão ainda.
+          </div>
+        `;
+        return;
+      }
+
+      feed.innerHTML = estado.envelopes.map(e => `
+        <div class="entry-item">
+          <div class="entry-info">
+            <div class="entry-badge-icon ${e.forma}">
+              <i class="pi ${e.forma === 'pix' ? 'pi-qrcode' : (e.forma === 'cartao' ? 'pi-credit-card' : 'pi-money-bill')}"></i>
+            </div>
+            <div class="entry-meta">
+              <h4>${e.nome}</h4>
+              <span>${e.hora} &bull; ${e.forma.toUpperCase()} ${e.env ? '&bull; Env #' + e.env : ''}</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <div class="entry-values">
+              <div class="entry-amount">R$ ${e.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div class="entry-dest">${e.dest}</div>
+            </div>
+            <button class="btn-remove-entry" onclick="removerLancamento(${e.id})" title="Remover">
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCashCounter() {
+      const container = document.getElementById('cashCounterGrid');
+      container.innerHTML = denominacoes.map(d => {
+        const qtd = estado.cedulasQtd[d.val] || 0;
+        const subtotal = (qtd * d.val).toFixed(2);
+        return `
+          <div class="cash-denomination-row">
+            <div class="denom-badge">
+              <div class="bill-tag ${d.tagClass}">${d.label}</div>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">${d.tipo === 'cedula' ? 'Cédula' : 'Moeda'}</span>
+            </div>
+            <div class="denom-subtotal">R$ ${parseFloat(subtotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <div class="denom-stepper">
+              <button type="button" class="step-btn" onclick="ajustarQtd(${d.val}, -1)">-</button>
+              <input 
+                type="number" 
+                class="step-input" 
+                value="${qtd}" 
+                min="0"
+                onchange="setQtd(${d.val}, this.value)"
+              />
+              <button type="button" class="step-btn" onclick="ajustarQtd(${d.val}, 1)">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function ajustarQtd(val, delta) {
+      let q = (estado.cedulasQtd[val] || 0) + delta;
+      if (q < 0) q = 0;
+      estado.cedulasQtd[val] = q;
+      renderCashCounter();
+      atualizarTotais();
+    }
+
+    function setQtd(val, inputVal) {
+      let q = parseInt(inputVal, 10);
+      if (isNaN(q) || q < 0) q = 0;
+      estado.cedulasQtd[val] = q;
+      renderCashCounter();
+      atualizarTotais();
+    }
+
+    function atualizarTotais() {
+      let totalEnvelopes = 0;
+      let totalEnvelopesDinheiro = 0;
+      let totalPix = 0;
+      let totalCartao = 0;
+      let envelopesCount = estado.envelopes.length;
+      let pixCount = 0;
+
+      estado.envelopes.forEach(e => {
+        totalEnvelopes += e.valor;
+        if (e.forma === 'dinheiro') totalEnvelopesDinheiro += e.valor;
+        if (e.forma === 'pix') { totalPix += e.valor; pixCount++; }
+        if (e.forma === 'cartao') { totalCartao += e.valor; pixCount++; }
+      });
+
+      let totalFisico = 0;
+      denominacoes.forEach(d => {
+        const q = estado.cedulasQtd[d.val] || 0;
+        totalFisico += (q * d.val);
+      });
+
+      const diferencaDinheiro = totalFisico - totalEnvelopesDinheiro;
+      const totalGeral = totalFisico + totalPix + totalCartao;
+
+      document.getElementById('hudTotal').innerText = `R$ ${totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('hudEnvelopesCount').innerText = envelopesCount;
+      document.getElementById('hudPixCount').innerText = pixCount;
+
+      const badge = document.getElementById('hudConciliacaoBadge');
+      if (Math.abs(diferencaDinheiro) < 0.01) {
+        badge.className = "reconciliation-status ok";
+        badge.innerHTML = `<i class="pi pi-check-circle"></i> 100% Conciliado (R$ 0,00)`;
+      } else if (diferencaDinheiro > 0) {
+        badge.className = "reconciliation-status ok";
+        badge.innerHTML = `<i class="pi pi-info-circle"></i> Oferta Solta (+R$ ${diferencaDinheiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`;
+      } else {
+        badge.className = "reconciliation-status diff";
+        badge.innerHTML = `<i class="pi pi-exclamation-triangle"></i> Falta R$ ${Math.abs(diferencaDinheiro).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      }
+
+      document.getElementById('totalDinheiroFisico').innerText = `R$ ${totalFisico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('recFisico').innerText = `R$ ${totalFisico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('recEnvelopesDinheiro').innerText = `R$ ${totalEnvelopesDinheiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('recDiferencaDinheiro').innerText = `R$ ${diferencaDinheiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('recPix').innerText = `R$ ${totalPix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('recCartao').innerText = `R$ ${totalCartao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('recTotalGeral').innerText = `R$ ${totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+      const statusBadge = document.getElementById('summaryStatusBadge');
+      if (Math.abs(diferencaDinheiro) < 0.01) {
+        statusBadge.className = "reconciliation-status ok";
+        statusBadge.innerText = "100% Batido";
+      } else {
+        statusBadge.className = "reconciliation-status diff";
+        statusBadge.innerText = "Diferença Pendente";
+      }
+    }
+
+    function abrirModalFechamento() {
+      const conf1 = document.getElementById('conferente1').value;
+      const conf2 = document.getElementById('conferente2').value;
+      const total = document.getElementById('hudTotal').innerText;
+      const envCount = estado.envelopes.length;
+      const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+      const textoResumo = `
+🏛️ *TERMO DE CONFERÊNCIA DE DÍZIMOS & OFERTAS*
+*Igreja Presbiteriana do Brasil*
+📅 Data: ${dataHoje} (Culto Noturno)
+👥 Conferentes: ${conf1} & ${conf2}
+----------------------------------
+💰 *TOTAL APURADO:* ${total}
+✉️ Total de Envelopes: ${envCount}
+💵 Espécie (Físico): ${document.getElementById('recFisico').innerText}
+📱 PIX / Banco: ${document.getElementById('recPix').innerText}
+💳 Cartões: ${document.getElementById('recCartao').innerText}
+----------------------------------
+⚖️ Situação: 100% Conciliado e Depositado no Cofre.
+✅ Conferido e Aprovado pela Junta Diaconal.
+      `.trim();
+
+      document.getElementById('termoResumoTexto').innerText = textoResumo;
+      document.getElementById('modalFechamento').classList.add('open');
+    }
+
+    function fecharModal() {
+      document.getElementById('modalFechamento').classList.remove('open');
+    }
+
+    function compartilharWhatsApp() {
+      const texto = encodeURIComponent(document.getElementById('termoResumoTexto').innerText);
+      window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
+    }
+  </script>
+</body>
+</html>
