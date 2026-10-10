@@ -120,6 +120,7 @@ export class AppMenu implements OnInit {
                     { label: 'Estatística do Presbitério', icon: 'pi pi-fw pi-percentage', routerLink: ['/secretaria/estatistica-presbiterio'], visible: this.can('person.view') },
                     { label: 'Cartas de Transferência', icon: 'pi pi-fw pi-envelope', routerLink: ['/secretaria/cartas'], visible: this.can('person.view') },
                     { label: 'Livro de Atas do Conselho', icon: 'pi pi-fw pi-book', routerLink: ['/secretaria/atas'], visible: this.can('person.view') },
+                    { label: 'Boletim Informativo Semanal', icon: 'pi pi-fw pi-file-edit', routerLink: ['/secretaria/boletim'], visible: this.can('person.view') },
                 ],
             },
             {

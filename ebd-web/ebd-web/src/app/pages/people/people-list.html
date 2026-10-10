@@ -389,94 +389,205 @@
       <!-- ========================================================== -->
       <!-- DOCUMENTO OFICIAL TIMBRADO PARA IMPRESSÃO / SALVAR EM PDF  -->
       <!-- ========================================================== -->
-      <div id="ficha-impressao-ipb" class="p-6 bg-surface-0 text-surface-900 border-2 border-primary/30 rounded-2xl shadow-sm text-xs print:p-0 print:border-none">
+      <div id="ficha-impressao-ipb" class="ipb-moldura-solene text-surface-900 bg-white shadow-sm my-4">
         
         <!-- Timbre da Igreja Presbiteriana do Brasil -->
-        <div class="text-center pb-4 border-b-2 border-primary/20 mb-4">
-          <div class="flex items-center justify-center gap-2 mb-1">
-            <span class="font-extrabold uppercase tracking-widest text-primary text-sm">Igreja Presbiteriana do Brasil</span>
-          </div>
-          <h2 class="text-base font-black uppercase text-surface-900 m-0 tracking-tight">
+        <div class="ipb-timbre-header">
+          <img src="/ipb-logo.png" alt="Igreja Presbiteriana do Brasil" class="ipb-logo-img" onerror="this.style.display='none'" />
+          <div class="ipb-timbre-nome-ipb">Igreja Presbiteriana do Brasil</div>
+          <h2 class="ipb-timbre-nome-igreja">
             {{ f.igreja || 'Igreja Presbiteriana em Campo Verde' }}
           </h2>
-          <div class="text-xs text-surface-600 mt-0.5">
+          <div class="ipb-timbre-jurisdicao">
             {{ f.presbiterio || 'Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)' }}
           </div>
-          <div class="mt-2 inline-block px-4 py-1 bg-primary/10 text-primary font-black uppercase tracking-wider rounded-md text-xs">
-            Ficha Cadastral Canônica e Ministerial Oficial
+          <div class="ipb-faixa-chancela">
+            Ficha Cadastral Canônica e Histórico Ministerial
           </div>
         </div>
 
-        <!-- Matriz de Assentamento Canônico e Pessoal -->
-        <div class="grid grid-cols-3 gap-3 py-3 border-b border-surface-200">
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Nome Completo do Membro</span>
-            <strong class="text-surface-900 text-sm">{{ membro.full_name }}</strong>
-          </div>
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Nº do ROL Oficial</span>
-            <strong class="font-mono text-sm text-surface-900">{{ membro.roll_number || 'S/N' }}</strong>
-          </div>
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Situação Canônica</span>
-            <span class="font-bold text-surface-900">{{ getStatusBadge(membro.canonical_status).label }}</span>
-          </div>
-
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Data de Nascimento / Idade</span>
-            <span>{{ membro.birth_date ? (membro.birth_date | date: 'dd/MM/yyyy') : '—' }} ({{ membro.age ? membro.age + ' anos' : '—' }})</span>
-          </div>
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">CPF</span>
-            <span>{{ membro.cpf || 'Não informado' }}</span>
-          </div>
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Estado Civil / Cônjuge</span>
-            <span>{{ membro.marital_status || '—' }} @if (membro.spouse_name) { (c/ {{ membro.spouse_name }}) }</span>
-          </div>
-
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Modo de Admissão</span>
-            <span>{{ getModoRecepcaoLabel(membro.reception_type) }}</span>
-          </div>
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Data da Admissão</span>
-            <span>{{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—' }}</span>
-          </div>
-          <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Profissão de Fé / Batismo</span>
-            <span>{{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : (membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—') }}</span>
-          </div>
+        <!-- Seção I: Identificação Canônica & Registro Civil -->
+        <div class="ipb-secao-titulo">
+          <span>I. Identificação do Membro e Dados Civis</span>
         </div>
+        <table class="ipb-tabela-dados">
+          <tbody>
+            <tr>
+              <td style="width: 45%;">
+                <span class="ipb-label">Nome Completo do Membro</span>
+                <span class="ipb-val-destaque">{{ membro.full_name }}</span>
+              </td>
+              <td style="width: 25%;">
+                <span class="ipb-label">Nº do ROL Oficial</span>
+                <span class="ipb-val font-mono" style="font-weight: 800; color: #064e3b;">{{ membro.roll_number || 'S/N' }}</span>
+              </td>
+              <td style="width: 30%;">
+                <span class="ipb-label">Situação Canônica</span>
+                <span class="ipb-badge-canonico">{{ getStatusBadge(membro.canonical_status).label }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="ipb-label">Data de Nascimento / Idade</span>
+                <span class="ipb-val">{{ membro.birth_date ? (membro.birth_date | date: 'dd/MM/yyyy') : '—' }} ({{ membro.age ? membro.age + ' anos' : '—' }})</span>
+              </td>
+              <td>
+                <span class="ipb-label">CPF</span>
+                <span class="ipb-val">{{ membro.cpf || 'Não informado' }}</span>
+              </td>
+              <td>
+                <span class="ipb-label">Estado Civil / Cônjuge</span>
+                <span class="ipb-val">{{ membro.marital_status || '—' }} @if (membro.spouse_name) { (c/ {{ membro.spouse_name }}) }</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="ipb-label">Telefone / WhatsApp</span>
+                <span class="ipb-val">{{ membro.phone || 'Não informado' }}</span>
+              </td>
+              <td>
+                <span class="ipb-label">E-mail Cadastrado</span>
+                <span class="ipb-val">{{ membro.email || 'Não informado' }}</span>
+              </td>
+              <td>
+                <span class="ipb-label">Composição Familiar</span>
+                <span class="ipb-val">
+                  @if (f.familias && f.familias.length > 0) {
+                    @for (fam of f.familias; track fam.id; let last = $last) {
+                      {{ fam.name }}{{ fam.relationship ? ' (' + fam.relationship + ')' : '' }}{{ !last ? ', ' : '' }}
+                    }
+                  } @else {
+                    —
+                  }
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Seção II: Assentamentos Canônicos & Histórico Sacramental -->
+        <div class="ipb-secao-titulo">
+          <span>II. Assentamentos Canônicos e Sacramentais</span>
+        </div>
+        <table class="ipb-tabela-dados">
+          <tbody>
+            <tr>
+              <td style="width: 35%;">
+                <span class="ipb-label">Modo de Recepção / Admissão</span>
+                <span class="ipb-val">{{ getModoRecepcaoLabel(membro.reception_type) }}</span>
+              </td>
+              <td style="width: 20%;">
+                <span class="ipb-label">Data da Admissão</span>
+                <span class="ipb-val">{{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—' }}</span>
+              </td>
+              <td style="width: 22%;">
+                <span class="ipb-label">Profissão de Fé</span>
+                <span class="ipb-val">{{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : '—' }}</span>
+              </td>
+              <td style="width: 23%;">
+                <span class="ipb-label">Batismo</span>
+                <span class="ipb-val">{{ membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—' }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Seção III: Ministérios, Escola Dominical & Sociedades Internas -->
+        <div class="ipb-secao-titulo">
+          <span>III. Atuação Eclesiástica, EBD e Sociedades Internas</span>
+        </div>
+        <table class="ipb-tabela-dados">
+          <tbody>
+            <tr>
+              <td style="width: 50%;">
+                <span class="ipb-label">Sociedades Internas (SAF / UPH / UMP / UPA / UCP)</span>
+                <span class="ipb-val">
+                  @if (f.cargos_atuais && f.cargos_atuais.length > 0) {
+                    @for (c of f.cargos_atuais; track c.sociedade; let last = $last) {
+                      <strong>{{ c.sociedade }}:</strong> {{ c.cargo }}{{ !last ? ' • ' : '' }}
+                    }
+                  } @else {
+                    Nenhum vínculo societário registrado
+                  }
+                </span>
+              </td>
+              <td style="width: 30%;">
+                <span class="ipb-label">Escola Bíblica Dominical (EBD)</span>
+                <span class="ipb-val">
+                  {{ membro.can_teach ? 'Habilitado a Lecionar' : 'Aluno Regular' }}
+                  @if (f.classes_professor && f.classes_professor.length > 0) {
+                    (Prof: {{ f.classes_professor.join(', ') }})
+                  }
+                  @if (f.classes_aluno && f.classes_aluno.length > 0) {
+                    (Classe: {{ f.classes_aluno.join(', ') }})
+                  }
+                </span>
+              </td>
+              <td style="width: 20%;">
+                <span class="ipb-label">Tesouraria / Dízimos</span>
+                <span class="ipb-val">
+                  {{ membro.is_tither ? 'Dizimista Ativo' : 'Não informado' }}
+                  @if (membro.envelope_number) {
+                    (Env. #{{ membro.envelope_number }})
+                  }
+                </span>
+              </td>
+            </tr>
+            @if (membro.notes) {
+              <tr>
+                <td colspan="3">
+                  <span class="ipb-label">Anotações Cadastrais / Observações</span>
+                  <span class="ipb-val" style="font-style: italic; color: #475569;">{{ membro.notes }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
 
         <!-- Termo de Fé e Certidão do Conselho -->
-        <div class="pt-4 text-surface-600 leading-relaxed text-justify">
-          <p class="mb-4">
-            Certifico para todos os devidos fins eclesiásticos que o histórico, registros batismais e assentamentos canônicos acima conferem fielmente com os livros oficiais de Atas e Rol de Membros arquivados na Secretaria desta Igreja, encontrando-se o referido irmão em plena comunhão e submissão aos símbolos de fé da Igreja Presbiteriana do Brasil.
+        <div class="ipb-certidao-bloco">
+          <p class="ipb-certidao-texto">
+            Certifico para todos os devidos fins de ordem canônica e eclesiástica que os assentamentos, registros batismais, vínculos ministeriais e dados cadastrais acima conferem fielmente com os livros oficiais de Atas e Rol de Membros arquivados sob a guarda da Secretaria deste Conselho, encontrando-se o referido irmão em plena comunhão e submissão à Constituição e aos Símbolos de Fé da Igreja Presbiteriana do Brasil.
           </p>
+        </div>
 
-          <div class="flex items-center justify-between text-[11px] text-surface-500 mb-6 pb-2 border-b border-surface-200">
-            <div>
-              <strong>Emissão:</strong> {{ f.data_emissao || 'Hoje' }} às {{ f.hora_emissao || '10:00' }}
-            </div>
-            <div>
-              <strong>Autenticidade:</strong> <span class="font-mono font-bold">{{ f.codigo_autenticidade || 'IPB-VERIFIED' }}</span>
-            </div>
+        <!-- Autenticidade Digital -->
+        <div class="ipb-autenticidade-linha">
+          <div>
+            <strong>Emissão Oficial:</strong> {{ f.data_emissao || 'Hoje' }} às {{ f.hora_emissao || '10:00' }}
           </div>
+          <div>
+            <strong>Autenticidade Conciliar:</strong>
+            <span class="ipb-codigo-auth">{{ f.codigo_autenticidade || 'IPB-VERIFIED' }}</span>
+          </div>
+          <div>
+            <strong>Validação:</strong> Sistema EBD/Secretaria IPB
+          </div>
+        </div>
 
-          <!-- Linhas de Assinatura Canônica -->
-          <div class="grid grid-cols-2 gap-8 text-center pt-4">
-            <div>
-              <div class="border-t border-surface-400 w-48 mx-auto mb-1"></div>
-              <strong class="text-surface-900 block text-xs">{{ f.pastor_responsavel?.nome || f.pastor_presidente || 'Rev. Pastor Presidente' }}</strong>
-              <span class="text-[10px] text-surface-500">{{ f.pastor_responsavel?.cargo || 'Presidente do Conselho da Igreja' }}</span>
+        <!-- Linhas de Assinatura Canônica -->
+        <div class="ipb-grid-assinaturas">
+          <div>
+            <div class="ipb-linha-assinatura"></div>
+            <div class="ipb-assinante-nome">
+              {{ f.pastor_responsavel?.nome || f.pastor_presidente || 'Rev. Pastor Presidente' }}
             </div>
-            <div>
-              <div class="border-t border-surface-400 w-48 mx-auto mb-1"></div>
-              <strong class="text-surface-900 block text-xs">Presb. Secretário do Conselho</strong>
-              <span class="text-[10px] text-surface-500">Secretaria da Igreja Presbiteriana</span>
+            <div class="ipb-assinante-cargo">
+              {{ f.pastor_responsavel?.cargo || 'Presidente do Conselho da Igreja' }}
             </div>
+            <div class="ipb-assinante-cargo" style="color: #64748b;">Igreja Presbiteriana do Brasil</div>
           </div>
+          <div>
+            <div class="ipb-linha-assinatura"></div>
+            <div class="ipb-assinante-nome">Presb. Secretário do Conselho</div>
+            <div class="ipb-assinante-cargo">Secretaria Executiva do Conselho</div>
+            <div class="ipb-assinante-cargo" style="color: #64748b;">Igreja Presbiteriana do Brasil</div>
+          </div>
+        </div>
+
+        <!-- Rodapé Solene -->
+        <div class="ipb-rodape-solene">
+          Igreja Presbiteriana do Brasil • Uma igreja bíblica, reformada, missionária e acolhedora • Soli Deo Gloria
         </div>
 
       </div>

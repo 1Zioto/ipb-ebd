@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elaborador de Boletim Informativo Semanal — IPB</title>
+  <!-- Google Fonts: Inter para interface e Cinzel/Merriweather para cabeçalhos eclesiásticos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Reset & Variáveis */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ipb-verde-escuro: #0d532b;
+      --ipb-verde-medio: #1b5e20;
+      --ipb-verde-claro: #43a047;
+      --ipb-verde-fundo: #c8e6c9;
+      --ipb-verde-borda: #a5d6a7;
+      --bg-cinza: #0f172a;
+      --card-bg: #ffffff;
+      --texto-cor: #1e293b;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-cinza);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Topbar */
+    header.topbar {
+      background: #090e1a;
+      border-bottom: 1px solid #1e293b;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #10b981;
+      letter-spacing: 0.03em;
+    }
+
+    .brand-title p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: #059669;
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: #10b981;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+    .btn-outline:hover {
+      background: #1e293b;
+      color: #ffffff;
+    }
+
+    .btn-success {
+      background: #15803d;
+      color: #ffffff;
+    }
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    /* Workspace */
+    .workspace {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      flex: 1;
+      overflow: hidden;
+      height: calc(100vh - 61px);
+    }
+
+    @media (max-width: 1100px) {
+      .workspace {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    /* Painel do Editor */
+    .editor-container {
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .editor-tabs {
+      display: flex;
+      background: #0f172a;
+      border-bottom: 1px solid #334155;
+      overflow-x: auto;
+      padding: 4px 6px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background: #059669;
+      color: #ffffff;
+    }
+
+    .editor-form-scroll {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f8fafc;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: #10b981;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .card-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .card-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    /* Painel do Preview */
+    .preview-container {
+      background: #334155;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      height: 100%;
+    }
+
+    .preview-toolbar {
+      width: 210mm;
+      max-width: 100%;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1e293b;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+    }
+
+    /* Folha A4 do Boletim */
+    .folha-a4 {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      color: #1a1a1a;
+      padding: 12mm 12mm;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      font-family: 'Times New Roman', Times, Georgia, serif;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .duas-colunas {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12mm;
+      align-items: start;
+    }
+
+    /* Ribbons e Identidade Visual Fiel à Foto */
+    .ipb-ribbon {
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-top: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ipb-ribbon-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--ipb-verde-escuro);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+
+    .ipb-ribbon-badge svg {
+      width: 20px;
+      height: 20px;
+      fill: #ffffff;
+    }
+
+    .ipb-ribbon-arrow {
+      position: absolute;
+      left: 31px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 7px solid #ffffff;
+      z-index: 3;
+    }
+
+    .ipb-ribbon-bar {
+      background: var(--ipb-verde-escuro);
+      color: #ffffff;
+      font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 5px 12px 5px 16px;
+      border-radius: 0 4px 4px 0;
+      margin-left: -5px;
+      flex: 1;
+    }
+
+    .ipb-sub-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ipb-verde-claro);
+      color: #ffffff;
+      font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 3px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+    }
+
+    .ipb-sub-plus {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      background: #ffffff;
+      color: var(--ipb-verde-claro);
+      font-size: 13px;
+      font-weight: 900;
+      border-radius: 2px;
+      line-height: 1;
+    }
+
+    .boletim-p {
+      font-size: 11.5px;
+      line-height: 1.35;
+      text-align: justify;
+      margin-bottom: 6px;
+    }
+
+    .oracao-lista {
+      padding-left: 18px;
+      margin: 4px 0 8px 0;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+
+    .oracao-lista li {
+      margin-bottom: 3px;
+    }
+
+    /* Tabela da Escala Infantil */
+    .escala-tabela {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+      margin: 4px 0 8px 0;
+      border: 1px solid #d1d5db;
+    }
+
+    .escala-tabela th {
+      font-style: italic;
+      font-weight: 700;
+      padding: 4px 6px;
+      background: #f3f4f6;
+      border-bottom: 1px solid #cbd5e1;
+      color: #1b5e20;
+    }
+
+    .escala-tabela td {
+      padding: 4px 6px;
+      border: 1px solid #e5e7eb;
+      vertical-align: top;
+      line-height: 1.25;
+    }
+
+    .faixa-etaria {
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    /* Dízimos Box */
+    .dizimos-box {
+      background: var(--ipb-verde-fundo);
+      border: 1px solid var(--ipb-verde-borda);
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+      font-size: 11.5px;
+      line-height: 1.35;
+      color: #1b5e20;
+    }
+
+    .dizimos-box-title {
+      font-family: Arial, sans-serif;
+      font-weight: 800;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      color: var(--ipb-verde-escuro);
+      margin-bottom: 4px;
+    }
+
+    .aviso-item {
+      margin-bottom: 12px;
+    }
+
+    .aviso-img {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin: 6px 0;
+      border: 1px solid #e5e7eb;
+    }
+
+    .aviso-meta {
+      font-size: 10.5px;
+      color: #374151;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-box {
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      max-width: 650px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      color: #f8fafc;
+    }
+
+    /* Impressão de Alta Resolução */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 8mm;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      header.topbar,
+      .editor-container,
+      .preview-toolbar,
+      .no-print {
+        display: none !important;
+      }
+      .workspace {
+        display: block !important;
+        height: auto !important;
+      }
+      .preview-container {
+        padding: 0 !important;
+        background: transparent !important;
+        overflow: visible !important;
+      }
+      .folha-a4 {
+        width: 100% !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        page-break-after: always;
+      }
+      .ipb-ribbon-bar,
+      .ipb-ribbon-badge,
+      .ipb-sub-badge,
+      .dizimos-box {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar no-print">
+    <div class="brand-title">
+      <!-- Ícone Sarça IPB -->
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="#10b981">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/>
+      </svg>
+      <div>
+        <h1>Elaborador de Boletim Semanal</h1>
+        <p>Igreja Presbiteriana do Brasil — Formatação e Diagramação Editorial</p>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button class="btn btn-outline" onclick="restaurarModeloFoto()">
+        🔄 Restaurar Modelo Foto
+      </button>
+      <button class="btn btn-outline" onclick="salvarRascunho(true)">
+        💾 Salvar Rascunho
+      </button>
+      <button class="btn btn-success" onclick="abrirModalWhatsapp()">
+        💬 Copiar p/ WhatsApp
+      </button>
+      <button class="btn btn-primary" onclick="window.print()">
+        🖨️ Imprimir / Salvar PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Principal -->
+  <div class="workspace">
+
+    <!-- Painel do Editor -->
+    <div class="editor-container no-print">
+      <!-- Abas de Navegação -->
+      <div class="editor-tabs">
+        <button class="tab-btn active" onclick="trocarAba('geral', this)">Geral</button>
+        <button class="tab-btn" onclick="trocarAba('oracao', this)">Oração</button>
+        <button class="tab-btn" onclick="trocarAba('escalas', this)">Escalas</button>
+        <button class="tab-btn" onclick="trocarAba('dizimos', this)">Dízimos</button>
+        <button class="tab-btn" onclick="trocarAba('devocional', this)">Devocional</button>
+        <button class="tab-btn" onclick="trocarAba('avisos', this)">Avisos</button>
+      </div>
+
+      <!-- Formulário do Editor -->
+      <div class="editor-form-scroll">
+
+        <!-- ABA GERAL -->
+        <div id="aba-geral" class="aba-conteudo">
+          <div class="form-group">
+            <label>Nome da Igreja</label>
+            <input type="text" id="input-igreja" class="form-control" value="IGREJA PRESBITERIANA JAÓ" oninput="atualizar()">
+          </div>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label>Data por Extenso</label>
+              <input type="text" id="input-data" class="form-control" value="11 de Outubro de 2026" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Telefones Contato</label>
+              <input type="text" id="input-telefones" class="form-control" value="3945-7071/3945-7281" oninput="atualizar()">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Agenda do Pastor</label>
+            <textarea id="input-agenda" rows="3" class="form-control" oninput="atualizar()">Se você deseja conversar com os pastores, fale com a secretária para marcar um horário pelos telefones: 3945-7071/3945-7281.</textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Congregação / Plantação Local</label>
+            <input type="text" id="input-cong-local" class="form-control" value="Alphaville" oninput="atualizar()">
+          </div>
+
+          <div class="form-group">
+            <label>Endereço Congregação</label>
+            <input type="text" id="input-cong-endereco" class="form-control" value="AlphaPark Hotel - Av. Alphaville Flamboyant, Qd. 5, nº 200, Park Lozandes." oninput="atualizar()">
+          </div>
+
+          <div class="form-group">
+            <label>Horários de Funcionamento</label>
+            <input type="text" id="input-cong-horarios" class="form-control" value="Culto – Domingo: 19h e Grupos familiares – Quinta-feira: 20h" oninput="atualizar()">
+          </div>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label>Pastor Responsável</label>
+              <input type="text" id="input-cong-pastor" class="form-control" value="Rev. Gustavo Ribeiro" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Presbítero Responsável</label>
+              <input type="text" id="input-cong-presb" class="form-control" value="Presb. Ronaldo Guedes" oninput="atualizar()">
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA ORAÇÃO -->
+        <div id="aba-oracao" class="aba-conteudo" style="display: none;">
+          <div class="form-group">
+            <label>Frase de Introdução</label>
+            <input type="text" id="input-oracao-intro" class="form-control" value="Oremos pelos nossos irmãos:" oninput="atualizar()">
+          </div>
+
+          <div class="form-group">
+            <label>Motivos de Oração (1 por linha: Nome - Motivo)</label>
+            <textarea id="input-oracao-lista" rows="6" class="form-control" oninput="atualizar()">Cláudia (tia da Marcela Machado) – Câncer
+Bruno (filho da Marla, amiga do Célio)
+Sr. Valdacir (pai do Paulo Henrique)</textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Orientações para Pedidos</label>
+            <textarea id="input-oracao-pedidos" rows="3" class="form-control" oninput="atualizar()">Interessados em colocar pedidos de oração no boletim, por favor, procurem o Pr. Gil ou a secretária Marcela Machado.</textarea>
+          </div>
+        </div>
+
+        <!-- ABA ESCALAS -->
+        <div id="aba-escalas" class="aba-conteudo" style="display: none;">
+          <div class="form-group">
+            <label>EBD - Linha 1 (Faixa | Nomes)</label>
+            <input type="text" id="input-ebd-1" class="form-control" value="02 a 07 anos | Rayliane, Eloíza e Diliany" oninput="atualizar()">
+          </div>
+          <div class="form-group">
+            <label>EBD - Linha 2 (Faixa | Nomes)</label>
+            <input type="text" id="input-ebd-2" class="form-control" value="08 a 12 anos | Deise e Pb. Álvaro" oninput="atualizar()">
+          </div>
+
+          <hr style="border-color: #334155; margin: 12px 0;">
+
+          <div class="form-group">
+            <label>Culto Infantil - Linhas (Faixa | Nomes)</label>
+            <textarea id="input-culto-infantil" rows="6" class="form-control" oninput="atualizar()">Berçário | Não terá
+02 e 03 anos | Iara e Jéssica
+04 a 06 anos | Gabrielle
+07 a 09 anos | Diliany
+10 a 12 anos | Templo</textarea>
+          </div>
+        </div>
+
+        <!-- ABA DÍZIMOS -->
+        <div id="aba-dizimos" class="aba-conteudo" style="display: none;">
+          <div class="form-group">
+            <label>Texto de Abertura</label>
+            <textarea id="input-dizimos-intro" rows="3" class="form-control" oninput="atualizar()">Para os membros da igreja ou visitantes que desejarem realizar suas ofertas ou dar seus dízimos por meio de operação bancária, segue dados abaixo:</textarea>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label>Conta</label>
+              <input type="text" id="input-diz-conta" class="form-control" value="39.456-7" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Agência & Banco</label>
+              <input type="text" id="input-diz-agencia" class="form-control" value="4384, ITAÚ (Nº 341)" oninput="atualizar()">
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label>CNPJ</label>
+              <input type="text" id="input-diz-cnpj" class="form-control" value="11.118.427/0001-05" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Chave PIX</label>
+              <input type="text" id="input-diz-pix" class="form-control" value="11.118.427/0001-05" oninput="atualizar()">
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA DEVOCIONAL -->
+        <div id="aba-devocional" class="aba-conteudo" style="display: none;">
+          <div class="form-group">
+            <label>Título da Coluna</label>
+            <input type="text" id="input-dev-titulo" class="form-control" value="TU E TUA CASA – Devocionais para o Lar" oninput="atualizar()">
+          </div>
+          <div class="form-group">
+            <label>Referência Bíblica</label>
+            <input type="text" id="input-dev-ref" class="form-control" value="2Cr. 7:14" oninput="atualizar()">
+          </div>
+          <div class="form-group">
+            <label>Texto da Reflexão</label>
+            <textarea id="input-dev-texto" rows="10" class="form-control" oninput="atualizar()">Orar com fé não significa determinar a Deus que as coisas aconteçam como se nossa oração tivesse um poder próprio para que as coisas acontecessem inexistentes ou fora da vontade de Deus. É Deus quem responde com soberania ao clamor sincero e obediente do seu povo. Ele se inclina aos nossos pedidos para respondê-las, e isto de acordo com sua vontade boa e perfeita. Se houvesse uma busca verdadeira a Deus por parte dos que professam crer em Seu Santo Nome, veríamos aquele avivamento genuíno transformar as famílias e a nossa pátria. Sugerimos que as famílias aproveitem estes momentos na Igreja Presbiteriana Jaó.</textarea>
+          </div>
+        </div>
+
+        <!-- ABA AVISOS -->
+        <div id="aba-avisos" class="aba-conteudo" style="display: none;">
+          <div class="card-item">
+            <div class="card-item-header">
+              <strong style="color: #10b981; font-size: 0.8rem;">AVISO 1</strong>
+            </div>
+            <div class="form-group">
+              <label>Título</label>
+              <input type="text" id="input-av1-titulo" class="form-control" value="VIGÍLIA IPJAÓ" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Texto</label>
+              <textarea id="input-av1-texto" rows="3" class="form-control" oninput="atualizar()">A Equipe do Life on Life convida toda a igreja para participar da Vigília de Oração, no próximo dia 28 de abril, das 22h às 00h, aqui na igreja. Venha, participe e traga sua família!</textarea>
+            </div>
+          </div>
+
+          <div class="card-item">
+            <div class="card-item-header">
+              <strong style="color: #10b981; font-size: 0.8rem;">AVISO 2 (COM BANNER)</strong>
+            </div>
+            <div class="form-group">
+              <label>Título</label>
+              <input type="text" id="input-av2-titulo" class="form-control" value="ENCONTRO DE CASAIS ALPHAVILLE" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>URL Imagem / Foto</label>
+              <input type="text" id="input-av2-img" class="form-control" value="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Texto / Chamada</label>
+              <input type="text" id="input-av2-chamada" class="form-control" value="Invista em seu casamento!" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Tema</label>
+              <input type="text" id="input-av2-tema" class="form-control" value="Comunicação (Resolvendo conflitos no casamento)" oninput="atualizar()">
+            </div>
+            <div class="row-2">
+              <div class="form-group">
+                <label>Preletor</label>
+                <input type="text" id="input-av2-preletor" class="form-control" value="Rev. Saulo Carvalho" oninput="atualizar()">
+              </div>
+              <div class="form-group">
+                <label>Data</label>
+                <input type="text" id="input-av2-data" class="form-control" value="27 de abril de 2017" oninput="atualizar()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Local & Valor</label>
+              <input type="text" id="input-av2-local" class="form-control" value="Salão de Festas do Edifício Maison Royale // Valor: R$ 30,00" oninput="atualizar()">
+            </div>
+          </div>
+
+          <div class="card-item">
+            <div class="card-item-header">
+              <strong style="color: #10b981; font-size: 0.8rem;">AVISO 3</strong>
+            </div>
+            <div class="form-group">
+              <label>Título</label>
+              <input type="text" id="input-av3-titulo" class="form-control" value="SEMINÁRIO EBD - OS YOUTUBERS" oninput="atualizar()">
+            </div>
+            <div class="form-group">
+              <label>Texto</label>
+              <textarea id="input-av3-texto" rows="4" class="form-control" oninput="atualizar()">No dia 07/5 haverá um seminário na Escola Bíblica Dominical da IPJaó que abordará um tema muito conhecido por nossos filhos: Os Youtubers. Quem são? O que essas pessoas estão falando na internet? O preletor será o Presbítero Beto da Igreja Presbiteriana do Setor Bueno. Participe!</textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Painel do Live Preview (Folha A4 Fiel à Foto) -->
+    <div class="preview-container">
+      
+      <div class="preview-toolbar no-print">
+        <span style="color: #10b981; font-weight: 700; font-size: 0.85rem;">
+          FOLHA DE IMPRESSÃO A4 (PREVIEW EM TEMPO REAL)
+        </span>
+        <button class="btn btn-primary" onclick="window.print()">
+          🖨️ Imprimir Página
+        </button>
+      </div>
+
+      <!-- FOLHA A4 -->
+      <div class="folha-a4" id="folha-boletim">
+        <div class="duas-colunas">
+
+          <!-- COLUNA ESQUERDA -->
+          <div>
+
+            <!-- AGENDA DO PASTOR -->
+            <div class="ipb-ribbon">
+              <div class="ipb-ribbon-badge">
+                <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+              </div>
+              <div class="ipb-ribbon-arrow"></div>
+              <div class="ipb-ribbon-bar">AGENDA DO PASTOR</div>
+            </div>
+            <p class="boletim-p" id="view-agenda"></p>
+
+            <!-- IGREJA EM ORAÇÃO -->
+            <div class="ipb-ribbon">
+              <div class="ipb-ribbon-badge">
+                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </div>
+              <div class="ipb-ribbon-arrow"></div>
+              <div class="ipb-ribbon-bar">IGREJA EM ORAÇÃO</div>
+            </div>
+            <p class="boletim-p" style="font-weight: bold; margin-bottom: 2px;" id="view-oracao-intro"></p>
+            <ul class="oracao-lista" id="view-oracao-lista"></ul>
+
+            <!-- + PEDIDOS DE ORAÇÃO -->
+            <div class="ipb-sub-badge">
+              <span class="ipb-sub-plus">+</span>
+              <span>PEDIDOS DE ORAÇÃO</span>
+            </div>
+            <p class="boletim-p" id="view-oracao-pedidos"></p>
+
+            <!-- ESCALA INFANTIL -->
+            <div class="ipb-ribbon">
+              <div class="ipb-ribbon-badge">
+                <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+              </div>
+              <div class="ipb-ribbon-arrow"></div>
+              <div class="ipb-ribbon-bar">ESCALA INFANTIL</div>
+            </div>
+
+            <table class="escala-tabela">
+              <thead>
+                <tr>
+                  <th style="width: 45%;">Escola Bíblica Dominical</th>
+                  <th style="width: 55%;">Culto Infantil</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="view-escala-ebd"></td>
+                  <td id="view-escala-culto"></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- PLANTAÇÃO DE IGREJA -->
+            <div class="ipb-ribbon">
+              <div class="ipb-ribbon-badge">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              </div>
+              <div class="ipb-ribbon-arrow"></div>
+              <div class="ipb-ribbon-bar">PLANTAÇÃO DE IGREJA</div>
+            </div>
+            <div class="boletim-p" id="view-congrega"></div>
+
+            <!-- DÍZIMOS E OFERTAS -->
+            <div class="ipb-ribbon">
+              <div class="ipb-ribbon-badge">
+                <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+              </div>
+              <div class="ipb-ribbon-arrow"></div>
+              <div class="ipb-ribbon-bar">DÍZIMOS E OFERTAS</div>
+            </div>
+            <p class="boletim-p" id="view-dizimos-intro"></p>
+
+            <div class="dizimos-box" id="view-dizimos-box"></div>
+
+          </div>
+
+          <!-- COLUNA DIREITA -->
+          <div>
+
+            <!-- TU E TUA CASA - DEVOCIONAIS -->
+            <div class="ipb-ribbon">
+              <div class="ipb-ribbon-badge">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              </div>
+              <div class="ipb-ribbon-arrow"></div>
+              <div class="ipb-ribbon-bar" id="view-dev-titulo">TU E TUA CASA</div>
+            </div>
+
+            <div class="boletim-p">
+              <strong id="view-dev-ref"></strong><br>
+              <span id="view-dev-texto"></span>
+            </div>
+
+            <!-- AVISOS DIVERSOS -->
+            <div class="ipb-ribbon" style="margin-top: 14px;">
+              <div class="ipb-ribbon-badge">
+                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+              </div>
+              <div class="ipb-ribbon-arrow"></div>
+              <div class="ipb-ribbon-bar">AVISOS DIVERSOS</div>
+            </div>
+
+            <!-- AVISO 1 -->
+            <div class="aviso-item">
+              <div class="ipb-sub-badge">
+                <span class="ipb-sub-plus">+</span>
+                <span id="view-av1-titulo"></span>
+              </div>
+              <p class="boletim-p" id="view-av1-texto"></p>
+            </div>
+
+            <!-- AVISO 2 -->
+            <div class="aviso-item">
+              <div class="ipb-sub-badge">
+                <span class="ipb-sub-plus">+</span>
+                <span id="view-av2-titulo"></span>
+              </div>
+              <img id="view-av2-img" src="" alt="Cartaz" class="aviso-img" style="display: none;">
+              <p class="boletim-p">
+                <strong id="view-av2-chamada"></strong><br>
+                <strong>Tema:</strong> <span id="view-av2-tema"></span><br>
+                <strong>Preletor:</strong> <span id="view-av2-preletor"></span><br>
+                <strong>Data:</strong> <span id="view-av2-data"></span><br>
+                <span id="view-av2-local"></span>
+              </p>
+            </div>
+
+            <!-- AVISO 3 -->
+            <div class="aviso-item">
+              <div class="ipb-sub-badge">
+                <span class="ipb-sub-plus">+</span>
+                <span id="view-av3-titulo"></span>
+              </div>
+              <p class="boletim-p" id="view-av3-texto"></p>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal WhatsApp -->
+  <div class="modal-overlay" id="modal-whatsapp">
+    <div class="modal-box">
+      <h3 style="color: #10b981; margin-bottom: 8px;">Texto Formatado para o WhatsApp</h3>
+      <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">
+        Pronto com emojis, tópicos e negritos. Copie e cole direto nos grupos da igreja!
+      </p>
+      <textarea id="texto-whatsapp-box" rows="12" class="form-control" readonly style="font-family: monospace; font-size: 0.8rem;"></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
+        <button class="btn btn-outline" onclick="fecharModalWhatsapp()">Fechar</button>
+        <button class="btn btn-primary" onclick="copiarTextoWhatsapp()">📋 Copiar Texto</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function trocarAba(abaNome, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.aba-conteudo').forEach(c => c.style.display = 'none');
+      const target = document.getElementById('aba-' + abaNome);
+      if (target) target.style.display = 'block';
+    }
+
+    function atualizar() {
+      // Agenda
+      document.getElementById('view-agenda').innerText = document.getElementById('input-agenda').value;
+
+      // Oração
+      document.getElementById('view-oracao-intro').innerText = document.getElementById('input-oracao-intro').value;
+      const linhasOracao = document.getElementById('input-oracao-lista').value.split('\n');
+      const ul = document.getElementById('view-oracao-lista');
+      ul.innerHTML = '';
+      linhasOracao.forEach(l => {
+        if (l.trim()) {
+          const li = document.createElement('li');
+          li.innerText = l.trim();
+          ul.appendChild(li);
+        }
+      });
+      document.getElementById('view-oracao-pedidos').innerText = document.getElementById('input-oracao-pedidos').value;
+
+      // Escalas
+      const ebd1 = document.getElementById('input-ebd-1').value.split('|');
+      const ebd2 = document.getElementById('input-ebd-2').value.split('|');
+      document.getElementById('view-escala-ebd').innerHTML = `
+        <div style="margin-bottom: 4px;">
+          <span class="faixa-etaria">${ebd1[0] ? ebd1[0].trim() : ''}</span><br>
+          ${ebd1[1] ? ebd1[1].trim() : ''}
+        </div>
+        <div>
+          <span class="faixa-etaria">${ebd2[0] ? ebd2[0].trim() : ''}</span><br>
+          ${ebd2[1] ? ebd2[1].trim() : ''}
+        </div>
+      `;
+
+      const linhasCulto = document.getElementById('input-culto-infantil').value.split('\n');
+      let htmlCulto = '';
+      linhasCulto.forEach(l => {
+        if (l.includes('|')) {
+          const partes = l.split('|');
+          htmlCulto += `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 10px;">
+              <span class="faixa-etaria">${partes[0].trim()}</span>
+              <span>${partes[1].trim()}</span>
+            </div>
+          `;
+        }
+      });
+      document.getElementById('view-escala-culto').innerHTML = htmlCulto;
+
+      // Congregação
+      const local = document.getElementById('input-cong-local').value;
+      const end = document.getElementById('input-cong-endereco').value;
+      const hor = document.getElementById('input-cong-horarios').value;
+      const pr = document.getElementById('input-cong-pastor').value;
+      const pb = document.getElementById('input-cong-presb').value;
+      document.getElementById('view-congrega').innerHTML = `
+        <strong>Local:</strong> ${local}<br>
+        <strong>Endereço:</strong> ${end}<br>
+        <strong>Horário de funcionamento:</strong> ${hor}<br>
+        <strong>Pastor responsável:</strong> ${pr}<br>
+        <strong>Presb. responsável:</strong> ${pb}
+      `;
+
+      // Dízimos
+      const igreja = document.getElementById('input-igreja').value;
+      const dizIntro = document.getElementById('input-dizimos-intro').value;
+      const conta = document.getElementById('input-diz-conta').value;
+      const agencia = document.getElementById('input-diz-agencia').value;
+      const cnpj = document.getElementById('input-diz-cnpj').value;
+      const fones = document.getElementById('input-telefones').value;
+      const pix = document.getElementById('input-diz-pix').value;
+
+      document.getElementById('view-dizimos-intro').innerText = dizIntro;
+      document.getElementById('view-dizimos-box').innerHTML = `
+        <div class="dizimos-box-title">${igreja}</div>
+        <div><strong>CONTA: ${conta}</strong>, <strong>AGÊNCIA: ${agencia}</strong></div>
+        <div><strong>CNPJ: ${cnpj}</strong></div>
+        ${pix ? `<div><strong>CHAVE PIX: ${pix}</strong></div>` : ''}
+        <div>Telefone <strong>${fones}</strong>.</div>
+      `;
+
+      // Devocional
+      document.getElementById('view-dev-titulo').innerText = document.getElementById('input-dev-titulo').value;
+      document.getElementById('view-dev-ref').innerText = 'Leitura do texto bíblico e da reflexão – ' + document.getElementById('input-dev-ref').value;
+      document.getElementById('view-dev-texto').innerText = document.getElementById('input-dev-texto').value;
+
+      // Avisos
+      document.getElementById('view-av1-titulo').innerText = document.getElementById('input-av1-titulo').value;
+      document.getElementById('view-av1-texto').innerText = document.getElementById('input-av1-texto').value;
+
+      document.getElementById('view-av2-titulo').innerText = document.getElementById('input-av2-titulo').value;
+      const imgUrl = document.getElementById('input-av2-img').value;
+      const imgElem = document.getElementById('view-av2-img');
+      if (imgUrl) {
+        imgElem.src = imgUrl;
+        imgElem.style.display = 'block';
+      } else {
+        imgElem.style.display = 'none';
+      }
+      document.getElementById('view-av2-chamada').innerText = document.getElementById('input-av2-chamada').value;
+      document.getElementById('view-av2-tema').innerText = document.getElementById('input-av2-tema').value;
+      document.getElementById('view-av2-preletor').innerText = document.getElementById('input-av2-preletor').value;
+      document.getElementById('view-av2-data').innerText = document.getElementById('input-av2-data').value;
+      document.getElementById('view-av2-local').innerText = document.getElementById('input-av2-local').value;
+
+      document.getElementById('view-av3-titulo').innerText = document.getElementById('input-av3-titulo').value;
+      document.getElementById('view-av3-texto').innerText = document.getElementById('input-av3-texto').value;
+    }
+
+    // Persistência
+    function salvarRascunho(alerta) {
+      const inputs = document.querySelectorAll('.form-control');
+      const dados = {};
+      inputs.forEach(i => dados[i.id] = i.value);
+      localStorage.setItem('ipb_boletim_standalone_draft', JSON.stringify(dados));
+      if (alerta) alert('Rascunho do boletim salvo com sucesso no navegador!');
+    }
+
+    function carregarRascunho() {
+      const salvo = localStorage.getItem('ipb_boletim_standalone_draft');
+      if (salvo) {
+        try {
+          const dados = JSON.parse(salvo);
+          for (const [id, val] of Object.entries(dados)) {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+          }
+        } catch(e) {}
+      }
+    }
+
+    function restaurarModeloFoto() {
+      if (confirm('Restaurar os valores padrão fiéis à foto do boletim?')) {
+        localStorage.removeItem('ipb_boletim_standalone_draft');
+        location.reload();
+      }
+    }
+
+    // WhatsApp
+    function abrirModalWhatsapp() {
+      const igreja = document.getElementById('input-igreja').value;
+      const data = document.getElementById('input-data').value;
+      const devRef = document.getElementById('input-dev-ref').value;
+      const devTxt = document.getElementById('input-dev-texto').value;
+      const oracaoIntro = document.getElementById('input-oracao-intro').value;
+      const oracaoLista = document.getElementById('input-oracao-lista').value;
+      const av1Tit = document.getElementById('input-av1-titulo').value;
+      const av1Txt = document.getElementById('input-av1-texto').value;
+      const av2Tit = document.getElementById('input-av2-titulo').value;
+      const av2Txt = document.getElementById('input-av2-chamada').value + ' ' + document.getElementById('input-av2-tema').value;
+      const av3Tit = document.getElementById('input-av3-titulo').value;
+      const av3Txt = document.getElementById('input-av3-texto').value;
+      const conta = document.getElementById('input-diz-conta').value;
+      const ag = document.getElementById('input-diz-agencia').value;
+      const pix = document.getElementById('input-diz-pix').value;
+
+      let msg = `📰 *BOLETIM INFORMATIVO — ${igreja}*\n`;
+      msg += `📅 *${data}*\n`;
+      msg += `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      msg += `📖 *DEVOCIONAL — ${devRef}*\n${devTxt.substring(0, 300)}...\n\n`;
+      msg += `🙏 *IGREJA EM ORAÇÃO*\n${oracaoIntro}\n`;
+      oracaoLista.split('\n').forEach(l => {
+        if (l.trim()) msg += `• ${l.trim()}\n`;
+      });
+      msg += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      msg += `📢 *AVISOS DA SEMANA*\n`;
+      msg += `✨ *${av1Tit}*\n${av1Txt}\n\n`;
+      msg += `✨ *${av2Tit}*\n${av2Txt}\n\n`;
+      msg += `✨ *${av3Tit}*\n${av3Txt}\n\n`;
+      msg += `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      msg += `💳 *DÍZIMOS E OFERTAS*\n`;
+      msg += `Conta: *${conta}* | Agência: *${ag}*\n`;
+      if (pix) msg += `Chave PIX: *${pix}*\n\n`;
+      msg += `_Tenha um domingo abençoado!_ 🙌✨`;
+
+      document.getElementById('texto-whatsapp-box').value = msg;
+      document.getElementById('modal-whatsapp').style.display = 'flex';
+    }
+
+    function fecharModalWhatsapp() {
+      document.getElementById('modal-whatsapp').style.display = 'none';
+    }
+
+    function copiarTextoWhatsapp() {
+      const box = document.getElementById('texto-whatsapp-box');
+      box.select();
+      navigator.clipboard.writeText(box.value).then(() => {
+        alert('Texto copiado para a área de transferência!');
+        fecharModalWhatsapp();
+      });
+    }
+
+    // Inicialização
+    carregarRascunho();
+    atualizar();
+  </script>
+</body>
+</html>

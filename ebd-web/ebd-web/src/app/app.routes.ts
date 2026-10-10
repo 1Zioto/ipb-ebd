@@ -182,6 +182,11 @@ export const routes: Routes = [
         canActivate: [permissionGuard('person.view')],
         loadComponent: () => import('./pages/secretaria/atas-conselho').then((m) => m.AtasConselhoPage),
       },
+      {
+        path: 'secretaria/boletim',
+        canActivate: [permissionGuard('person.view')],
+        loadComponent: () => import('./pages/secretaria/boletim/boletim-elaborador').then((m) => m.BoletimElaboradorPage),
+      },
       // ---- Sociedades Internas & Ministérios ----
       {
         path: 'sociedades',

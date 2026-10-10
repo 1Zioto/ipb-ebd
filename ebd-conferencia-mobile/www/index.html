@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="primeicons/primeicons.css">
   <script src="js/html5-qrcode.min.js"></script>
+  <script src="js/pos-printer.js"></script>
   <style>
     :root {
       --primary: #047857;
@@ -1084,23 +1085,544 @@
       width: 100%;
     }
 
-    /* Toast Notification */
-    .toast-box {
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #0f172a;
+    /* ======================================================== */
+    /* BOTÃO DE STATUS DA IMPRESSORA NO TOPO                   */
+    /* ======================================================== */
+    .btn-top-printer {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid var(--surface-border);
+      color: #047857;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      position: relative;
+      transition: all 0.15s;
+    }
+
+    .btn-top-printer:hover, .btn-top-printer:active {
+      background: var(--primary-light);
+      border-color: var(--primary-border);
+    }
+
+    .printer-status-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 1.5px solid #ffffff;
+      background: #94a3b8;
+    }
+
+    .printer-status-dot.connected {
+      background: #10b981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+      animation: pulseGreen 2s infinite;
+    }
+
+    .printer-status-dot.ready {
+      background: #0284c7;
+    }
+
+    @keyframes pulseGreen {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Botão de Impressão Rápida no Feed de Lançamentos */
+    .btn-entry-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--surface-border);
+      background: #ffffff;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.15s;
+    }
+
+    .btn-entry-icon.print {
+      color: #047857;
+      border-color: #a7f3d0;
+      background: #ecfdf5;
+    }
+
+    .btn-entry-icon.print:hover, .btn-entry-icon.print:active {
+      background: #047857;
       color: #ffffff;
-      padding: 10px 18px;
-      border-radius: 30px;
+    }
+
+    .btn-entry-icon.del:hover, .btn-entry-icon.del:active {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: var(--danger-border);
+    }
+
+    /* Botão em destaque na aba de Fechamento */
+    .btn-pos-print {
+      width: 100%;
+      height: 52px;
+      background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      border-radius: 14px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px -4px rgba(4, 120, 87, 0.4);
+      transition: all 0.15s;
+    }
+
+    .btn-pos-print:active {
+      transform: scale(0.98);
+    }
+
+    /* ======================================================== */
+    /* ABA 4: CONFIGURAÇÃO DE IMPRESSORA POS / BLUETOOTH       */
+    /* ======================================================== */
+    .printer-hero-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border: 1.5px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+    }
+
+    .printer-hero-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .printer-device-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .printer-avatar-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: #ecfdf5;
+      border: 1.5px solid #a7f3d0;
+      color: #047857;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .printer-avatar-icon.active {
+      background: #047857;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(4, 120, 87, 0.3);
+    }
+
+    .printer-meta-title h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .printer-meta-title p {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .printer-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .printer-status-badge.connected {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
+    .printer-status-badge.disconnected {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+    }
+
+    .printer-btn-connect {
+      width: 100%;
+      height: 46px;
+      background: #047857;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(4, 120, 87, 0.25);
+      transition: all 0.15s;
+    }
+
+    .printer-btn-connect:active {
+      transform: scale(0.98);
+    }
+
+    .printer-btn-disconnect {
+      width: 100%;
+      height: 40px;
+      background: #ffffff;
+      color: var(--danger);
+      border: 1.5px solid var(--danger-border);
+      border-radius: 12px;
       font-size: 13px;
       font-weight: 700;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-      z-index: 999;
-      display: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* Cards de Seção de Configuração */
+    .config-card {
+      background: #ffffff;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+
+    .config-card-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
       align-items: center;
       gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .config-card-title i {
+      color: #047857;
+    }
+
+    /* Grade de Seleção de Modos de Comunicação */
+    .comm-mode-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .comm-mode-card {
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1.5px solid var(--surface-border);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: all 0.15s;
+    }
+
+    .comm-mode-card.selected {
+      background: #ecfdf5;
+      border-color: #047857;
+    }
+
+    .comm-mode-card input[type="radio"] {
+      margin-top: 3px;
+      accent-color: #047857;
+    }
+
+    .comm-mode-details h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .comm-mode-details p {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .comm-mode-details .tag-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .tag-badge.ble { background: #dbeafe; color: #1e40af; }
+    .tag-badge.rawbt { background: #fef3c7; color: #92400e; }
+    .tag-badge.sys { background: #f1f5f9; color: #475569; }
+
+    /* Seletor de Largura da Bobina */
+    .paper-size-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .paper-size-btn {
+      padding: 12px 8px;
+      background: #f8fafc;
+      border: 1.5px solid var(--surface-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .paper-size-btn.selected {
+      background: #ecfdf5;
+      border-color: #047857;
+      color: #065f46;
+    }
+
+    .paper-size-btn .size-name {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .paper-size-btn .size-cols {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Linhas de Alternância (Switches) */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .switch-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .switch-info h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 1px;
+    }
+
+    .switch-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .custom-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .custom-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-switch {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #cbd5e1;
+      transition: .2s;
+      border-radius: 24px;
+    }
+
+    .slider-switch:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-switch {
+      background-color: #047857;
+    }
+
+    input:checked + .slider-switch:before {
+      transform: translateX(20px);
+    }
+
+    /* ======================================================== */
+    /* MODELO VISUAL DO CUPOM TÉRMICO (PREVIEW & IMPRESSÃO)     */
+    /* ======================================================== */
+    .thermal-receipt-doc {
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #111827;
+      background: #fff;
+      padding: 12px 10px;
+      user-select: text;
+    }
+
+    .th-center { text-align: center; }
+    .th-bold { font-weight: 800; }
+    .th-title { font-size: 13px; letter-spacing: 0.3px; margin-bottom: 2px; }
+    .th-subtitle { font-size: 12px; margin-top: 4px; }
+    .th-muted { color: #4b5563; font-size: 11px; }
+    .th-caption { font-size: 10px; color: #4b5563; }
+    .th-indent { padding-left: 8px; }
+    .th-label { font-size: 11px; color: #4b5563; margin-top: 4px; }
+
+    .th-divider {
+      border-bottom: 1px dashed #4b5563;
+      margin: 6px 0;
+    }
+
+    .th-divider.double {
+      border-bottom: 2px solid #111827;
+      margin: 8px 0;
+    }
+
+    .th-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 3px;
+      font-size: 11px;
+    }
+
+    .th-section-title {
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .th-highlight {
+      font-size: 14px;
+      padding: 4px 0;
+    }
+
+    .th-big-total {
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      padding: 6px 0;
+    }
+
+    .th-sign-box {
+      margin: 16px 0 10px 0;
+    }
+
+    .th-sign-line {
+      border-bottom: 1px solid #111827;
+      width: 85%;
+      margin: 0 auto 4px auto;
+    }
+
+    .th-footer-msg {
+      font-size: 10px;
+      margin-top: 10px;
+      color: #4b5563;
+      font-style: italic;
+    }
+
+    /* Modal de Cupom Térmico */
+    .thermal-paper-view {
+      background: #fafaf9;
+      border: 1px solid #d6d3d1;
+      border-radius: 8px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.1);
+      max-height: 380px;
+      overflow-y: auto;
+      margin: 12px 0;
+      border-top: 4px dashed #a8a29e;
+      border-bottom: 4px dashed #a8a29e;
+    }
+
+    /* ======================================================== */
+    /* FOLHA DE IMPRESSÃO TÉRMICA (@MEDIA PRINT)                */
+    /* ======================================================== */
+    #thermalReceiptPrintArea {
+      display: none;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+
+      #thermalReceiptPrintArea,
+      #thermalReceiptPrintArea * {
+        visibility: visible !important;
+      }
+
+      #thermalReceiptPrintArea {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 58mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+
+      #thermalReceiptPrintArea.paper-80mm {
+        width: 80mm !important;
+      }
+
+      @page {
+        size: 58mm auto;
+        margin: 0mm;
+      }
     }
   </style>
 </head>
@@ -1172,6 +1694,10 @@
           </div>
         </div>
         <div class="top-user-actions">
+          <button type="button" class="btn-top-printer" id="btnHeaderPrinter" title="Impressora POS / Bluetooth" onclick="switchTab('impressora')">
+            <i class="pi pi-print"></i>
+            <span class="printer-status-dot disconnected" id="headerPrinterDot"></span>
+          </button>
           <div class="user-pill" id="activeUserPill">
             <i class="pi pi-user" style="color: #047857;"></i>
             <span id="activeUserName">Diácono</span>
@@ -1378,6 +1904,11 @@
         </div>
 
         <div class="action-buttons-stack">
+          <button type="button" class="btn-pos-print" onclick="imprimirTermoFechamentoPOS()">
+            <i class="pi pi-print"></i>
+            <span>Imprimir Termo de Apuração na Impressora POS</span>
+          </button>
+
           <button type="button" class="btn-sync-api" onclick="sincronizarComAPI()">
             <i class="pi pi-cloud-upload"></i>
             <span>Sincronizar Coleta com Sistema IPB</span>
@@ -1399,19 +1930,212 @@
       </div>
     </main>
 
-    <!-- Navegação Inferior -->
+    <!-- ======================================================== -->
+    <!-- ABA 4: CONFIGURAÇÃO DE IMPRESSORA POS / BLUETOOTH       -->
+    <!-- ======================================================== -->
+    <main id="tab-impressora" class="tab-content">
+      <!-- Card Hero de Conexão -->
+      <div class="printer-hero-card">
+        <div class="printer-hero-header">
+          <div class="printer-device-info">
+            <div class="printer-avatar-icon" id="printerAvatarIcon">
+              <i class="pi pi-print"></i>
+            </div>
+            <div class="printer-meta-title">
+              <h3 id="printerDeviceTitle">Impressora POS Bluetooth</h3>
+              <p id="printerDeviceSubtitle">Nenhum dispositivo conectado</p>
+            </div>
+          </div>
+          <span class="printer-status-badge disconnected" id="printerStatusBadge">
+            <i class="pi pi-circle-fill" style="font-size: 8px;"></i> Desconectada
+          </span>
+        </div>
+
+        <button type="button" class="printer-btn-connect" id="btnBuscarBluetooth" onclick="conectarBluetoothPOS()">
+          <i class="pi pi-search"></i>
+          <span>Buscar & Parear Impressora Bluetooth</span>
+        </button>
+
+        <button type="button" class="printer-btn-disconnect" id="btnDesconectarBluetooth" style="display: none;" onclick="desconectarBluetoothPOS()">
+          <i class="pi pi-power-off"></i>
+          <span>Desconectar Impressora</span>
+        </button>
+      </div>
+
+      <!-- Método de Impressão -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <i class="pi pi-sliders-h"></i>
+          <span>Modo de Comunicação com a Impressora</span>
+        </div>
+
+        <div class="comm-mode-grid">
+          <label class="comm-mode-card selected" id="cardModeAuto" onclick="alterarModoImpressao('auto')">
+            <input type="radio" name="printerMode" value="auto" checked />
+            <div class="comm-mode-details">
+              <h4>Automático Inteligente</h4>
+              <p>Tenta Bluetooth direto (BLE). No Android, utiliza o serviço RawBT para máxima compatibilidade.</p>
+              <span class="tag-badge ble">Recomendado</span>
+            </div>
+          </label>
+
+          <label class="comm-mode-card" id="cardModeBluetooth" onclick="alterarModoImpressao('bluetooth')">
+            <input type="radio" name="printerMode" value="bluetooth" />
+            <div class="comm-mode-details">
+              <h4>Bluetooth Direto (Web BLE)</h4>
+              <p>Comunicação direta via Bluetooth Low Energy (ESC/POS) sem apps intermediários.</p>
+              <span class="tag-badge ble">Bluetooth LE</span>
+            </div>
+          </label>
+
+          <label class="comm-mode-card" id="cardModeRawbt" onclick="alterarModoImpressao('rawbt')">
+            <input type="radio" name="printerMode" value="rawbt" />
+            <div class="comm-mode-details">
+              <h4>RawBT (App Android)</h4>
+              <p>Ideal para mini impressoras Bluetooth 2.0/3.0 / SPP (Mercado Livre/Shopee) pareadas no Android.</p>
+              <span class="tag-badge rawbt">Android SPP</span>
+            </div>
+          </label>
+
+          <label class="comm-mode-card" id="cardModeSystem" onclick="alterarModoImpressao('system')">
+            <input type="radio" name="printerMode" value="system" />
+            <div class="comm-mode-details">
+              <h4>Spooler do Sistema / Navegador</h4>
+              <p>Abre o diálogo nativo com layout exato de bobina térmica 58mm/80mm.</p>
+              <span class="tag-badge sys">Spooler</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tamanho da Bobina & Opções -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <i class="pi pi-file"></i>
+          <span>Formato do Papel & Bobina</span>
+        </div>
+
+        <div class="paper-size-selector">
+          <button type="button" class="paper-size-btn selected" id="btnPaper58" onclick="alterarLarguraBobina('58')">
+            <i class="pi pi-ticket" style="font-size: 18px;"></i>
+            <span class="size-name">58 mm</span>
+            <span class="size-cols">32 Colunas (Mini Portátil)</span>
+          </button>
+          <button type="button" class="paper-size-btn" id="btnPaper80" onclick="alterarLarguraBobina('80')">
+            <i class="pi pi-receipt" style="font-size: 18px;"></i>
+            <span class="size-name">80 mm</span>
+            <span class="size-cols">48 Colunas (Bancada/PDV)</span>
+          </button>
+        </div>
+
+        <div class="switch-row">
+          <div class="switch-info">
+            <h4>Imprimir 2 Vias</h4>
+            <p>1ª via Igreja (arquivo) + 2ª via Dizimista/Ofertante</p>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="chkDualCopies" onchange="salvarConfigImpressora()" />
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+
+        <div class="switch-row">
+          <div class="switch-info">
+            <h4>Corte de Papel (Guilhotina)</h4>
+            <p>Comando automático de corte para impressoras com lâmina</p>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="chkAutoCut" onchange="salvarConfigImpressora()" />
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Automações -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <i class="pi pi-bolt"></i>
+          <span>Automações de Impressão</span>
+        </div>
+
+        <div class="switch-row">
+          <div class="switch-info">
+            <h4>Imprimir Recibo ao Lançar</h4>
+            <p>Emite comprovante térmico automaticamente ao registrar envelope</p>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="chkAutoPrintEnvelope" onchange="salvarConfigImpressora()" />
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+
+        <div class="switch-row">
+          <div class="switch-info">
+            <h4>Imprimir Termo no Fechamento</h4>
+            <p>Emite o termo diaconal ao concluir a apuração</p>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="chkAutoPrintFechamento" checked onchange="salvarConfigImpressora()" />
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Personalização do Cupom -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <i class="pi pi-pencil"></i>
+          <span>Identificação do Cabeçalho & Rodapé</span>
+        </div>
+
+        <label class="form-label" style="font-size: 11px;">Nome da Instituição (Linha 1)</label>
+        <input type="text" id="txtChurchName" class="witness-select" value="IGREJA PRESBITERIANA DO BRASIL" onchange="salvarConfigImpressora()" />
+
+        <label class="form-label" style="font-size: 11px;">Subtítulo / Ministério (Linha 2)</label>
+        <input type="text" id="txtChurchSub" class="witness-select" value="Junta Diaconal & Tesouraria" onchange="salvarConfigImpressora()" />
+
+        <label class="form-label" style="font-size: 11px;">Mensagem Bíblica de Rodapé</label>
+        <input type="text" id="txtFooterMsg" class="witness-select" value="Deus ama ao que dá com alegria. (2 Co 9:7)" onchange="salvarConfigImpressora()" />
+      </div>
+
+      <!-- Teste & Calibração -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <i class="pi pi-wrench"></i>
+          <span>Testar & Calibrar Impressora</span>
+        </div>
+
+        <div class="action-buttons-stack">
+          <button type="button" class="btn-pos-print" onclick="imprimirCupomTestePOS()">
+            <i class="pi pi-print"></i>
+            <span>Imprimir Cupom de Teste na POS</span>
+          </button>
+
+          <button type="button" class="btn-outline-action" onclick="visualizarCupomTesteModal()">
+            <i class="pi pi-eye"></i>
+            <span>Pré-visualizar Modelo na Tela</span>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Navegação Inferior (4 Abas) -->
     <nav class="bottom-nav">
-      <button type="button" class="nav-tab-btn active" onclick="switchTab('envelopes', this)">
+      <button type="button" class="nav-tab-btn active" id="navBtn-envelopes" onclick="switchTab('envelopes', this)">
         <i class="pi pi-envelope"></i>
         <span>Envelopes</span>
       </button>
-      <button type="button" class="nav-tab-btn" onclick="switchTab('cedulas', this)">
+      <button type="button" class="nav-tab-btn" id="navBtn-cedulas" onclick="switchTab('cedulas', this)">
         <i class="pi pi-calculator"></i>
         <span>Cédulas</span>
       </button>
-      <button type="button" class="nav-tab-btn" onclick="switchTab('fechamento', this)">
+      <button type="button" class="nav-tab-btn" id="navBtn-fechamento" onclick="switchTab('fechamento', this)">
         <i class="pi pi-verified"></i>
         <span>Fechamento</span>
+      </button>
+      <button type="button" class="nav-tab-btn" id="navBtn-impressora" onclick="switchTab('impressora', this)">
+        <i class="pi pi-print"></i>
+        <span>Impressora</span>
       </button>
     </nav>
   </div>
@@ -1459,6 +2183,40 @@
     <i class="pi pi-info-circle"></i>
     <span id="toastText">Ação realizada!</span>
   </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL DE PRÉ-VISUALIZAÇÃO DO CUPOM TÉRMICO POS           -->
+  <!-- ======================================================== -->
+  <div class="modal-overlay" id="modalCupomPreview">
+    <div class="modal-box" style="max-width: 360px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <h3 style="font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; color: #065f46;" id="cupomModalTitle">
+          <i class="pi pi-receipt"></i> Cupom Térmico POS
+        </h3>
+        <button type="button" onclick="fecharModalPreviewCupom()" style="background: transparent; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer;">
+          &times;
+        </button>
+      </div>
+
+      <div class="thermal-paper-view" id="thermalPaperContainer">
+        <!-- Renderização do Cupom Térmico -->
+      </div>
+
+      <div class="action-buttons-stack" style="margin-top: 12px;">
+        <button type="button" class="btn-pos-print" id="btnImprimirModalCupom" onclick="executarImpressaoDoModal()">
+          <i class="pi pi-print"></i>
+          <span>Imprimir Agora na POS</span>
+        </button>
+
+        <button type="button" class="btn-outline-action" onclick="fecharModalPreviewCupom()">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Container Oculto para Spooler do Navegador (@media print) -->
+  <div id="thermalReceiptPrintArea"></div>
 
   <!-- ======================================================== -->
   <!-- JAVASCRIPT PRINCIPAL DO APLICATIVO                       -->
@@ -1514,6 +2272,9 @@
       carregarEstadoSalvo();
       renderizarGradeCedulas();
       verificarSessao();
+      if (typeof atualizarTelaImpressora === "function") {
+        atualizarTelaImpressora();
+      }
     });
 
     function verificarSessao() {
@@ -1688,9 +2449,14 @@
 
       const target = document.getElementById("tab-" + tabId);
       if (target) target.classList.add("active");
-      if (btn) btn.classList.add("active");
+      
+      const navBtn = btn || document.getElementById("navBtn-" + tabId);
+      if (navBtn) navBtn.classList.add("active");
 
       atualizarHUD();
+      if (tabId === 'impressora') {
+        atualizarTelaImpressora();
+      }
     }
 
     // Lançamento de Envelopes
@@ -1750,6 +2516,11 @@
       renderizarFeed();
       atualizarHUD();
       showToast(`Envelope de R$ ${valor.toFixed(2).replace(".", ",")} registrado!`);
+
+      // Impressão automática configurável
+      if (typeof posPrinter !== "undefined" && posPrinter.config.autoPrintEnvelope) {
+        imprimirComprovanteEnvelope(novaEntrada.id, false);
+      }
     }
 
     function removerEntrada(id) {
@@ -1801,9 +2572,14 @@
             </div>
             <div class="entry-val-box">
               <div class="entry-amount">R$ ${e.valor.toFixed(2).replace(".", ",")}</div>
-              <button type="button" class="btn-del-entry" title="Remover" onclick="removerEntrada(${e.id})">
-                <i class="pi pi-trash"></i>
-              </button>
+              <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; margin-top: 4px;">
+                <button type="button" class="btn-entry-icon print" title="Imprimir Comprovante POS" onclick="imprimirComprovanteEnvelope(${e.id})">
+                  <i class="pi pi-print"></i>
+                </button>
+                <button type="button" class="btn-entry-icon del" title="Remover" onclick="removerEntrada(${e.id})">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -2143,6 +2919,275 @@
       setTimeout(() => {
         toast.style.display = "none";
       }, 3000);
+    }
+
+    // ========================================================
+    // INTEGRAÇÃO DE IMPRESSORA POS & BLUETOOTH
+    // ========================================================
+    let docPendenteImpressaoModal = null;
+
+    function atualizarTelaImpressora() {
+      if (typeof posPrinter === "undefined") return;
+
+      const cfg = posPrinter.config;
+      const isConn = posPrinter.isConnected();
+      const devName = posPrinter.getDeviceName();
+
+      // Status visual
+      const statusBadge = document.getElementById("printerStatusBadge");
+      const deviceTitle = document.getElementById("printerDeviceTitle");
+      const deviceSubtitle = document.getElementById("printerDeviceSubtitle");
+      const avatarIcon = document.getElementById("printerAvatarIcon");
+      const btnConnect = document.getElementById("btnBuscarBluetooth");
+      const btnDisconnect = document.getElementById("btnDesconectarBluetooth");
+      const headerDot = document.getElementById("headerPrinterDot");
+
+      if (isConn) {
+        if (statusBadge) {
+          statusBadge.className = "printer-status-badge connected";
+          statusBadge.innerHTML = `<i class="pi pi-circle-fill" style="font-size: 8px;"></i> Conectada`;
+        }
+        if (deviceTitle) deviceTitle.textContent = devName || "Impressora POS Conectada";
+        if (deviceSubtitle) deviceSubtitle.textContent = "Pronta para emissão de comprovantes";
+        if (avatarIcon) avatarIcon.className = "printer-avatar-icon active";
+        if (btnConnect) btnConnect.style.display = "none";
+        if (btnDisconnect) btnDisconnect.style.display = "flex";
+        if (headerDot) headerDot.className = "printer-status-dot connected";
+      } else {
+        if (statusBadge) {
+          statusBadge.className = "printer-status-badge disconnected";
+          statusBadge.innerHTML = `<i class="pi pi-circle-fill" style="font-size: 8px;"></i> Desconectada`;
+        }
+        if (deviceTitle) deviceTitle.textContent = devName ? `Última: ${devName}` : "Impressora POS Bluetooth";
+        if (deviceSubtitle) deviceSubtitle.textContent = devName ? "Toque para reconectar" : "Nenhum dispositivo conectado";
+        if (avatarIcon) avatarIcon.className = "printer-avatar-icon";
+        if (btnConnect) btnConnect.style.display = "flex";
+        if (btnDisconnect) btnDisconnect.style.display = "none";
+        if (headerDot) headerDot.className = "printer-status-dot disconnected";
+      }
+
+      // Modos de comunicação
+      document.querySelectorAll(".comm-mode-card").forEach(c => c.classList.remove("selected"));
+      const currentModeRadio = document.querySelector(`input[name="printerMode"][value="${cfg.mode}"]`);
+      if (currentModeRadio) {
+        currentModeRadio.checked = true;
+        const parentCard = currentModeRadio.closest(".comm-mode-card");
+        if (parentCard) parentCard.classList.add("selected");
+      }
+
+      // Largura da bobina
+      const btn58 = document.getElementById("btnPaper58");
+      const btn80 = document.getElementById("btnPaper80");
+      if (btn58) btn58.classList.toggle("selected", cfg.paperWidth === "58");
+      if (btn80) btn80.classList.toggle("selected", cfg.paperWidth === "80");
+
+      // Switches
+      const chkDual = document.getElementById("chkDualCopies");
+      const chkCut = document.getElementById("chkAutoCut");
+      const chkEnv = document.getElementById("chkAutoPrintEnvelope");
+      const chkFech = document.getElementById("chkAutoPrintFechamento");
+
+      if (chkDual) chkDual.checked = parseInt(cfg.copies) > 1;
+      if (chkCut) chkCut.checked = !!cfg.autoCut;
+      if (chkEnv) chkEnv.checked = !!cfg.autoPrintEnvelope;
+      if (chkFech) chkFech.checked = !!cfg.autoPrintFechamento;
+
+      // Inputs de texto
+      const txtName = document.getElementById("txtChurchName");
+      const txtSub = document.getElementById("txtChurchSub");
+      const txtFoot = document.getElementById("txtFooterMsg");
+
+      if (txtName) txtName.value = cfg.churchName || "";
+      if (txtSub) txtSub.value = cfg.churchSub || "";
+      if (txtFoot) txtFoot.value = cfg.footerMsg || "";
+    }
+
+    function onPrinterStatusChange(isConnected) {
+      atualizarTelaImpressora();
+      if (isConnected) {
+        showToast("Impressora Bluetooth conectada com sucesso!");
+      } else {
+        showToast("Impressora desconectada.");
+      }
+    }
+
+    async function conectarBluetoothPOS() {
+      if (typeof posPrinter === "undefined") return;
+
+      if (!posPrinter.isBluetoothSupported()) {
+        alert("O seu navegador não possui suporte direto à Web Bluetooth API no WebView.\n\nPara impressoras térmicas Bluetooth pareadas no Android (MTP-II, POS-58, Goojprt), selecione a opção 'RawBT (App Android)'!");
+        alterarModoImpressao('rawbt');
+        return;
+      }
+
+      showToast("Buscando dispositivos Bluetooth...");
+      try {
+        const res = await posPrinter.conectarBluetooth();
+        atualizarTelaImpressora();
+        showToast(`Conectado à impressora: ${res.name}!`);
+      } catch (err) {
+        if (err.name === 'NotFoundError') {
+          showToast("Busca cancelada.");
+        } else {
+          console.warn("Erro ao conectar Bluetooth:", err);
+          alert(`Não foi possível conectar: ${err.message}\n\nDica: Certifique-se de que a impressora está ligada com o Bluetooth ativado.`);
+        }
+        atualizarTelaImpressora();
+      }
+    }
+
+    async function desconectarBluetoothPOS() {
+      if (typeof posPrinter === "undefined") return;
+      await posPrinter.desconectarBluetooth();
+      atualizarTelaImpressora();
+      showToast("Impressora desconectada.");
+    }
+
+    function alterarModoImpressao(modo) {
+      if (typeof posPrinter === "undefined") return;
+      posPrinter.config.mode = modo;
+      posPrinter.saveConfig();
+      atualizarTelaImpressora();
+      showToast(`Modo alterado para: ${modo.toUpperCase()}`);
+    }
+
+    function alterarLarguraBobina(largura) {
+      if (typeof posPrinter === "undefined") return;
+      posPrinter.config.paperWidth = largura;
+      posPrinter.saveConfig();
+      atualizarTelaImpressora();
+      showToast(`Formato de papel alterado para: ${largura}mm`);
+    }
+
+    function salvarConfigImpressora() {
+      if (typeof posPrinter === "undefined") return;
+
+      const chkDual = document.getElementById("chkDualCopies");
+      const chkCut = document.getElementById("chkAutoCut");
+      const chkEnv = document.getElementById("chkAutoPrintEnvelope");
+      const chkFech = document.getElementById("chkAutoPrintFechamento");
+
+      if (chkDual) posPrinter.config.copies = chkDual.checked ? 2 : 1;
+      if (chkCut) posPrinter.config.autoCut = chkCut.checked;
+      if (chkEnv) posPrinter.config.autoPrintEnvelope = chkEnv.checked;
+      if (chkFech) posPrinter.config.autoPrintFechamento = chkFech.checked;
+
+      const txtName = document.getElementById("txtChurchName");
+      const txtSub = document.getElementById("txtChurchSub");
+      const txtFoot = document.getElementById("txtFooterMsg");
+
+      if (txtName) posPrinter.config.churchName = txtName.value.trim() || "IGREJA PRESBITERIANA DO BRASIL";
+      if (txtSub) posPrinter.config.churchSub = txtSub.value.trim() || "Junta Diaconal & Tesouraria";
+      if (txtFoot) posPrinter.config.footerMsg = txtFoot.value.trim() || "Deus ama ao que dá com alegria.";
+
+      posPrinter.saveConfig();
+      atualizarTelaImpressora();
+      showToast("Configurações salvas.");
+    }
+
+    async function imprimirCupomTestePOS() {
+      if (typeof posPrinter === "undefined") return;
+      const cupom = posPrinter.gerarCupomTeste();
+
+      showToast("Enviando cupom de teste para a impressora...");
+      try {
+        await posPrinter.imprimirDocumento(cupom);
+        showToast("Cupom de teste enviado com sucesso!");
+      } catch (err) {
+        console.warn(err);
+        abrirModalPreviewCupom("Cupom de Teste POS", cupom.htmlContent, cupom);
+      }
+    }
+
+    function visualizarCupomTesteModal() {
+      if (typeof posPrinter === "undefined") return;
+      const cupom = posPrinter.gerarCupomTeste();
+      abrirModalPreviewCupom("Pré-visualização do Teste", cupom.htmlContent, cupom);
+    }
+
+    async function imprimirComprovanteEnvelope(id, abrirModalSeErro = true) {
+      if (typeof posPrinter === "undefined") return;
+      const entrada = state.entries.find(e => e.id === id);
+      if (!entrada) {
+        showToast("Lançamento não encontrado.");
+        return;
+      }
+
+      const cupom = posPrinter.gerarCupomEnvelope(entrada);
+      try {
+        await posPrinter.imprimirDocumento(cupom);
+        showToast(`Comprovante de ${entrada.membro} impresso!`);
+      } catch (err) {
+        console.warn(err);
+        if (abrirModalSeErro) {
+          abrirModalPreviewCupom(`Comprovante #${entrada.id.toString().slice(-4)}`, cupom.htmlContent, cupom);
+        } else {
+          showToast("Aviso: Falha ao enviar para impressora.");
+        }
+      }
+    }
+
+    async function imprimirTermoFechamentoPOS() {
+      if (typeof posPrinter === "undefined") return;
+      const totais = calcularTotais();
+      const conf1 = document.getElementById("conferente1") ? document.getElementById("conferente1").value : "";
+      const conf2 = document.getElementById("conferente2") ? document.getElementById("conferente2").value : "";
+
+      const cupom = posPrinter.gerarCupomFechamento({
+        totais,
+        conferente1: conf1,
+        conferente2: conf2,
+        dataStr: new Date().toLocaleDateString('pt-BR'),
+        entries: state.entries
+      });
+
+      try {
+        await posPrinter.imprimirDocumento(cupom);
+        showToast("Termo de Apuração impresso na POS com sucesso!");
+      } catch (err) {
+        console.warn(err);
+        abrirModalPreviewCupom("Termo Canônico de Apuração", cupom.htmlContent, cupom);
+      }
+    }
+
+    function abrirModalPreviewCupom(titulo, htmlDoc, docObj) {
+      docPendenteImpressaoModal = docObj;
+      const modalTitle = document.getElementById("cupomModalTitle");
+      const paperContainer = document.getElementById("thermalPaperContainer");
+      const modal = document.getElementById("modalCupomPreview");
+
+      if (modalTitle) modalTitle.innerHTML = `<i class="pi pi-receipt"></i> ${titulo}`;
+      if (paperContainer) paperContainer.innerHTML = htmlDoc;
+      if (modal) modal.classList.add("open");
+    }
+
+    function fecharModalPreviewCupom() {
+      const modal = document.getElementById("modalCupomPreview");
+      if (modal) modal.classList.remove("open");
+      docPendenteImpressaoModal = null;
+    }
+
+    async function executarImpressaoDoModal() {
+      if (!docPendenteImpressaoModal || typeof posPrinter === "undefined") return;
+
+      const btn = document.getElementById("btnImprimirModalCupom");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="pi pi-spin pi-spinner"></i> Imprimindo...`;
+      }
+
+      try {
+        await posPrinter.imprimirDocumento(docPendenteImpressaoModal);
+        showToast("Impresso com sucesso!");
+        fecharModalPreviewCupom();
+      } catch (err) {
+        alert("Erro ao imprimir: " + err.message + "\n\nVocê também pode utilizar o modo Spooler ou RawBT.");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="pi pi-print"></i> <span>Imprimir Agora na POS</span>`;
+        }
+      }
     }
   </script>
 </body>

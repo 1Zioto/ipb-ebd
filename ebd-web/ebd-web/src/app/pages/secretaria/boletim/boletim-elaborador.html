@@ -1,0 +1,1317 @@
+<p-toast></p-toast>
+
+<div class="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
+  <div>
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 flex items-center gap-2">
+      <i class="pi pi-file-edit text-emerald-600 dark:text-emerald-400"></i>
+      Elaborador de Boletim Informativo Semanal
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400">
+      Crie, edite e diagramate o boletim dominical da Igreja Presbiteriana com impressão em alta fidelidade e exportação para WhatsApp.
+    </p>
+  </div>
+
+  <div class="flex items-center flex-wrap gap-2">
+    <button
+      pButton
+      type="button"
+      label="Modelo IPJaó (Foto)"
+      icon="pi pi-refresh"
+      class="p-button-outlined p-button-sm p-button-success"
+      (click)="restaurarModeloIPJao()"
+      pTooltip="Restaura o modelo fiel da foto enviada"
+    ></button>
+
+    <button
+      pButton
+      type="button"
+      label="Histórico"
+      icon="pi pi-history"
+      class="p-button-outlined p-button-sm p-button-secondary"
+      (click)="dialogHistorico = true"
+      pTooltip="Ver edições salvas anteriormente"
+    ></button>
+
+    <button
+      pButton
+      type="button"
+      label="WhatsApp"
+      icon="pi pi-whatsapp"
+      class="p-button-sm p-button-success"
+      (click)="abrirGeradorWhatsapp()"
+      pTooltip="Gerar texto formatado com emojis para grupos da igreja"
+    ></button>
+
+    <button
+      pButton
+      type="button"
+      label="Imprimir / Salvar PDF"
+      icon="pi pi-print"
+      class="p-button-sm p-button-primary bg-emerald-700 hover:bg-emerald-800 border-none text-white font-semibold"
+      (click)="imprimirOuExportarPdf()"
+      pTooltip="Abre o documento oficial pronto para impressão ou download em PDF"
+    ></button>
+  </div>
+</div>
+
+<!-- ========================================================================
+     WORKSPACE PRINCIPAL: EDITOR (ESQUERDA) + LIVE PREVIEW (DIREITA)
+     ======================================================================== -->
+<div class="boletim-workspace">
+
+  <!-- ========================
+       PAINEL ESQUERDO: EDITOR
+       ======================== -->
+  <div class="editor-panel no-print">
+    <div class="editor-header flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-sliders-h text-lg"></i>
+        <span class="font-bold text-sm">Painel de Conteúdo do Boletim</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-save"
+          class="p-button-text p-button-sm text-white hover:bg-white/20 p-1"
+          (click)="salvarNoHistorico()"
+          pTooltip="Arquivar esta edição no histórico"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-download"
+          class="p-button-text p-button-sm text-white hover:bg-white/20 p-1"
+          (click)="exportarJson()"
+          pTooltip="Exportar arquivo JSON de backup"
+        ></button>
+      </div>
+    </div>
+
+    <!-- Barra de Abas do Editor -->
+    <div class="editor-tabs-bar">
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'geral'"
+        (click)="activeTab.set('geral')"
+      >
+        <i class="pi pi-cog"></i> Cabeçalho
+      </button>
+
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'devocional'"
+        (click)="activeTab.set('devocional')"
+      >
+        <i class="pi pi-book"></i> Devocional
+      </button>
+
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'oracao'"
+        (click)="activeTab.set('oracao')"
+      >
+        <i class="pi pi-heart"></i> Oração
+      </button>
+
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'escalas'"
+        (click)="activeTab.set('escalas')"
+      >
+        <i class="pi pi-users"></i> Escala Infantil
+      </button>
+
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'congrega'"
+        (click)="activeTab.set('congrega')"
+      >
+        <i class="pi pi-map-marker"></i> Congregação
+      </button>
+
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'dizimos'"
+        (click)="activeTab.set('dizimos')"
+      >
+        <i class="pi pi-wallet"></i> Dízimos/Ofertas
+      </button>
+
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'avisos'"
+        (click)="activeTab.set('avisos')"
+      >
+        <i class="pi pi-megaphone"></i> Avisos
+      </button>
+
+      <button
+        type="button"
+        class="editor-tab-btn"
+        [class.active]="activeTab() === 'liturgia'"
+        (click)="activeTab.set('liturgia')"
+      >
+        <i class="pi pi-calendar"></i> Liturgia
+      </button>
+    </div>
+
+    <!-- Conteúdo da Aba Ativa -->
+    <div class="editor-body space-y-4">
+
+      <!-- ABA 1: CABEÇALHO & DADOS GERAIS -->
+      @if (activeTab() === 'geral') {
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Nome da Igreja</label>
+            <input
+              pInputText
+              type="text"
+              class="w-full text-sm"
+              [(ngModel)]="boletim().igrejaNome"
+              (ngModelChange)="salvarRascunho(false)"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Edição / Ano</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().edicaoNumero"
+                (ngModelChange)="salvarRascunho(false)"
+                placeholder="Ex: Nº 41 - Ano 2026"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Data do Domingo</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().dataExtenso"
+                (ngModelChange)="salvarRascunho(false)"
+                placeholder="Ex: 11 de Outubro de 2026"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Agenda do Pastor / Atendimento</label>
+            <textarea
+              class="w-full text-sm p-2 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-800"
+              rows="3"
+              [(ngModel)]="boletim().agendaPastorTexto"
+              (ngModelChange)="salvarRascunho(false)"
+            ></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- ABA 2: DEVOCIONAL -->
+      @if (activeTab() === 'devocional') {
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Título da Coluna Devocional</label>
+            <input
+              pInputText
+              type="text"
+              class="w-full text-sm"
+              [(ngModel)]="boletim().devocionalTitulo"
+              (ngModelChange)="salvarRascunho(false)"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Referência Bíblica (Ex: 2Cr. 7:14)</label>
+            <input
+              pInputText
+              type="text"
+              class="w-full text-sm"
+              [(ngModel)]="boletim().devocionalReferencia"
+              (ngModelChange)="salvarRascunho(false)"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Texto da Reflexão para o Lar</label>
+            <textarea
+              class="w-full text-sm p-2 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-800"
+              rows="8"
+              [(ngModel)]="boletim().devocionalTexto"
+              (ngModelChange)="salvarRascunho(false)"
+            ></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- ABA 3: IGREJA EM ORAÇÃO -->
+      @if (activeTab() === 'oracao') {
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Frase de Abertura</label>
+            <input
+              pInputText
+              type="text"
+              class="w-full text-sm"
+              [(ngModel)]="boletim().oracaoSubtitulo"
+              (ngModelChange)="salvarRascunho(false)"
+            />
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-xs font-bold text-surface-700 dark:text-surface-200">Motivos de Oração Cadastrados</span>
+            <button
+              pButton
+              type="button"
+              label="Novo Motivo"
+              icon="pi pi-plus"
+              class="p-button-xs p-button-success"
+              (click)="adicionarMotivoOracao()"
+            ></button>
+          </div>
+
+          <div class="space-y-2">
+            @for (motivo of boletim().motivosOracao; track motivo.id; let i = $index) {
+              <div class="p-2 border rounded-lg bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 space-y-1">
+                <div class="flex items-center justify-between gap-2">
+                  <input
+                    pInputText
+                    type="text"
+                    class="w-full text-xs font-semibold"
+                    [(ngModel)]="motivo.nome"
+                    (ngModelChange)="salvarRascunho(false)"
+                    placeholder="Nome da pessoa"
+                  />
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-text p-button-danger p-button-sm p-1"
+                    (click)="removerMotivoOracao(i)"
+                  ></button>
+                </div>
+                <input
+                  pInputText
+                  type="text"
+                  class="w-full text-xs"
+                  [(ngModel)]="motivo.motivo"
+                  (ngModelChange)="salvarRascunho(false)"
+                  placeholder="Motivo (ex: Saúde, Cirurgia, Câncer)"
+                />
+              </div>
+            }
+          </div>
+
+          <div class="pt-2">
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Nota de Pedidos de Oração</label>
+            <textarea
+              class="w-full text-xs p-2 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-800"
+              rows="3"
+              [(ngModel)]="boletim().pedidosOracaoOrientacao"
+              (ngModelChange)="salvarRascunho(false)"
+            ></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- ABA 4: ESCALA INFANTIL -->
+      @if (activeTab() === 'escalas') {
+        <div class="space-y-4">
+          <!-- EBD -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400">Escola Bíblica Dominical (EBD)</span>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                class="p-button-text p-button-sm p-0"
+                (click)="adicionarEscalaEbd()"
+                pTooltip="Adicionar faixa etária"
+              ></button>
+            </div>
+            @for (item of boletim().escalaEbd; track $index; let i = $index) {
+              <div class="grid grid-cols-12 gap-1 mb-1 items-center">
+                <div class="col-span-5">
+                  <input
+                    pInputText
+                    type="text"
+                    class="w-full text-xs"
+                    [(ngModel)]="item.faixa"
+                    (ngModelChange)="salvarRascunho(false)"
+                    placeholder="Faixa etária"
+                  />
+                </div>
+                <div class="col-span-6">
+                  <input
+                    pInputText
+                    type="text"
+                    class="w-full text-xs"
+                    [(ngModel)]="item.responsaveis"
+                    (ngModelChange)="salvarRascunho(false)"
+                    placeholder="Professores"
+                  />
+                </div>
+                <div class="col-span-1 text-center">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-times"
+                    class="p-button-text p-button-danger p-button-sm p-0"
+                    (click)="removerEscalaEbd(i)"
+                  ></button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Culto Infantil -->
+          <div class="pt-2 border-t border-surface-200 dark:border-surface-700">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400">Culto Infantil (Noite)</span>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                class="p-button-text p-button-sm p-0"
+                (click)="adicionarEscalaCulto()"
+                pTooltip="Adicionar faixa"
+              ></button>
+            </div>
+            @for (item of boletim().escalaCultoInfantil; track $index; let i = $index) {
+              <div class="grid grid-cols-12 gap-1 mb-1 items-center">
+                <div class="col-span-5">
+                  <input
+                    pInputText
+                    type="text"
+                    class="w-full text-xs"
+                    [(ngModel)]="item.faixa"
+                    (ngModelChange)="salvarRascunho(false)"
+                    placeholder="Faixa ou Berçário"
+                  />
+                </div>
+                <div class="col-span-6">
+                  <input
+                    pInputText
+                    type="text"
+                    class="w-full text-xs"
+                    [(ngModel)]="item.responsaveis"
+                    (ngModelChange)="salvarRascunho(false)"
+                    placeholder="Voluntários"
+                  />
+                </div>
+                <div class="col-span-1 text-center">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-times"
+                    class="p-button-text p-button-danger p-button-sm p-0"
+                    (click)="removerEscalaCulto(i)"
+                  ></button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ABA 5: CONGREGAÇÃO / PLANTAÇÃO -->
+      @if (activeTab() === 'congrega') {
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="congregaCheck"
+              [(ngModel)]="boletim().congregaAtiva"
+              (ngModelChange)="salvarRascunho(false)"
+            />
+            <label for="congregaCheck" class="text-xs font-semibold cursor-pointer">
+              Exibir bloco de Plantação de Igreja / Congregação
+            </label>
+          </div>
+
+          @if (boletim().congregaAtiva) {
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Local / Ponto de Pregação</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().congregaLocal"
+                (ngModelChange)="salvarRascunho(false)"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Endereço Completo</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().congregaEndereco"
+                (ngModelChange)="salvarRascunho(false)"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Horários de Funcionamento</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().congregaHorarios"
+                (ngModelChange)="salvarRascunho(false)"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Pastor Responsável</label>
+                <input
+                  pInputText
+                  type="text"
+                  class="w-full text-sm"
+                  [(ngModel)]="boletim().congregaPastor"
+                  (ngModelChange)="salvarRascunho(false)"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Presbítero Responsável</label>
+                <input
+                  pInputText
+                  type="text"
+                  class="w-full text-sm"
+                  [(ngModel)]="boletim().congregaPresbitero"
+                  (ngModelChange)="salvarRascunho(false)"
+                />
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ABA 6: DÍZIMOS E OFERTAS -->
+      @if (activeTab() === 'dizimos') {
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Texto Introdutório</label>
+            <textarea
+              class="w-full text-xs p-2 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-800"
+              rows="2"
+              [(ngModel)]="boletim().dizimosTextoAbertura"
+              (ngModelChange)="salvarRascunho(false)"
+            ></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Banco</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().dizimosBanco"
+                (ngModelChange)="salvarRascunho(false)"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Agência</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().dizimosAgencia"
+                (ngModelChange)="salvarRascunho(false)"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Conta Corrente</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().dizimosConta"
+                (ngModelChange)="salvarRascunho(false)"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">CNPJ</label>
+              <input
+                pInputText
+                type="text"
+                class="w-full text-sm"
+                [(ngModel)]="boletim().dizimosCnpj"
+                (ngModelChange)="salvarRascunho(false)"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Chave PIX</label>
+            <input
+              pInputText
+              type="text"
+              class="w-full text-sm"
+              [(ngModel)]="boletim().dizimosPix"
+              (ngModelChange)="salvarRascunho(false)"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Telefones da Igreja</label>
+            <input
+              pInputText
+              type="text"
+              class="w-full text-sm"
+              [(ngModel)]="boletim().dizimosTelefones"
+              (ngModelChange)="salvarRascunho(false)"
+            />
+          </div>
+        </div>
+      }
+
+      <!-- ABA 7: AVISOS DIVERSOS & EVENTOS -->
+      @if (activeTab() === 'avisos') {
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-surface-700 dark:text-surface-200">Avisos e Eventos</span>
+            <button
+              pButton
+              type="button"
+              label="Adicionar Aviso"
+              icon="pi pi-plus"
+              class="p-button-xs p-button-success"
+              (click)="abrirModalNovoAviso()"
+            ></button>
+          </div>
+
+          @for (aviso of boletim().avisos; track aviso.id; let i = $index) {
+            <div class="p-3 border rounded-lg bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-emerald-800 dark:text-emerald-400 uppercase">
+                  + {{ aviso.titulo }}
+                </span>
+                <div class="flex items-center gap-1">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-pencil"
+                    class="p-button-text p-button-sm p-1 text-surface-600 hover:text-surface-900"
+                    (click)="editarAviso(aviso)"
+                    pTooltip="Editar aviso"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-text p-button-danger p-button-sm p-1"
+                    (click)="removerAviso(i)"
+                    pTooltip="Excluir"
+                  ></button>
+                </div>
+              </div>
+
+              <p class="text-xs text-surface-600 dark:text-surface-300 line-clamp-2">
+                {{ aviso.descricao }}
+              </p>
+
+              @if (aviso.imagemUrl) {
+                <div class="text-xs text-emerald-600 flex items-center gap-1">
+                  <i class="pi pi-image"></i>
+                  <span>Banner anexado</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ABA 8: LITURGIA & ANIVERSARIANTES -->
+      @if (activeTab() === 'liturgia') {
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Liturgia Culto da Manhã</label>
+            <textarea
+              class="w-full text-xs p-2 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-800"
+              rows="3"
+              [(ngModel)]="boletim().liturgiaManha"
+              (ngModelChange)="salvarRascunho(false)"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Liturgia Culto da Noite</label>
+            <textarea
+              class="w-full text-xs p-2 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-800"
+              rows="3"
+              [(ngModel)]="boletim().liturgiaNoite"
+              (ngModelChange)="salvarRascunho(false)"
+            ></textarea>
+          </div>
+
+          <div class="pt-2 border-t border-surface-200 dark:border-surface-700">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-surface-700 dark:text-surface-200">Aniversariantes da Semana</span>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                class="p-button-text p-button-sm p-0"
+                (click)="adicionarAniversariante()"
+              ></button>
+            </div>
+
+            @for (aniv of boletim().aniversariantes; track $index; let i = $index) {
+              <div class="grid grid-cols-12 gap-1 mb-1 items-center">
+                <div class="col-span-4">
+                  <input
+                    pInputText
+                    type="text"
+                    class="w-full text-xs"
+                    [(ngModel)]="aniv.dia"
+                    (ngModelChange)="salvarRascunho(false)"
+                    placeholder="Dia"
+                  />
+                </div>
+                <div class="col-span-7">
+                  <input
+                    pInputText
+                    type="text"
+                    class="w-full text-xs"
+                    [(ngModel)]="aniv.nomes"
+                    (ngModelChange)="salvarRascunho(false)"
+                    placeholder="Nomes"
+                  />
+                </div>
+                <div class="col-span-1 text-center">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-times"
+                    class="p-button-text p-button-danger p-button-sm p-0"
+                    (click)="removerAniversariante(i)"
+                  ></button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+
+  <!-- ==============================================
+       PAINEL DIREITO: LIVE PREVIEW & DOCUMENTO OFICIAL
+       ============================================== -->
+  <div class="preview-panel">
+    <!-- Barra de Ferramentas do Preview -->
+    <div class="preview-toolbar no-print">
+      <div class="flex items-center gap-2">
+        <span class="text-xs uppercase tracking-wider font-bold text-emerald-400">
+          <i class="pi pi-eye mr-1"></i> Visualização em Tempo Real (A4)
+        </span>
+      </div>
+
+      <!-- Alternador de Modos de Página -->
+      <div class="flex items-center gap-1 bg-surface-900 p-1 rounded-lg border border-surface-700">
+        <button
+          type="button"
+          class="text-xs px-2.5 py-1 rounded transition-colors font-semibold"
+          [class.bg-emerald-600]="modoPreview() === 'avisos_escalas'"
+          [class.text-white]="modoPreview() === 'avisos_escalas'"
+          [class.text-surface-400]="modoPreview() !== 'avisos_escalas'"
+          (click)="modoPreview.set('avisos_escalas')"
+        >
+          Página de Avisos & Escalas (Modelo Foto)
+        </button>
+
+        <button
+          type="button"
+          class="text-xs px-2.5 py-1 rounded transition-colors font-semibold"
+          [class.bg-emerald-600]="modoPreview() === 'capa_liturgia'"
+          [class.text-white]="modoPreview() === 'capa_liturgia'"
+          [class.text-surface-400]="modoPreview() !== 'capa_liturgia'"
+          (click)="modoPreview.set('capa_liturgia')"
+        >
+          Capa & Liturgia
+        </button>
+
+        <button
+          type="button"
+          class="text-xs px-2.5 py-1 rounded transition-colors font-semibold"
+          [class.bg-emerald-600]="modoPreview() === 'completo'"
+          [class.text-white]="modoPreview() === 'completo'"
+          [class.text-surface-400]="modoPreview() !== 'completo'"
+          (click)="modoPreview.set('completo')"
+        >
+          Livreto Completo (2 Págs)
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          pButton
+          type="button"
+          label="Imprimir A4"
+          icon="pi pi-print"
+          class="p-button-xs bg-emerald-600 border-none text-white hover:bg-emerald-500 font-semibold"
+          (click)="imprimirOuExportarPdf()"
+        ></button>
+      </div>
+    </div>
+
+    <!-- Container da Folha A4 com Scroll -->
+    <div class="preview-scroll-container">
+
+      <!-- ================================================================
+           FOLHA DE IMPRESSÃO / MODELO EDITORIAL A4
+           ================================================================ -->
+      <div id="boletim-folha-impressao" class="boletim-folha-a4">
+
+        <!-- ==============================================================
+             PÁGINA 1: CAPA & LITURGIA (Quando ativo)
+             ============================================================== -->
+        @if (modoPreview() === 'capa_liturgia' || modoPreview() === 'completo') {
+          <div class="mb-8 pb-8 border-b-2 border-dashed border-gray-300">
+            <!-- Cabeçalho Oficial com Brasão IPB -->
+            <div class="boletim-cabecalho-oficial">
+              <div class="flex items-center gap-3">
+                <img src="/ipb-logo.png" alt="IPB" class="w-12 h-12 object-contain" />
+                <div>
+                  <h1 class="boletim-titulo-igreja">{{ boletim().igrejaNome }}</h1>
+                  <p class="boletim-subtitulo-igreja">{{ boletim().igrejaSubtitulo }}</p>
+                </div>
+              </div>
+              <div class="boletim-data-badge">
+                <div>{{ boletim().dataExtenso }}</div>
+                <div class="text-xs font-normal text-gray-500">{{ boletim().edicaoNumero }}</div>
+              </div>
+            </div>
+
+            <!-- Duas Colunas da Capa -->
+            <div class="boletim-duas-colunas">
+              <!-- Coluna 1: Palavra Devocional / Pastoral -->
+              <div>
+                <div class="ipb-secao-ribbon">
+                  <div class="ipb-ribbon-badge">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+                  </div>
+                  <div class="ipb-ribbon-arrow"></div>
+                  <div class="ipb-ribbon-bar">{{ boletim().devocionalTitulo }}</div>
+                </div>
+
+                <div class="boletim-texto font-semibold text-emerald-900 mt-2">
+                  Leitura Bíblica: {{ boletim().devocionalReferencia }}
+                </div>
+                <div class="boletim-texto whitespace-pre-line">
+                  {{ boletim().devocionalTexto }}
+                </div>
+              </div>
+
+              <!-- Coluna 2: Liturgias dos Cultos e Aniversariantes -->
+              <div>
+                <div class="ipb-secao-ribbon">
+                  <div class="ipb-ribbon-badge">
+                    <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                  </div>
+                  <div class="ipb-ribbon-arrow"></div>
+                  <div class="ipb-ribbon-bar">ORDEM DO CULTO</div>
+                </div>
+
+                <div class="ipb-sub-badge">
+                  <span class="ipb-sub-plus">+</span>
+                  <span>CULTO MATUTINO (09:00H)</span>
+                </div>
+                <p class="boletim-texto">{{ boletim().liturgiaManha }}</p>
+
+                <div class="ipb-sub-badge mt-3">
+                  <span class="ipb-sub-plus">+</span>
+                  <span>CULTO VESPERTINO (19:00H)</span>
+                </div>
+                <p class="boletim-texto">{{ boletim().liturgiaNoite }}</p>
+
+                <!-- Aniversariantes -->
+                <div class="ipb-sub-badge mt-3">
+                  <span class="ipb-sub-plus">+</span>
+                  <span>ANIVERSARIANTES DA SEMANA</span>
+                </div>
+                <div class="text-xs space-y-1 mt-1">
+                  @for (aniv of boletim().aniversariantes; track $index) {
+                    <div>
+                      <strong class="text-emerald-950">{{ aniv.dia }}:</strong> {{ aniv.nomes }}
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- ==============================================================
+             PÁGINA 2: AVISOS, ORAÇÃO, ESCALAS & DÍZIMOS (MODELO DA FOTO)
+             ============================================================== -->
+        @if (modoPreview() === 'avisos_escalas' || modoPreview() === 'completo') {
+          <div class="boletim-duas-colunas">
+
+            <!-- =========================================
+                 COLUNA ESQUERDA DA PÁGINA (CONFORME FOTO)
+                 ========================================= -->
+            <div>
+
+              <!-- 1. AGENDA DO PASTOR -->
+              <div class="ipb-secao-ribbon">
+                <div class="ipb-ribbon-badge">
+                  <!-- Ícone da Sarça Ardente IPB -->
+                  <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                </div>
+                <div class="ipb-ribbon-arrow"></div>
+                <div class="ipb-ribbon-bar">AGENDA DO PASTOR</div>
+              </div>
+              <p class="boletim-texto">
+                {{ boletim().agendaPastorTexto }}
+              </p>
+
+              <!-- 2. IGREJA EM ORAÇÃO -->
+              <div class="ipb-secao-ribbon mt-3">
+                <div class="ipb-ribbon-badge">
+                  <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                </div>
+                <div class="ipb-ribbon-arrow"></div>
+                <div class="ipb-ribbon-bar">IGREJA EM ORAÇÃO</div>
+              </div>
+
+              <p class="boletim-texto font-semibold mb-1">
+                {{ boletim().oracaoSubtitulo }}
+              </p>
+
+              <ul class="oracao-lista">
+                @for (motivo of boletim().motivosOracao; track motivo.id) {
+                  <li>
+                    <strong>{{ motivo.nome }}</strong>
+                    @if (motivo.motivo) {
+                      <span> – {{ motivo.motivo }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+
+              <!-- + PEDIDOS DE ORAÇÃO -->
+              <div class="ipb-sub-badge">
+                <span class="ipb-sub-plus">+</span>
+                <span>PEDIDOS DE ORAÇÃO</span>
+              </div>
+              <p class="boletim-texto">
+                {{ boletim().pedidosOracaoOrientacao }}
+              </p>
+
+              <!-- 3. ESCALA INFANTIL -->
+              <div class="ipb-secao-ribbon mt-3">
+                <div class="ipb-ribbon-badge">
+                  <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                </div>
+                <div class="ipb-ribbon-arrow"></div>
+                <div class="ipb-ribbon-bar">ESCALA INFANTIL</div>
+              </div>
+
+              <!-- Tabela Escala Infantil -->
+              <table class="escala-tabela">
+                <thead>
+                  <tr>
+                    <th style="width: 45%;">Escola Bíblica Dominical</th>
+                    <th style="width: 55%;">Culto Infantil</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <!-- Coluna EBD -->
+                    <td>
+                      @for (item of boletim().escalaEbd; track $index) {
+                        <div class="mb-1">
+                          <span class="escala-faixa">{{ item.faixa }}:</span><br />
+                          <span>{{ item.responsaveis }}</span>
+                        </div>
+                      }
+                    </td>
+
+                    <!-- Coluna Culto Infantil -->
+                    <td>
+                      @for (item of boletim().escalaCultoInfantil; track $index) {
+                        <div class="mb-1 flex items-baseline justify-between gap-1 text-[10px]">
+                          <span class="escala-faixa">{{ item.faixa }}</span>
+                          <span class="text-right">{{ item.responsaveis }}</span>
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- 4. PLANTAÇÃO DE IGREJA -->
+              @if (boletim().congregaAtiva) {
+                <div class="ipb-secao-ribbon mt-3">
+                  <div class="ipb-ribbon-badge">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                  </div>
+                  <div class="ipb-ribbon-arrow"></div>
+                  <div class="ipb-ribbon-bar">PLANTAÇÃO DE IGREJA</div>
+                </div>
+
+                <div class="boletim-texto text-[11px] leading-tight">
+                  <strong>Local:</strong> {{ boletim().congregaLocal }}<br />
+                  <strong>Endereço:</strong> {{ boletim().congregaEndereco }}<br />
+                  <strong>Horário de funcionamento:</strong> {{ boletim().congregaHorarios }}<br />
+                  <strong>Pastor responsável:</strong> {{ boletim().congregaPastor }}<br />
+                  <strong>Presb. responsável:</strong> {{ boletim().congregaPresbitero }}
+                </div>
+              }
+
+              <!-- 5. DÍZIMOS E OFERTAS -->
+              <div class="ipb-secao-ribbon mt-3">
+                <div class="ipb-ribbon-badge">
+                  <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                </div>
+                <div class="ipb-ribbon-arrow"></div>
+                <div class="ipb-ribbon-bar">DÍZIMOS E OFERTAS</div>
+              </div>
+
+              <p class="boletim-texto">
+                {{ boletim().dizimosTextoAbertura }}
+              </p>
+
+              <!-- Caixa Verde de Destaque Bancário -->
+              <div class="dizimos-box">
+                <div class="dizimos-box-titulo">{{ boletim().igrejaNome }}</div>
+                <div>
+                  <strong>CONTA: {{ boletim().dizimosConta }}</strong>,
+                  <strong>AGÊNCIA: {{ boletim().dizimosAgencia }}</strong>
+                </div>
+                <div>
+                  <strong>CNPJ: {{ boletim().dizimosCnpj }}</strong>
+                  <strong>Nº do Banco: {{ boletim().dizimosBanco }}</strong>
+                </div>
+                @if (boletim().dizimosPix) {
+                  <div>
+                    <strong>CHAVE PIX: {{ boletim().dizimosPix }}</strong>
+                  </div>
+                }
+                <div>
+                  Telefone <strong>{{ boletim().dizimosTelefones }}</strong>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- =========================================
+                 COLUNA DIREITA DA PÁGINA (CONFORME FOTO)
+                 ========================================= -->
+            <div>
+
+              <!-- 1. TU E TUA CASA - DEVOCIONAIS -->
+              <div class="ipb-secao-ribbon">
+                <div class="ipb-ribbon-badge">
+                  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                </div>
+                <div class="ipb-ribbon-arrow"></div>
+                <div class="ipb-ribbon-bar">{{ boletim().devocionalTitulo }}</div>
+              </div>
+
+              <div class="boletim-texto">
+                <strong>Leitura do texto bíblico e da reflexão – {{ boletim().devocionalReferencia }}</strong><br />
+                {{ boletim().devocionalTexto }}
+              </div>
+
+              <!-- 2. AVISOS DIVERSOS -->
+              <div class="ipb-secao-ribbon mt-4">
+                <div class="ipb-ribbon-badge">
+                  <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                </div>
+                <div class="ipb-ribbon-arrow"></div>
+                <div class="ipb-ribbon-bar">AVISOS DIVERSOS</div>
+              </div>
+
+              <!-- Lista de Avisos e Eventos -->
+              @for (aviso of boletim().avisos; track aviso.id) {
+                <div class="aviso-card">
+                  <!-- Header com + verde -->
+                  <div class="ipb-sub-badge">
+                    <span class="ipb-sub-plus">+</span>
+                    <span>{{ aviso.titulo }}</span>
+                  </div>
+
+                  <!-- Se tiver imagem / banner -->
+                  @if (aviso.imagemUrl) {
+                    <img [src]="aviso.imagemUrl" [alt]="aviso.titulo" class="aviso-card-imagem" />
+                  }
+
+                  <!-- Descrição do aviso -->
+                  <p class="boletim-texto">
+                    {{ aviso.descricao }}
+                  </p>
+
+                  <!-- Metadados (Preletor, Data, Local, Valor) -->
+                  @if (aviso.preletor || aviso.data || aviso.local || aviso.valor) {
+                    <div class="aviso-meta-lista">
+                      @if (aviso.tema) {
+                        <div class="aviso-meta-item"><strong>Tema:</strong> {{ aviso.tema }}</div>
+                      }
+                      @if (aviso.preletor) {
+                        <div class="aviso-meta-item"><strong>Preletor:</strong> {{ aviso.preletor }}</div>
+                      }
+                      @if (aviso.data) {
+                        <div class="aviso-meta-item"><strong>Data:</strong> {{ aviso.data }}</div>
+                      }
+                      @if (aviso.local) {
+                        <div class="aviso-meta-item"><strong>Local:</strong> {{ aviso.local }}</div>
+                      }
+                      @if (aviso.valor) {
+                        <div class="aviso-meta-item"><strong>Valor:</strong> {{ aviso.valor }}</div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+            </div>
+
+          </div>
+        }
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========================================================================
+     MODAIS
+     ======================================================================== -->
+
+<!-- Modal: Adicionar / Editar Aviso -->
+<p-dialog
+  [(visible)]="dialogNovoAviso"
+  [header]="avisoEmEdicao.id ? 'Editar Aviso / Evento' : 'Novo Aviso / Evento'"
+  [modal]="true"
+  [style]="{ width: '560px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="space-y-3 pt-2">
+    <div>
+      <label class="block text-xs font-semibold mb-1">Título do Aviso (Caixa Alta)</label>
+      <input
+        pInputText
+        type="text"
+        class="w-full text-sm"
+        [(ngModel)]="avisoEmEdicao.titulo"
+        placeholder="Ex: ENCONTRO DE CASAIS ALPHAVILLE"
+      />
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold mb-1">Descrição do Comunicado</label>
+      <textarea
+        class="w-full text-sm p-2 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-800"
+        rows="4"
+        [(ngModel)]="avisoEmEdicao.descricao"
+        placeholder="Texto descritivo do evento..."
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold mb-1">URL da Imagem / Banner (Opcional)</label>
+      <input
+        pInputText
+        type="text"
+        class="w-full text-sm"
+        [(ngModel)]="avisoEmEdicao.imagemUrl"
+        placeholder="https://exemplo.com/cartaz.jpg"
+      />
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-xs font-semibold mb-1">Tema / Assunto</label>
+        <input
+          pInputText
+          type="text"
+          class="w-full text-sm"
+          [(ngModel)]="avisoEmEdicao.tema"
+          placeholder="Ex: Comunicação no Casamento"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold mb-1">Preletor</label>
+        <input
+          pInputText
+          type="text"
+          class="w-full text-sm"
+          [(ngModel)]="avisoEmEdicao.preletor"
+          placeholder="Ex: Rev. Saulo Carvalho"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-xs font-semibold mb-1">Data / Horário</label>
+        <input
+          pInputText
+          type="text"
+          class="w-full text-sm"
+          [(ngModel)]="avisoEmEdicao.data"
+          placeholder="Ex: 27 de abril às 20h"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold mb-1">Valor / Inscrição</label>
+        <input
+          pInputText
+          type="text"
+          class="w-full text-sm"
+          [(ngModel)]="avisoEmEdicao.valor"
+          placeholder="Ex: R$ 30,00"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold mb-1">Local do Evento</label>
+      <input
+        pInputText
+        type="text"
+        class="w-full text-sm"
+        [(ngModel)]="avisoEmEdicao.local"
+        placeholder="Ex: Templo da Igreja / Salão de Festas"
+      />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancelar"
+      class="p-button-text p-button-secondary"
+      (click)="dialogNovoAviso = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="Salvar no Boletim"
+      class="p-button-success"
+      (click)="salvarAvisoModal()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Histórico de Boletins Salvos -->
+<p-dialog
+  [(visible)]="dialogHistorico"
+  header="Histórico de Edições do Boletim"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+>
+  <div class="space-y-2 pt-2 max-h-[400px] overflow-y-auto">
+    @if (historicoEdicoes().length === 0) {
+      <div class="text-center py-6 text-surface-400">
+        <i class="pi pi-folder-open text-3xl mb-2 block"></i>
+        Nenhum boletim arquivado ainda. Clique no ícone de salvar para arquivar o boletim deste domingo!
+      </div>
+    }
+
+    @for (item of historicoEdicoes(); track item.id) {
+      <div
+        class="p-3 border rounded-lg bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 flex items-center justify-between hover:border-emerald-500 cursor-pointer transition-colors"
+        (click)="carregarEdicaoDoHistorico(item)"
+      >
+        <div>
+          <div class="font-bold text-sm text-surface-900 dark:text-surface-100">{{ item.titulo }}</div>
+          <div class="text-xs text-surface-500">Salvo em: {{ item.data }}</div>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button
+            pButton
+            type="button"
+            label="Carregar"
+            icon="pi pi-check"
+            class="p-button-xs p-button-success"
+            (click)="carregarEdicaoDoHistorico(item)"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-text p-button-danger p-button-sm p-1"
+            (click)="excluirDoHistorico(item.id, $event)"
+          ></button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Fechar"
+      class="p-button-text"
+      (click)="dialogHistorico = false"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Exportação Formatada para WhatsApp -->
+<p-dialog
+  [(visible)]="dialogExportarWhatsapp"
+  header="Boletim Formatado para o WhatsApp"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  [draggable]="false"
+>
+  <div class="space-y-3 pt-2">
+    <p class="text-xs text-surface-500">
+      O texto abaixo já está formatado com negritos, marcadores e emojis para você copiar e colar diretamente no grupo da igreja no WhatsApp.
+    </p>
+
+    <textarea
+      class="w-full text-xs font-mono p-3 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-100 dark:bg-surface-900"
+      rows="14"
+      readonly
+      [value]="textoWhatsappGerado"
+    ></textarea>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Fechar"
+      class="p-button-text"
+      (click)="dialogExportarWhatsapp = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="Copiar Texto"
+      icon="pi pi-copy"
+      class="p-button-success"
+      (click)="copiarTextoWhatsapp()"
+    ></button>
+  </ng-template>
+</p-dialog>
