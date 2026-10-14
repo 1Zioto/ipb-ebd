@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AtaConselho;
 use App\Models\CartaTransferencia;
+use App\Models\Institution;
 use App\Models\Person;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -114,10 +115,20 @@ class SecretariaController extends Controller
             ->whereYear('baptism_date', $ano)
             ->count();
 
+        $institutionId = $request->user()?->institution_id ?: 5;
+        $institution = Institution::with('parent.parent')->find($institutionId);
+        $nomeIgreja = $institution?->name ?: 'Igreja Presbiteriana de Campo Verde';
+        $presb = $institution?->parent?->name;
+        $sinodo = $institution?->parent?->parent?->name;
+        $jurisdicaoPartes = array_filter([$presb, $sinodo]);
+        $jurisdicao = !empty($jurisdicaoPartes)
+            ? implode(' • ', $jurisdicaoPartes)
+            : ($institution?->city && $institution?->state ? ($institution->city . ' / ' . $institution->state) : 'Presbitério Sudeste Espírito Santo (PSES) • Sínodo Central Espíritossantense (SCE)');
+
         return response()->json([
             'ano' => $ano,
-            'igreja' => 'Igreja Presbiteriana em Campo Verde',
-            'presbiterio' => 'Presbitério Campo Verde (PCVD) / Sínodo Mato Grosso',
+            'igreja' => $nomeIgreja,
+            'presbiterio' => $jurisdicao,
             'comungantes_atual' => $totalComungantes,
             'nao_comungantes_atual' => $totalNaoComungantes,
             'sob_disciplina_atual' => $totalSobDisciplina,

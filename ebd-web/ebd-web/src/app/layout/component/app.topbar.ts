@@ -38,6 +38,18 @@ import { AuthService } from '@/app/core/auth.service';
         </div>
 
         <div class="layout-topbar-actions">
+            <!-- Botão de Acesso Rápido Super Admin (Exclusivo Usuário Master) -->
+            @if (auth.isMasterUser()) {
+                <a
+                    routerLink="/admin/super-admin"
+                    class="layout-topbar-action !w-auto !h-10 px-3 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary flex items-center gap-2 font-semibold text-xs transition-all shadow-sm"
+                    title="Painel Super Admin: Liberar Telas & Igrejas"
+                >
+                    <i class="pi pi-sliders-h text-sm"></i>
+                    <span class="hidden md:inline">Super Admin</span>
+                </a>
+            }
+
             <!-- Alternador Rápido de Tema Claro/Escuro -->
             <button
                 type="button"
@@ -91,6 +103,36 @@ import { AuthService } from '@/app/core/auth.service';
 
                         <!-- Opções do Menu -->
                         <div class="flex flex-col gap-1 pt-1 border-t border-surface">
+                            @if (auth.isMasterUser()) {
+                                <!-- Link Super Admin (Apenas Usuário Master) -->
+                                <a
+                                    routerLink="/admin/super-admin"
+                                    (click)="userMenuOpen.set(false)"
+                                    class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                                >
+                                    <i class="pi pi-sliders-h"></i>
+                                    <span>Painel Super Admin</span>
+                                </a>
+
+                                <!-- Alternador Modo Super Admin -->
+                                <button
+                                    type="button"
+                                    (click)="toggleSuperAdminMode()"
+                                    class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-surface-700 dark:text-surface-300 hover:bg-surface-hover transition-colors"
+                                >
+                                    <span class="flex items-center gap-2">
+                                        <i class="pi pi-shield"></i>
+                                        <span>Modo Super Admin</span>
+                                    </span>
+                                    <span
+                                        class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+                                        [ngClass]="auth.isSuperAdmin() ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-surface-200 dark:bg-surface-700 text-muted-color'"
+                                    >
+                                        {{ auth.isSuperAdmin() ? 'Ativo' : 'Ativar' }}
+                                    </span>
+                                </button>
+                            }
+
                             <button
                                 type="button"
                                 (click)="toggleDarkMode()"
@@ -120,7 +162,7 @@ import { AuthService } from '@/app/core/auth.service';
 })
 export class AppTopbar {
     layoutService = inject(LayoutService);
-    private auth = inject(AuthService);
+    auth = inject(AuthService);
     user = this.auth.user;
 
     userMenuOpen = signal(false);
@@ -144,6 +186,12 @@ export class AppTopbar {
     toggleUserMenu(event: MouseEvent) {
         event.stopPropagation();
         this.userMenuOpen.update((v) => !v);
+    }
+
+    toggleSuperAdminMode() {
+        const next = !this.auth.isSuperAdmin();
+        this.auth.setSuperAdminMode(next);
+        this.userMenuOpen.set(false);
     }
 
     toggleDarkMode() {

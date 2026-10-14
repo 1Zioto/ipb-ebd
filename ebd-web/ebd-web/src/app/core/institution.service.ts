@@ -10,6 +10,7 @@ import {
   InstitutionBreadcrumb,
   InstitutionSubordinateSummary,
   InstitutionTreeNode,
+  IpbCatalogItem,
   Paginated,
 } from './models';
 
@@ -121,5 +122,43 @@ export class InstitutionService {
 
   cancelLinkRequest(requestId: number): Observable<{ message: string; data: import('./models').InstitutionLinkRequest }> {
     return this.http.post<{ message: string; data: import('./models').InstitutionLinkRequest }>(`${this.apiUrl}/link-requests/${requestId}/cancel`, {});
+  }
+
+  // --- Catálogo Oficial IPB & Vinculação ---
+  getCatalogoIpb(params?: {
+    q?: string;
+    uf?: string;
+    cidade?: string;
+    presbiterio?: string;
+    tipo?: string;
+    page?: number;
+    per_page?: number;
+  }): Observable<Paginated<IpbCatalogItem>> {
+    let p = new HttpParams();
+    if (params?.q) p = p.set('q', params.q);
+    if (params?.uf) p = p.set('uf', params.uf);
+    if (params?.cidade) p = p.set('cidade', params.cidade);
+    if (params?.presbiterio) p = p.set('presbiterio', params.presbiterio);
+    if (params?.tipo) p = p.set('tipo', params.tipo);
+    if (params?.page) p = p.set('page', String(params.page));
+    if (params?.per_page) p = p.set('per_page', String(params.per_page));
+
+    return this.http.get<Paginated<IpbCatalogItem>>(`${this.apiUrl}/catalogo-ipb`, { params: p });
+  }
+
+  showCatalogoIpb(id: number): Observable<{ data: IpbCatalogItem }> {
+    return this.http.get<{ data: IpbCatalogItem }>(`${this.apiUrl}/catalogo-ipb/${id}`);
+  }
+
+  vincularCatalogo(institutionId: number, catalogoId: number): Observable<{ message: string; data: Institution }> {
+    return this.http.post<{ message: string; data: Institution }>(`${this.apiUrl}/${institutionId}/vincular-catalogo`, {
+      catalogo_id: catalogoId,
+    });
+  }
+
+  importarCatalogo(catalogoId: number): Observable<{ message: string; data: Institution }> {
+    return this.http.post<{ message: string; data: Institution }>(`${this.apiUrl}/importar-catalogo`, {
+      catalogo_id: catalogoId,
+    });
   }
 }

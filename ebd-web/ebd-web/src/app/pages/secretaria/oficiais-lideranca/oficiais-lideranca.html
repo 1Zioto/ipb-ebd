@@ -1,0 +1,979 @@
+<div class="p-4 sm:p-6 space-y-6 max-w-[1400px] mx-auto">
+  
+  <!-- CABEÇALHO DO MÓDULO -->
+  <div class="surface-card p-6 rounded-2xl border border-surface shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-3xl font-black shrink-0 border border-primary/20">
+        🏛️
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-black text-surface-900 tracking-tight">
+            Oficiais, Secretarias & Sociedades Internas
+          </h1>
+          <p-tag value="IPB Local" severity="success" styleClass="text-xs font-bold"></p-tag>
+        </div>
+        <p class="text-xs sm:text-sm text-muted-color mt-0.5">
+          Gestão eclesiástica e ministerial: Conselho, Junta Diaconal, Secretarias locais (Áudio, Multimídia, Eventos), Sociedades e Professores da EBD.
+        </p>
+      </div>
+    </div>
+
+    <!-- AÇÕES DE TOPO -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <p-button
+        label="Ficha Cadastral"
+        icon="pi pi-file-edit"
+        [outlined]="true"
+        severity="secondary"
+        (onClick)="openFichaCadastral(membrosCadastrados()[0])"
+        pTooltip="Consultar e imprimir a Ficha Cadastral Oficial de qualquer membro"
+      ></p-button>
+
+      <p-button
+        label="Nova Secretaria"
+        icon="pi pi-plus"
+        severity="primary"
+        (onClick)="openNovaSecretaria()"
+        pTooltip="Cadastrar nova secretaria ou departamento na igreja"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- STATS CARDS -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div class="surface-card p-4 rounded-xl border border-surface shadow-xs flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+        ⛪
+      </div>
+      <div>
+        <div class="text-lg font-black text-surface-900 leading-tight">8</div>
+        <div class="text-[11px] font-bold text-muted-color">Presbíteros (Conselho)</div>
+      </div>
+    </div>
+
+    <div class="surface-card p-4 rounded-xl border border-surface shadow-xs flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center text-xl shrink-0">
+        🛡️
+      </div>
+      <div>
+        <div class="text-lg font-black text-surface-900 leading-tight">10</div>
+        <div class="text-[11px] font-bold text-muted-color">Diáconos (Junta)</div>
+      </div>
+    </div>
+
+    <div class="surface-card p-4 rounded-xl border border-surface shadow-xs flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center text-xl shrink-0">
+        📂
+      </div>
+      <div>
+        <div class="text-lg font-black text-surface-900 leading-tight">{{ secretarias().length }}</div>
+        <div class="text-[11px] font-bold text-muted-color">Secretarias Ativas</div>
+      </div>
+    </div>
+
+    <div class="surface-card p-4 rounded-xl border border-surface shadow-xs flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center text-xl shrink-0">
+        👥
+      </div>
+      <div>
+        <div class="text-lg font-black text-surface-900 leading-tight">{{ sociedades().length }}</div>
+        <div class="text-[11px] font-bold text-muted-color">Sociedades Eleitas</div>
+      </div>
+    </div>
+
+    <div class="surface-card p-4 rounded-xl border border-surface shadow-xs flex items-center gap-3 col-span-2 md:col-span-1">
+      <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center text-xl shrink-0">
+        🎓
+      </div>
+      <div>
+        <div class="text-lg font-black text-surface-900 leading-tight">14</div>
+        <div class="text-[11px] font-bold text-muted-color">Professores EBD</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVEGAÇÃO DE ABAS -->
+  <div class="flex gap-2 border-b border-surface overflow-x-auto pb-1">
+    <button
+      type="button"
+      (click)="activeTab = 'secretarias'"
+      [class]="'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition-colors flex items-center gap-2 border-b-2 ' +
+        (activeTab === 'secretarias' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-color hover:text-surface-900')"
+    >
+      <span>📂</span>
+      <span>Secretarias & Ministérios</span>
+      <p-tag [value]="secretarias().length.toString()" severity="success" styleClass="text-[10px]"></p-tag>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab = 'sociedades'"
+      [class]="'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition-colors flex items-center gap-2 border-b-2 ' +
+        (activeTab === 'sociedades' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-color hover:text-surface-900')"
+    >
+      <span>👥</span>
+      <span>Sociedades Internas (Diretorias)</span>
+      <p-tag [value]="sociedades().length.toString()" severity="info" styleClass="text-[10px]"></p-tag>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab = 'oficiais'"
+      [class]="'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition-colors flex items-center gap-2 border-b-2 ' +
+        (activeTab === 'oficiais' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-color hover:text-surface-900')"
+    >
+      <span>⛪</span>
+      <span>Conselho & Diaconato</span>
+      <p-tag [value]="oficiais().length.toString()" severity="warn" styleClass="text-[10px]"></p-tag>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab = 'professores'"
+      [class]="'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition-colors flex items-center gap-2 border-b-2 ' +
+        (activeTab === 'professores' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-color hover:text-surface-900')"
+    >
+      <span>🎓</span>
+      <span>Professores da EBD</span>
+      <p-tag value="14" severity="secondary" styleClass="text-[10px]"></p-tag>
+    </button>
+  </div>
+
+  <!-- CONTEÚDO 1: SECRETARIAS E MINISTÉRIOS (CRIÁVEIS DINAMICAMENTE) -->
+  @if (activeTab === 'secretarias') {
+    <div class="space-y-4">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="text-base font-black text-surface-900">Secretarias, Ministérios & Departamentos Locais</h2>
+          <p class="text-xs text-muted-color">Cada igreja local define suas próprias secretarias (Sonoplastia, Multimídia, Eventos, Missões, Louvor, etc.) com líderes e equipes responsáveis.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (sec of secretarias(); track sec.id) {
+          <div class="surface-card p-5 rounded-2xl border border-surface shadow-xs flex flex-col justify-between hover:border-surface-300 transition-all">
+            <div>
+              <div class="flex items-start gap-3.5 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center text-2xl shrink-0 shadow-xs">
+                  {{ sec.icon }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-black text-surface-900 leading-snug truncate">{{ sec.name }}</h3>
+                  <div class="text-xs font-bold text-primary mt-0.5">Líder: {{ sec.leader }}</div>
+                  <div class="text-[11px] text-muted-color">Vice: {{ sec.vice || 'Não informado' }}</div>
+                </div>
+              </div>
+
+              <p class="text-xs text-muted-color line-clamp-2 min-h-[32px] mb-3 leading-relaxed">
+                {{ sec.desc }}
+              </p>
+
+              <!-- EQUIPE DE RESPONSÁVEIS -->
+              <div class="bg-surface-ground p-3 rounded-xl border border-surface mb-3">
+                <div class="flex items-center justify-between text-[11px] font-bold text-muted-color uppercase tracking-wider mb-2">
+                  <span>Equipe de Responsáveis ({{ sec.team.length }})</span>
+                  <button type="button" (click)="openManageTeam(sec)" class="text-primary hover:underline cursor-pointer">
+                    Gerenciar
+                  </button>
+                </div>
+
+                <div class="flex flex-wrap gap-1.5">
+                  @for (m of sec.team; track m.name) {
+                    <button
+                      type="button"
+                      (click)="openFichaCadastral(m.name)"
+                      class="px-2 py-1 bg-surface-card rounded-md border border-surface text-[11px] font-semibold text-surface-700 flex items-center gap-1.5 hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                      [pTooltip]="'Ver Ficha Cadastral de ' + m.name + ' (' + m.role + ')'"
+                    >
+                      <i class="pi pi-user text-[10px]"></i>
+                      <span class="max-w-[120px] truncate">{{ m.name }}</span>
+                      <span class="text-primary text-[10px] font-bold">({{ m.role }})</span>
+                    </button>
+                  } @empty {
+                    <div class="text-[11px] text-muted-color italic py-1">Nenhum integrante adicionado ainda.</div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- AÇÕES DO CARD -->
+            <div class="flex items-center gap-2 pt-3 border-t border-surface">
+              <p-button
+                icon="pi pi-whatsapp"
+                label="WhatsApp"
+                severity="success"
+                [outlined]="true"
+                styleClass="flex-1 text-xs"
+                (onClick)="openWhatsApp(sec.leader, sec.leaderPhone)"
+              ></p-button>
+
+              <p-button
+                icon="pi pi-users"
+                label="Gerenciar Equipe"
+                severity="primary"
+                styleClass="flex-1 text-xs font-bold"
+                (onClick)="openManageTeam(sec)"
+              ></p-button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- CONTEÚDO 2: SOCIEDADES INTERNAS (DIRETORIAS) -->
+  @if (activeTab === 'sociedades') {
+    <div class="space-y-4">
+      <div>
+        <h2 class="text-base font-black text-surface-900">Sociedades Internas da Igreja Local</h2>
+        <p class="text-xs text-muted-color">Diretoria anual eleita pela assembleia de cada sociedade (SAF, UPH, UMP, UPA, UCP) com Presbítero Conselheiro designado pelo Conselho.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (soc of sociedades(); track soc.id) {
+          <div class="surface-card p-5 rounded-2xl border border-surface shadow-xs flex flex-col justify-between hover:border-surface-300 transition-all">
+            <div>
+              <div class="flex items-start gap-3.5 mb-3">
+                <div [style.background]="soc.color" class="w-12 h-12 rounded-xl text-white flex items-center justify-center text-2xl shrink-0 shadow-xs">
+                  {{ soc.icon }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-black text-surface-900 leading-snug">{{ soc.name }}</h3>
+                  <div [style.color]="soc.color" class="text-xs font-bold">{{ soc.badge }}</div>
+                  <div class="text-[11px] text-muted-color italic">"{{ soc.moto }}"</div>
+                </div>
+              </div>
+
+              <!-- DIRETORIA ELEITA -->
+              <div class="bg-surface-ground p-3 rounded-xl border border-surface space-y-1.5 text-xs mb-3">
+                <div class="flex items-center justify-between text-[11px] font-bold text-muted-color uppercase tracking-wider pb-1 border-b border-surface">
+                  <span>Diretoria Eleita 2026</span>
+                  <p-tag [value]="soc.membersCount + ' Sócios'" severity="secondary" styleClass="text-[10px]"></p-tag>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-surface-900">👑 {{ soc.board.presidente }}</span>
+                  <p-tag value="Presidente" severity="success" styleClass="text-[10px]"></p-tag>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-surface-700">🥈 {{ soc.board.vice }}</span>
+                  <span class="text-[10px] text-muted-color font-bold">Vice</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-surface-700">📝 {{ soc.board.sec1 }}</span>
+                  <span class="text-[10px] text-muted-color font-bold">1ª Secretária</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-surface-700">💰 {{ soc.board.tesoureira }}</span>
+                  <span class="text-[10px] text-muted-color font-bold">Tesoureira</span>
+                </div>
+                <div class="pt-1.5 border-t border-surface flex items-center justify-between text-[11px]">
+                  <span class="text-muted-color">Presbítero Conselheiro:</span>
+                  <span class="font-bold text-blue-700">{{ soc.conselheiro }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-surface">
+              <p-button
+                icon="pi pi-list"
+                label="Ver Detalhes da Diretoria"
+                [outlined]="true"
+                styleClass="w-full text-xs font-bold"
+                (onClick)="openSociedadeDetail(soc)"
+              ></p-button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- CONTEÚDO 3: OFICIAIS (CONSELHO & DIACONATO) -->
+  @if (activeTab === 'oficiais') {
+    <div class="space-y-4">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="text-base font-black text-surface-900">Conselho da Igreja & Junta Diaconal</h2>
+          <p class="text-xs text-muted-color">Pastores, Presbíteros Regentes e Diáconos eleitos pela assembleia com mandatos de 5 anos conforme a Constituição da IPB.</p>
+        </div>
+        <p-button
+          icon="pi pi-plus"
+          label="Nomear Oficial"
+          severity="primary"
+          (onClick)="openNovoOficial()"
+        ></p-button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (of of oficiais(); track of.name) {
+          <div class="surface-card p-5 rounded-2xl border border-surface shadow-xs flex flex-col justify-between hover:border-surface-300 transition-all">
+            <div>
+              <div class="flex items-start gap-3.5 mb-3">
+                <div [style.background]="of.bg" class="w-12 h-12 rounded-xl text-white flex items-center justify-center text-xl shrink-0 shadow-xs">
+                  ⛪
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-black text-surface-900 leading-snug">{{ of.name }}</h3>
+                  <div [style.color]="of.bg" class="text-xs font-bold">{{ of.role }}</div>
+                  <div class="text-[11px] text-muted-color">{{ of.organ }} • Mandato: {{ of.mandate }}</div>
+                </div>
+              </div>
+
+              <div class="bg-surface-ground p-3 rounded-xl border border-surface space-y-1.5 text-xs mb-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-muted-color">Status Eclesiástico:</span>
+                  <p-tag
+                    [value]="of.status === 'Ativo' ? 'Em Exercício Ativo' : 'Mandato a Renovar'"
+                    [severity]="of.status === 'Ativo' ? 'success' : 'warn'"
+                    styleClass="text-[10px] font-bold"
+                  ></p-tag>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-muted-color">Contato:</span>
+                  <span class="font-bold text-surface-900">{{ of.phone }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-3 border-t border-surface">
+              <p-button
+                icon="pi pi-whatsapp"
+                label="WhatsApp"
+                severity="success"
+                [outlined]="true"
+                styleClass="flex-1 text-xs"
+                (onClick)="openWhatsApp(of.name, of.phone)"
+              ></p-button>
+
+              <p-button
+                icon="pi pi-file-edit"
+                label="Ficha Cadastral"
+                severity="secondary"
+                [outlined]="true"
+                styleClass="flex-1 text-xs font-bold"
+                (onClick)="openFichaCadastral(of.name)"
+              ></p-button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- CONTEÚDO 4: PROFESSORES DA EBD -->
+  @if (activeTab === 'professores') {
+    <div class="space-y-4">
+      <div>
+        <h2 class="text-base font-black text-surface-900">Corpo Docente da Escola Bíblica Dominical</h2>
+        <p class="text-xs text-muted-color">Superintendência e professores designados anualmente pelo Conselho da Igreja para cada classe de ensino bíblico.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        @for (prof of professores(); track prof.classe) {
+          <div class="surface-card p-5 rounded-2xl border border-surface shadow-xs flex flex-col justify-between hover:border-surface-300 transition-all">
+            <div>
+              <div class="flex items-start gap-3.5 mb-3">
+                <div [style.background]="prof.color" class="w-12 h-12 rounded-xl text-white flex items-center justify-center text-xl shrink-0 shadow-xs">
+                  {{ prof.icon }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-black text-surface-900 leading-snug">{{ prof.classe }}</h3>
+                  <div [style.color]="prof.color" class="text-xs font-bold">{{ prof.subtitulo }}</div>
+                  <div class="text-[11px] text-muted-color">{{ prof.alunosCount }} Alunos Matriculados</div>
+                </div>
+              </div>
+
+              <div class="bg-surface-ground p-3 rounded-xl border border-surface space-y-1.5 text-xs mb-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-muted-color">Professor Titular:</span>
+                  <span class="font-bold text-surface-900">{{ prof.titular }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-muted-color">Professor Auxiliar:</span>
+                  <span class="font-bold text-surface-700">{{ prof.auxiliar }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-surface">
+              <p-button
+                icon="pi pi-file-edit"
+                label="Ficha Cadastral do Titular"
+                severity="secondary"
+                [outlined]="true"
+                styleClass="w-full text-xs font-bold"
+                (onClick)="openFichaCadastral(prof.titular)"
+              ></p-button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: GERENCIAR EQUIPE COM BUSCA NO CADASTRO DE MEMBROS                  -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="manageTeamDialog"
+  [modal]="true"
+  [style]="{ width: '95vw', maxWidth: '680px' }"
+  header="Gerenciar Equipe"
+>
+  @if (currentSecretaria) {
+    <div class="space-y-4">
+      <div>
+        <h3 class="text-base font-black text-surface-900 flex items-center gap-2">
+          <span>{{ currentSecretaria.icon }}</span>
+          <span>{{ currentSecretaria.name }}</span>
+        </h3>
+        <p class="text-xs text-muted-color mt-0.5">Líder Titular: {{ currentSecretaria.leader }} ({{ currentSecretaria.leaderPhone }})</p>
+      </div>
+
+      <!-- LISTA DE INTEGRANTES ATUAIS -->
+      <div>
+        <div class="text-xs font-bold uppercase tracking-wider text-muted-color mb-2">
+          Integrantes Atuais da Equipe ({{ currentSecretaria.team.length }})
+        </div>
+
+        <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+          @for (m of currentSecretaria.team; track $index) {
+            <div class="p-3 bg-surface-ground border border-surface rounded-xl flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                  <i class="pi pi-user"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-surface-900 truncate">{{ m.name }}</div>
+                  <div class="text-[11px] text-primary font-bold">Função: {{ m.role }}</div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <p-button
+                  icon="pi pi-file-edit"
+                  label="Ficha / Dossiê"
+                  size="small"
+                  [outlined]="true"
+                  severity="secondary"
+                  (onClick)="openFichaCadastral(m.name)"
+                  pTooltip="Abrir Ficha Cadastral oficial deste membro"
+                ></p-button>
+
+                <p-button
+                  icon="pi pi-trash"
+                  size="small"
+                  severity="danger"
+                  [outlined]="true"
+                  (onClick)="removeMemberFromTeam($index)"
+                  pTooltip="Remover integrante da equipe"
+                ></p-button>
+              </div>
+            </div>
+          } @empty {
+            <div class="p-4 text-center text-xs text-muted-color bg-surface-ground rounded-xl border border-dashed border-surface">
+              Nenhum integrante adicionado a esta equipe ainda.
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- FORMULÁRIO: BUSCA AUTOMÁTICA DENTRO DO CADASTRO DE MEMBROS -->
+      <div class="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3">
+        <div class="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-1.5">
+          <i class="pi pi-user-plus"></i>
+          <span>Adicionar Integrante Buscando no Cadastro</span>
+        </div>
+
+        <!-- CAMPO DE BUSCA COM AUTOCOMPLETE -->
+        <div>
+          <label class="block text-xs font-bold text-surface-700 mb-1">Buscar Membro Cadastrado na Igreja *</label>
+          <div class="relative">
+            <p-iconfield styleClass="w-full">
+              <p-inputicon styleClass="pi pi-search text-xs" />
+              <input
+                pInputText
+                type="text"
+                [(ngModel)]="searchMemberQuery"
+                placeholder="Digite o nome ou nº do ROL do membro..."
+                class="w-full text-xs"
+              />
+            </p-iconfield>
+
+            <!-- DROPDOWN DE SUGESTÕES -->
+            @if (searchMemberQuery && !selectedMember) {
+              <div class="absolute left-0 right-0 top-full mt-1 bg-surface-card border border-surface rounded-xl shadow-lg max-h-48 overflow-y-auto z-50 divide-y divide-surface">
+                @for (sug of filteredMembers(); track sug.id) {
+                  <div
+                    (click)="selectMemberForTeam(sug)"
+                    class="p-2.5 hover:bg-surface-ground cursor-pointer flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div class="font-bold text-surface-900">{{ sug.full_name }}</div>
+                      <div class="text-[10px] text-muted-color">ROL nº {{ sug.roll_number || 'S/N' }} • {{ sug.phone || 'Sem telefone' }}</div>
+                    </div>
+                    <span class="text-primary font-bold text-[11px]">Selecionar</span>
+                  </div>
+                } @empty {
+                  <div class="p-3 text-center text-xs text-muted-color">
+                    Nenhum membro encontrado com este nome no cadastro.
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <small class="text-[10px] text-muted-color mt-1 block">
+            💡 Busca automática em tempo real entre os membros comungantes cadastrados.
+          </small>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-surface-700 mb-1">Função / Atribuição na Equipe *</label>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="memberRole"
+              placeholder="Ex: Operador de Mesa, Câmera, Recepção..."
+              class="w-full text-xs"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-surface-700 mb-1">Telefone / WhatsApp</label>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="memberPhone"
+              placeholder="(11) 98765-4321"
+              class="w-full text-xs"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-1">
+          <p-button
+            icon="pi pi-check"
+            label="Confirmar e Adicionar à Equipe"
+            severity="primary"
+            size="small"
+            styleClass="text-xs font-bold"
+            (onClick)="addMemberToTeam()"
+          ></p-button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" severity="secondary" (onClick)="manageTeamDialog = false"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL: FICHA CADASTRAL / DOSSIÊ DO MEMBRO (PRONTO PARA IMPRESSÃO)         -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="fichaCadastralDialog"
+  [modal]="true"
+  [style]="{ width: '95vw', maxWidth: '820px' }"
+  header="Ficha Cadastral do Membro"
+>
+  @if (selectedFichaMember) {
+    <div id="fichaCadastralSheet" class="space-y-4 p-2 bg-white text-surface-900">
+      
+      <!-- TIMBRE OFICIAL IPB -->
+      <div class="text-center pb-3 border-b-2 border-emerald-900">
+        <div class="w-12 h-12 mx-auto mb-1 bg-emerald-800 text-white rounded-full flex items-center justify-center text-xl font-bold">
+          ⛪
+        </div>
+        <div class="text-xs font-bold uppercase tracking-wider text-emerald-900">Igreja Presbiteriana do Brasil</div>
+        <h2 class="text-lg font-black text-surface-900">Igreja Presbiteriana em Campo Verde</h2>
+        <div class="text-[11px] text-muted-color font-semibold">Presbitério de Vitória • Sínodo Central</div>
+        <div class="mt-2 inline-block px-5 py-1 bg-emerald-800 text-white font-extrabold uppercase tracking-widest rounded text-xs">
+          Ficha Cadastral
+        </div>
+      </div>
+
+      <!-- SELETOR DE OUTRO MEMBRO (OCULTO NA IMPRESSÃO) -->
+      <div class="p-2.5 bg-surface-ground border border-surface rounded-xl flex items-center justify-between gap-3 print:hidden">
+        <span class="text-xs font-bold text-surface-700">Visualizando dados de:</span>
+        <select
+          class="text-xs font-bold p-1.5 border border-surface rounded-lg bg-surface-card text-surface-900"
+          (change)="openFichaCadastral($any($event.target).value)"
+        >
+          @for (m of membrosCadastrados(); track m.id) {
+            <option [value]="m.full_name" [selected]="m.full_name === selectedFichaMember.full_name">
+              {{ m.full_name }} (ROL nº {{ m.roll_number || 'S/N' }})
+            </option>
+          }
+        </select>
+      </div>
+
+      <!-- SEÇÃO I: IDENTIFICAÇÃO E DADOS CIVIS -->
+      <div>
+        <div class="bg-surface-ground border-l-4 border-emerald-700 px-3 py-1 text-xs font-bold uppercase tracking-wider text-surface-900 mb-2">
+          I. Identificação do Membro e Dados Civis
+        </div>
+        <table class="w-full text-xs border border-surface border-collapse">
+          <tbody>
+            <tr>
+              <td class="p-2 border border-surface w-1/2">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Nome Completo</span>
+                <span class="font-black text-sm text-emerald-950">{{ selectedFichaMember.full_name }}</span>
+              </td>
+              <td class="p-2 border border-surface w-1/4">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Nº do ROL Oficial</span>
+                <span class="font-mono font-black text-sm text-emerald-700">#{{ selectedFichaMember.roll_number || 'S/N' }}</span>
+              </td>
+              <td class="p-2 border border-surface w-1/4">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Situação Eclesiástica</span>
+                <span class="font-bold text-emerald-700">● {{ selectedFichaMember.canonical_status || 'Comungante' }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-surface">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">CPF</span>
+                <span class="font-bold">{{ selectedFichaMember.cpf || 'Não informado' }}</span>
+              </td>
+              <td class="p-2 border border-surface">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Data de Nascimento</span>
+                <span class="font-bold">{{ selectedFichaMember.birth_date ? (selectedFichaMember.birth_date | date: 'dd/MM/yyyy') : 'Não informada' }}</span>
+              </td>
+              <td class="p-2 border border-surface">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Estado Civil</span>
+                <span class="font-bold">{{ selectedFichaMember.marital_status || 'Não informado' }}</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-surface">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Cônjuge</span>
+                <span class="font-bold">{{ selectedFichaMember.spouse_name || 'Nenhum / Não associado' }}</span>
+              </td>
+              <td colspan="2" class="p-2 border border-surface">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Telefone / WhatsApp</span>
+                <span class="font-bold">{{ selectedFichaMember.phone || 'Não informado' }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SEÇÃO II: REGISTROS ECLESIÁSTICOS -->
+      <div>
+        <div class="bg-surface-ground border-l-4 border-emerald-700 px-3 py-1 text-xs font-bold uppercase tracking-wider text-surface-900 mb-2">
+          II. Registros Eclesiásticos e Histórico Sacramental
+        </div>
+        <table class="w-full text-xs border border-surface border-collapse">
+          <tbody>
+            <tr>
+              <td class="p-2 border border-surface w-1/2">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Modo e Data de Admissão</span>
+                <span class="font-bold">{{ selectedFichaMember.reception_type || 'Profissão de Fé e Batismo' }} ({{ selectedFichaMember.reception_date || 'Registrada' }})</span>
+              </td>
+              <td class="p-2 border border-surface w-1/4">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Sociedade Interna</span>
+                <span class="font-bold">{{ selectedFichaMember.sociedade || 'Geral' }}</span>
+              </td>
+              <td class="p-2 border border-surface w-1/4">
+                <span class="block text-[10px] font-bold text-muted-color uppercase">Classe da EBD</span>
+                <span class="font-bold">{{ selectedFichaMember.classeEbd || 'Adultos' }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SEÇÃO III: CARGOS, LIDERANÇAS E EQUIPES ATUAIS (MINISTÉRIOS) -->
+      <div>
+        <div class="bg-surface-ground border-l-4 border-emerald-700 px-3 py-1 text-xs font-bold uppercase tracking-wider text-surface-900 mb-2">
+          III. Cargos, Lideranças e Equipes de Ministérios Atuais
+        </div>
+
+        @if (getMemberRoles(selectedFichaMember.full_name).length > 0) {
+          <div class="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
+            @for (r of getMemberRoles(selectedFichaMember.full_name); track $index) {
+              <div class="flex items-center justify-between gap-3 text-xs pb-2 border-b border-emerald-100 last:border-b-0 last:pb-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">{{ r.icone }}</span>
+                  <div>
+                    <div class="font-black text-emerald-950">{{ r.orgao }}</div>
+                    <div class="text-[11px] text-surface-700">Função: <strong>{{ r.funcao }}</strong></div>
+                  </div>
+                </div>
+                <p-tag [value]="r.tipo" severity="success" styleClass="text-[10px]"></p-tag>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="p-3 bg-surface-ground border border-dashed border-surface rounded-xl text-center text-xs text-muted-color">
+            Membro comungante ativo sem cargos ou equipes específicas vinculadas no momento.
+          </div>
+        }
+        <small class="text-[10px] text-muted-color mt-1 block">
+          * Informações sincronizadas automaticamente com os órgãos, secretarias e sociedades internas da Igreja.
+        </small>
+      </div>
+
+      <!-- TERMO DE CERTIFICAÇÃO E ASSINATURAS -->
+      <div class="text-[11px] text-surface-600 text-justify pt-2">
+        Certifico para os devidos fins de direito que os dados acima transcritos conferem fielmente com o Livro de Atas e o Rol de Membros arquivados na Secretaria desta Igreja, encontrando-se o(a) irmão(ã) em plena comunhão.
+      </div>
+
+      <div class="grid grid-cols-2 gap-8 text-center pt-8">
+        <div>
+          <div class="border-t border-surface-900 pt-1 text-xs font-bold text-surface-900">
+            Rev. Dr. Carlos Alberto Silveira
+          </div>
+          <div class="text-[10px] text-muted-color">Pastor Titular — Presidente do Conselho</div>
+        </div>
+        <div>
+          <div class="border-t border-surface-900 pt-1 text-xs font-bold text-surface-900">
+            Pb. Eduardo Ribeiro Meirelles
+          </div>
+          <div class="text-[10px] text-muted-color">Secretário do Conselho da Igreja</div>
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" severity="secondary" (onClick)="fichaCadastralDialog = false"></p-button>
+    <p-button label="Imprimir Ficha Cadastral" icon="pi pi-print" severity="primary" (onClick)="imprimirFicha()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL: NOVA SECRETARIA / MINISTÉRIO                                       -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="novaSecretariaDialog"
+  [modal]="true"
+  [style]="{ width: '95vw', maxWidth: '580px' }"
+  header="Criar Nova Secretaria / Ministério"
+>
+  <div class="space-y-3">
+    <div>
+      <label class="block text-xs font-bold text-surface-700 mb-1">Nome da Secretaria / Ministério *</label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="novaSecretariaForm.name"
+        placeholder="Ex: Secretaria de Sonoplastia, Eventos, Missões..."
+        class="w-full text-xs"
+      />
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-surface-700 mb-1">Finalidade / Descrição</label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="novaSecretariaForm.desc"
+        placeholder="Descreva as responsabilidades desta secretaria na igreja..."
+        class="w-full text-xs"
+      />
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Líder / Secretário(a) Titular *</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="novaSecretariaForm.leader"
+          placeholder="Ex: Diác. Gabriel Rocha"
+          class="w-full text-xs"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Telefone / WhatsApp</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="novaSecretariaForm.leaderPhone"
+          placeholder="(11) 98765-4321"
+          class="w-full text-xs"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Vice-Líder / Co-Responsável</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="novaSecretariaForm.vice"
+          placeholder="Ex: Rafael Torres"
+          class="w-full text-xs"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Ícone</label>
+        <select
+          [(ngModel)]="novaSecretariaForm.icon"
+          class="w-full text-xs p-2 border border-surface rounded-lg bg-surface-card"
+        >
+          <option value="🎛️">🎛️ Sonoplastia / Áudio</option>
+          <option value="📽️">📽️ Multimídia / Transmissão</option>
+          <option value="🎉">🎉 Eventos & Recepção</option>
+          <option value="🌍">🌍 Missões & Evangelismo</option>
+          <option value="🎵">🎵 Música & Louvor</option>
+          <option value="🤝">🤝 Ação Social & Diaconia</option>
+          <option value="🏛️">🏛️ Patrimônio & Zeladoria</option>
+          <option value="💻">💻 Comunicação & Redes</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" (onClick)="novaSecretariaDialog = false"></p-button>
+    <p-button label="Salvar Secretaria" icon="pi pi-check" severity="primary" (onClick)="salvarNovaSecretaria()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DETALHES DA DIRETORIA DA SOCIEDADE                                 -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="sociedadeDetailDialog"
+  [modal]="true"
+  [style]="{ width: '95vw', maxWidth: '520px' }"
+  header="Diretoria da Sociedade Interna"
+>
+  @if (selectedSociedade) {
+    <div class="space-y-4">
+      <div class="flex items-center gap-3 pb-3 border-b border-surface">
+        <div [style.background]="selectedSociedade.color" class="w-12 h-12 rounded-xl text-white flex items-center justify-center text-2xl font-bold shrink-0">
+          {{ selectedSociedade.icon }}
+        </div>
+        <div>
+          <h3 class="text-sm font-black text-surface-900">{{ selectedSociedade.name }} ({{ selectedSociedade.sigla }})</h3>
+          <div [style.color]="selectedSociedade.color" class="text-xs font-bold">{{ selectedSociedade.badge }}</div>
+          <div class="text-[11px] text-muted-color italic">"{{ selectedSociedade.moto }}"</div>
+        </div>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div class="flex justify-between p-2 bg-surface-ground rounded-lg">
+          <span class="text-muted-color">Presidente:</span>
+          <strong class="text-surface-900">{{ selectedSociedade.board.presidente }}</strong>
+        </div>
+        <div class="flex justify-between p-2 bg-surface-ground rounded-lg">
+          <span class="text-muted-color">Vice-Presidente:</span>
+          <strong class="text-surface-900">{{ selectedSociedade.board.vice }}</strong>
+        </div>
+        <div class="flex justify-between p-2 bg-surface-ground rounded-lg">
+          <span class="text-muted-color">1ª Secretária(o):</span>
+          <strong class="text-surface-900">{{ selectedSociedade.board.sec1 }}</strong>
+        </div>
+        <div class="flex justify-between p-2 bg-surface-ground rounded-lg">
+          <span class="text-muted-color">2ª Secretária(o):</span>
+          <strong class="text-surface-900">{{ selectedSociedade.board.sec2 }}</strong>
+        </div>
+        <div class="flex justify-between p-2 bg-surface-ground rounded-lg">
+          <span class="text-muted-color">Tesoureira(o):</span>
+          <strong class="text-surface-900">{{ selectedSociedade.board.tesoureira }}</strong>
+        </div>
+        <div class="flex justify-between p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-900">
+          <span class="font-bold">Presbítero Conselheiro (Conselho):</span>
+          <strong class="font-black">{{ selectedSociedade.conselheiro }}</strong>
+        </div>
+      </div>
+
+      <div class="p-3 bg-surface-ground border border-surface rounded-xl text-[11px] text-muted-color">
+        📌 <strong>Conformidade Estatutária IPB:</strong> A eleição da diretoria foi realizada em assembleia própria da sociedade e homologada pelo Conselho da Igreja em Ata.
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" severity="secondary" (onClick)="sociedadeDetailDialog = false"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL: NOMEAR OFICIAL                                                     -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="novoOficialDialog"
+  [modal]="true"
+  [style]="{ width: '95vw', maxWidth: '520px' }"
+  header="Nomear Oficial da Igreja Local"
+>
+  <div class="space-y-3">
+    <div>
+      <label class="block text-xs font-bold text-surface-700 mb-1">Nome do Oficial *</label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="novoOficialForm.name"
+        placeholder="Ex: Pb. Marcos Silveira"
+        class="w-full text-xs"
+      />
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Cargo de Oficial *</label>
+        <select
+          [(ngModel)]="novoOficialForm.role"
+          class="w-full text-xs p-2 border border-surface rounded-lg bg-surface-card"
+        >
+          <option value="Pastor Titular (Ministro)">Pastor Titular (Ministro)</option>
+          <option value="Pastor Auxiliar">Pastor Auxiliar</option>
+          <option value="Presbítero Regente">Presbítero Regente</option>
+          <option value="Diácono">Diácono</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Órgão / Função *</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="novoOficialForm.organ"
+          placeholder="Ex: Conselho da Igreja, Junta..."
+          class="w-full text-xs"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Mandato (5 Anos CI/IPB)</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="novoOficialForm.mandate"
+          placeholder="Ex: 2024 a 2029"
+          class="w-full text-xs"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-surface-700 mb-1">Telefone / WhatsApp</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="novoOficialForm.phone"
+          placeholder="(11) 98765-4321"
+          class="w-full text-xs"
+        />
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" (onClick)="novoOficialDialog = false"></p-button>
+    <p-button label="Salvar Oficial" icon="pi pi-check" severity="primary" (onClick)="salvarNovoOficial()"></p-button>
+  </ng-template>
+</p-dialog>

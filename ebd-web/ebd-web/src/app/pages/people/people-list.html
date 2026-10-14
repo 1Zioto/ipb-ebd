@@ -399,14 +399,14 @@
             {{ f.igreja || 'Igreja Presbiteriana em Campo Verde' }}
           </h2>
           <div class="ipb-timbre-jurisdicao">
-            {{ f.presbiterio || 'Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)' }}
+            {{ f.presbiterio || 'Presbitério de Vitória • Sínodo Central' }}
           </div>
           <div class="ipb-faixa-chancela">
-            Ficha Cadastral Canônica e Histórico Ministerial
+            Ficha Cadastral
           </div>
         </div>
 
-        <!-- Seção I: Identificação Canônica & Registro Civil -->
+        <!-- Seção I: Identificação do Membro e Dados Civis -->
         <div class="ipb-secao-titulo">
           <span>I. Identificação do Membro e Dados Civis</span>
         </div>
@@ -422,7 +422,7 @@
                 <span class="ipb-val font-mono" style="font-weight: 800; color: #064e3b;">{{ membro.roll_number || 'S/N' }}</span>
               </td>
               <td style="width: 30%;">
-                <span class="ipb-label">Situação Canônica</span>
+                <span class="ipb-label">Situação do Membro</span>
                 <span class="ipb-badge-canonico">{{ getStatusBadge(membro.canonical_status).label }}</span>
               </td>
             </tr>

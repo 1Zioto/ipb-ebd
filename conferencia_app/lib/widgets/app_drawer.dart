@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/api_service.dart';
-import '../screens/home_screen.dart';
+import '../screens/conferencias_list_screen.dart';
 import '../screens/ebd/ebd_dashboard_screen.dart';
 import '../screens/ebd/classes_list_screen.dart';
 import '../screens/ebd/calendario_escalas_screen.dart';
@@ -183,7 +183,7 @@ class AppDrawer extends StatelessWidget {
             _buildMenuItem(
               context,
               icon: Icons.menu_book_outlined,
-              title: 'Rol Canônico de Membros',
+              title: 'Rol de Membros',
               selected: currentRoute == 'rol_canonico',
               onTap: () {
                 Navigator.of(context).pop();
@@ -215,7 +215,7 @@ class AppDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  MaterialPageRoute(builder: (_) => const ConferenciasListScreen()),
                 );
               },
             ),

@@ -56,7 +56,7 @@ export class CartasTransferenciaPage implements OnInit {
   newCarta: Partial<CartaTransferencia> = {
     tipo: 'Emitida',
     status: 'Ativa',
-    igreja_origem: 'Igreja Presbiteriana em Campo Verde - MT',
+    igreja_origem: 'Igreja Presbiteriana de Campo Verde - Cariacica/ES',
     igreja_destino: '',
     data_emissao: new Date().toISOString().substring(0, 10),
     data_validade: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
@@ -103,7 +103,7 @@ export class CartasTransferenciaPage implements OnInit {
       numero_carta: `CT-${String(seq).padStart(3, '0')}/${ano}`,
       tipo: 'Emitida',
       status: 'Ativa',
-      igreja_origem: 'Igreja Presbiteriana em Campo Verde - MT',
+      igreja_origem: 'Igreja Presbiteriana de Campo Verde - Cariacica/ES',
       igreja_destino: '',
       data_emissao: new Date().toISOString().substring(0, 10),
       data_validade: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),

@@ -9,7 +9,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Institution, InstitutionBreadcrumb, InstitutionLinkRequest, InstitutionSubordinateSummary } from '../../core/models';
+import { DialogModule } from 'primeng/dialog';
+import { Institution, InstitutionBreadcrumb, InstitutionLinkRequest, InstitutionSubordinateSummary, IpbCatalogItem } from '../../core/models';
 import { InstitutionService } from '../../core/institution.service';
 import { InstitutionBreadcrumbComponent } from '../../layout/institution-breadcrumb';
 import { InstitutionContextService } from '../../core/institution-context.service';
@@ -17,7 +18,7 @@ import { InstitutionContextService } from '../../core/institution-context.servic
 @Component({
   selector: 'app-institution-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, InstitutionBreadcrumbComponent, ButtonModule, TableModule, TagModule, InputTextModule, TextareaModule, MessageModule, CheckboxModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, InstitutionBreadcrumbComponent, ButtonModule, TableModule, TagModule, InputTextModule, TextareaModule, MessageModule, CheckboxModule, DialogModule],
   templateUrl: './institution-detail.html',
 })
 export class InstitutionDetailPage implements OnInit {
@@ -32,6 +33,7 @@ export class InstitutionDetailPage implements OnInit {
   activeTab = signal<'general' | 'subordinates' | 'link_requests' | 'transfer'>('general');
 
   institutionData = signal<Institution | null>(null);
+  breadcrumbsList = signal<InstitutionBreadcrumb[]>([]);
   subordinatesList = signal<InstitutionSubordinateSummary[]>([]);
   historyList = signal<any[]>([]);
   parentOptions = signal<Institution[]>([]);
@@ -47,6 +49,22 @@ export class InstitutionDetailPage implements OnInit {
   linkReason = signal<string>('');
   submittingLinkRequest = signal<boolean>(false);
   copiedCode = signal<boolean>(false);
+
+  // Catálogo Oficial IPB
+  catalogDialogVisible = signal<boolean>(false);
+  catalogLoading = signal<boolean>(false);
+  catalogSearchQuery = signal<string>('');
+  catalogSelectedUf = signal<string>('');
+  catalogSelectedTipo = signal<string>('');
+  catalogItems = signal<IpbCatalogItem[]>([]);
+  catalogTotal = signal<number>(0);
+  catalogCurrentPage = signal<number>(1);
+  selectedCatalogItem = signal<IpbCatalogItem | null>(null);
+  linkingCatalog = signal<boolean>(false);
+
+  // Permissões baseadas na hierarquia (não edita e não vê métricas de níveis superiores ou iguais)
+  canEditInstitution = signal<boolean>(true);
+  canViewMetrics = signal<boolean>(true);
 
   loading = signal<boolean>(true);
   saving = signal<boolean>(false);
@@ -120,12 +138,34 @@ export class InstitutionDetailPage implements OnInit {
     this.loading.set(true);
     this.instService.get(id).subscribe({
       next: (res) => {
+        const canEdit = res.data.can_edit !== false;
+        const canMetrics = res.data.can_view_metrics !== false;
+        this.canEditInstitution.set(canEdit);
+        this.canViewMetrics.set(canMetrics);
+
         this.institutionData.set(res.data);
+        this.breadcrumbsList.set(res.breadcrumbs || []);
         this.form.patchValue(res.data as any);
+
+        if (!canEdit) {
+          this.form.disable();
+        } else {
+          this.form.enable();
+          this.form.get('code')?.disable();
+        }
+
         this.loading.set(false);
-        this.loadSubordinates(id);
-        this.loadHistory(id);
-        this.loadLinkRequests(id);
+
+        if (canMetrics) {
+          this.loadSubordinates(id);
+          this.loadHistory(id);
+          this.loadLinkRequests(id);
+        } else {
+          this.subordinatesList.set([]);
+          this.historyList.set([]);
+          this.receivedLinkRequests.set([]);
+          this.sentLinkRequests.set([]);
+        }
       },
       error: (err) => {
         this.errorMsg.set(err.error?.message || 'Erro ao carregar instituição.');
@@ -314,6 +354,11 @@ export class InstitutionDetailPage implements OnInit {
   }
 
   save(): void {
+    if (!this.canEditInstitution()) {
+      this.errorMsg.set('Você não tem permissão para editar esta instituição. Ela está acima ou no mesmo nível hierárquico da sua igreja.');
+      return;
+    }
+
     if (this.form.invalid) return;
 
     this.saving.set(true);
@@ -385,6 +430,85 @@ export class InstitutionDetailPage implements OnInit {
       congregacao: 'Congregação',
     };
     return map[type] || type;
+  }
+
+  // --- Catálogo IPB ---
+  openCatalogDialog(): void {
+    const currentName = this.institutionData()?.name || '';
+    if (!this.catalogSearchQuery()) {
+      if (currentName.includes('Campo Verde')) {
+        this.catalogSearchQuery.set('Campo Verde');
+      } else if (this.institutionData()?.city) {
+        this.catalogSearchQuery.set(this.institutionData()!.city!);
+      }
+    }
+    this.catalogDialogVisible.set(true);
+    this.selectedCatalogItem.set(null);
+    this.searchCatalog();
+  }
+
+  searchCatalog(page: number = 1): void {
+    this.catalogLoading.set(true);
+    this.catalogCurrentPage.set(page);
+
+    this.instService
+      .getCatalogoIpb({
+        q: this.catalogSearchQuery().trim(),
+        uf: this.catalogSelectedUf() || undefined,
+        tipo: this.catalogSelectedTipo() || undefined,
+        page,
+        per_page: 15,
+      })
+      .subscribe({
+        next: (res: any) => {
+          this.catalogItems.set(res.data || []);
+          this.catalogTotal.set(res.total || 0);
+          this.catalogLoading.set(false);
+        },
+        error: (err) => {
+          this.catalogLoading.set(false);
+          this.errorMsg.set('Erro ao consultar o catálogo da IPB.');
+        },
+      });
+  }
+
+  selectCatalogItem(item: IpbCatalogItem): void {
+    this.selectedCatalogItem.set(item);
+  }
+
+  confirmVincularCatalogo(): void {
+    const item = this.selectedCatalogItem();
+    const instId = this.institutionId();
+    if (!item || !instId) return;
+
+    this.linkingCatalog.set(true);
+    this.instService.vincularCatalogo(instId, item.id).subscribe({
+      next: (res) => {
+        this.linkingCatalog.set(false);
+        this.catalogDialogVisible.set(false);
+        this.selectedCatalogItem.set(null);
+        this.successMsg.set(`Instituição vinculada com sucesso à '${res.data.name}' sob a jurisdição do Presbitério e Sínodo oficiais.`);
+        this.institutionData.set(res.data);
+        this.form.patchValue({
+          name: res.data.name,
+          short_name: res.data.short_name,
+          type: res.data.type,
+          city: res.data.city,
+          state: res.data.state,
+          district: res.data.district,
+          street: res.data.street,
+          zipcode: res.data.zipcode,
+          email: res.data.email,
+          website: res.data.website,
+          phone: res.data.phone,
+        });
+        this.loadHistory(instId);
+      },
+      error: (err) => {
+        this.linkingCatalog.set(false);
+        this.errorMsg.set(err.error?.message || 'Erro ao vincular com o catálogo da IPB.');
+      },
+    });
   }
 }
 

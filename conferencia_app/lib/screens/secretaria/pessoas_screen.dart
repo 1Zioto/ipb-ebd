@@ -324,7 +324,7 @@ class _PessoasScreenState extends State<PessoasScreen> {
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                               ),
                               Text(
-                                'Atualize os dados canônicos, cadastrais e de parentesco',
+                                'Atualize os dados eclesiásticos, cadastrais e de parentesco',
                                 style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                               ),
                             ],
@@ -406,7 +406,7 @@ class _PessoasScreenState extends State<PessoasScreen> {
                           DropdownButtonFormField<String>(
                             initialValue: tipoVal,
                             decoration: InputDecoration(
-                              labelText: 'Condição Canônica',
+                              labelText: 'Condição do Membro',
                               prefixIcon: const Icon(Icons.church_rounded, size: 20, color: Color(0xFF047857)),
                               filled: true,
                               fillColor: const Color(0xFFF8FAFC),
@@ -594,14 +594,14 @@ class _PessoasScreenState extends State<PessoasScreen> {
             child: ListView(
               padding: const EdgeInsets.all(18),
               children: [
-                // CARD 1: Dossiê Canônico (IPB)
+                // CARD 1: Registros Eclesiásticos (IPB)
                 _buildInfoCard(
-                  title: 'ASSENTAMENTOS CANÔNICOS (IPB)',
+                  title: 'REGISTROS ECLESIÁSTICOS (IPB)',
                   icon: Icons.verified_user_rounded,
                   iconColor: const Color(0xFF047857),
                   children: [
                     _buildInfoRow('Livro do ROL Oficial:', 'ROL nº ${p['rol'] ?? '000'}'),
-                    _buildInfoRow('Condição Canônica:', p['tipo']),
+                    _buildInfoRow('Condição do Membro:', p['tipo']),
                     _buildInfoRow('Modo de Recepção:', p['modoAdmissao'] ?? 'Profissão de Fé e Batismo'),
                     _buildInfoRow('Data de Admissão:', p['admissao'] ?? 'Não informada'),
                     _buildInfoRow('Sociedade Interna:', p['sociedade'] ?? 'Geral'),

@@ -1,3 +1,5 @@
+import 'models.dart';
+
 class EbdClassModel {
   final int id;
   final String name;
@@ -38,18 +40,18 @@ class EbdClassModel {
 
   factory EbdClassModel.fromJson(Map<String, dynamic> json) {
     return EbdClassModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: asInt(json['id']),
       name: json['name']?.toString() ?? 'Classe EBD',
       ageRange: json['age_range']?.toString(),
       room: json['room']?.toString(),
       teacherName: json['teacher_name']?.toString() ?? 'Professor Escalado',
-      teacherId: json['teacher_id'] is int ? json['teacher_id'] : int.tryParse(json['teacher_id']?.toString() ?? ''),
-      studentsCount: json['students_count'] is int ? json['students_count'] : 0,
+      teacherId: json['teacher_id'] != null ? asInt(json['teacher_id']) : null,
+      studentsCount: asInt(json['students_count']),
       status: json['status']?.toString() ?? 'pendente',
-      presentCount: json['present_count'] is int ? json['present_count'] : 0,
-      biblesCount: json['bibles_count'] is int ? json['bibles_count'] : 0,
-      magazinesCount: json['magazines_count'] is int ? json['magazines_count'] : 0,
-      offerAmount: (json['offer_amount'] as num?)?.toDouble() ?? 0.0,
+      presentCount: asInt(json['present_count']),
+      biblesCount: asInt(json['bibles_count']),
+      magazinesCount: asInt(json['magazines_count']),
+      offerAmount: asDouble(json['offer_amount']),
       isLinkedToUser: json['is_linked'] == true,
     );
   }
@@ -94,7 +96,7 @@ class AttendanceRecordModel {
 
   factory AttendanceRecordModel.fromJson(Map<String, dynamic> json) {
     return AttendanceRecordModel(
-      personId: json['person_id'] is int ? json['person_id'] : int.tryParse(json['person_id']?.toString() ?? '0') ?? 0,
+      personId: asInt(json['person_id']),
       studentName: json['student_name']?.toString() ?? 'Aluno',
       envelopeNumber: json['envelope_number']?.toString(),
       isPresent: json['present'] == true,

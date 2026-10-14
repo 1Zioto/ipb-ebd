@@ -17,6 +17,9 @@ class LancamentoDizimo extends Model
         'person_id',
         'amount',
         'contribution_type',
+        'payment_method',
+        'envelope_number',
+        'contribuinte_nome',
         'is_unidentified',
         'notes',
         'created_by',
@@ -26,7 +29,7 @@ class LancamentoDizimo extends Model
     protected function casts(): array
     {
         return [
-            'amount' => 'decimal:2',
+            'amount' => 'float',
             'is_unidentified' => 'boolean',
         ];
     }

@@ -102,9 +102,20 @@ class InstitutionService
     }
 
     /**
-     * Retorna a árvore completa de instituições em formato aninhado.
+     * Retorna a lista de IDs de instituições ancestrais (pais recursivos).
      */
-    public function getTree(?int $rootId = null): array
+    public function getAncestorIds(int $institutionId): array
+    {
+        $crumbs = $this->getBreadcrumbs($institutionId);
+        return array_map(fn ($c) => (int) $c['id'], $crumbs);
+    }
+
+    /**
+     * Retorna a árvore completa de instituições em formato aninhado,
+     * aplicando controle de visualização de métricas e permissões de edição
+     * de acordo com o nível hierárquico do usuário.
+     */
+    public function getTree(?int $rootId = null, ?User $user = null): array
     {
         $allowedIds = $rootId ? $this->getDescendantIds($rootId, true) : null;
 
@@ -115,8 +126,18 @@ class InstitutionService
 
         $all = $query->orderBy('type')->orderBy('name')->get();
 
-        // Mapear métricas básicas por instituição
-        $metricsMap = $this->getBasicMetricsForInstitutions($all->pluck('id')->all());
+        $isGlobal = $user ? $user->hasGlobalInstitutionAccess() : true;
+        $userInstId = $user?->institution_id;
+        $manageableIds = ($userInstId && ! $isGlobal)
+            ? $this->getDescendantIds($userInstId, true)
+            : null;
+
+        // Só busca contadores de pessoas/métricas para os nós que o usuário pode gerenciar
+        $metricsTargetIds = ($manageableIds !== null)
+            ? $manageableIds
+            : $all->pluck('id')->all();
+
+        $metricsMap = $this->getBasicMetricsForInstitutions($metricsTargetIds);
 
         $grouped = [];
         foreach ($all as $inst) {
@@ -124,6 +145,12 @@ class InstitutionService
             if ($rootId && $inst->id === $rootId) {
                 $parentId = 0; // Trata o nó raiz como topo da subárvore
             }
+
+            $isSelf = ($userInstId && $inst->id === $userInstId);
+            $canManage = $isGlobal || ($manageableIds !== null && in_array($inst->id, $manageableIds, true));
+            $canEdit = $canManage;
+            $canViewMetrics = $canManage;
+
             $grouped[$parentId][] = [
                 'id' => $inst->id,
                 'name' => $inst->name,
@@ -133,8 +160,12 @@ class InstitutionService
                 'city' => $inst->city,
                 'state' => $inst->state,
                 'parent_institution_id' => $inst->parent_institution_id,
-                'members_count' => $metricsMap[$inst->id]['members_count'] ?? 0,
-                'subordinates_count' => $metricsMap[$inst->id]['subordinates_count'] ?? 0,
+                'members_count' => $canViewMetrics ? ($metricsMap[$inst->id]['members_count'] ?? 0) : null,
+                'subordinates_count' => $canViewMetrics ? ($metricsMap[$inst->id]['subordinates_count'] ?? 0) : null,
+                'is_self' => $isSelf,
+                'can_edit' => $canEdit,
+                'can_view_metrics' => $canViewMetrics,
+                'is_structural_only' => ! $canManage,
                 'children' => [],
             ];
         }
@@ -152,8 +183,11 @@ class InstitutionService
         foreach ($grouped[$parentId] as $node) {
             $children = $this->buildTreeNodes($grouped, $node['id']);
             $node['children'] = $children;
-            // Total subordinados soma filhos diretos + descendentes
-            $node['subordinates_count'] = count($children);
+            if ($node['can_view_metrics']) {
+                $node['subordinates_count'] = count($children);
+            } else {
+                $node['subordinates_count'] = null;
+            }
             $nodes[] = $node;
         }
 

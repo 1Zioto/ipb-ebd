@@ -4,6 +4,7 @@
     <p class="text-muted-color mb-0">Gerenciamento de congregações, igrejas, presbitérios, sínodos e concílio</p>
   </div>
   <div class="flex gap-2">
+    <p-button label="Consultar Catálogo IPB" icon="pi pi-search" severity="info" (onClick)="openCatalogDialog()" />
     <p-button label="Árvore Organizacional" icon="pi pi-sitemap" severity="secondary" routerLink="/instituicoes/arvore" />
     <p-button label="Cadastrar Instituição" icon="pi pi-plus" routerLink="/instituicoes/nova" />
   </div>
@@ -60,9 +61,14 @@
         <td>{{ item.cnpj || '—' }}</td>
         <td><p-tag [value]="item.status" [severity]="item.status === 'ativa' ? 'success' : 'secondary'" /></td>
         <td class="whitespace-nowrap text-right">
-          <p-button icon="pi pi-link" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id]" [queryParams]="{ tab: 'link_requests' }" />
-          <p-button icon="pi pi-chart-bar" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id, 'dashboard']" />
-          <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id]" />
+          @if (item.can_edit !== false) {
+            <p-button icon="pi pi-link" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id]" [queryParams]="{ tab: 'link_requests' }" />
+            <p-button icon="pi pi-chart-bar" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id, 'dashboard']" />
+            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id]" />
+          } @else {
+            <p-tag value="Apenas Estrutural" severity="secondary" icon="pi pi-shield" styleClass="mr-1" />
+            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" [routerLink]="['/instituicoes', item.id]" />
+          }
         </td>
       </tr>
     </ng-template>
@@ -80,3 +86,144 @@
     </div>
   }
 </div>
+
+<!-- Dialog de Consulta do Catálogo Oficial da IPB -->
+<p-dialog
+  [(visible)]="catalogDialogVisible"
+  [modal]="true"
+  [header]="'Catálogo Oficial da IPB — Busca & Importação'"
+  [style]="{ width: '92vw', maxWidth: '1000px' }"
+  [breakpoints]="{ '960px': '95vw', '640px': '100vw' }"
+>
+  <div class="flex flex-col gap-4">
+    <div class="text-sm text-muted-color">
+      Pesquise entre todas as <strong>4.371 igrejas e congregações</strong> do diretório oficial da IPB no Brasil. Veja os concílios e importe qualquer igreja com sua hierarquia para o sistema.
+    </div>
+
+    <!-- Filtros de Busca -->
+    <div class="flex flex-wrap md:flex-nowrap gap-2 items-center">
+      <div class="flex-1 min-w-[200px]">
+        <input
+          pInputText
+          class="w-full"
+          placeholder="Buscar por nome da igreja, cidade, bairro, CEP ou código..."
+          [ngModel]="catalogSearchQuery()"
+          (ngModelChange)="catalogSearchQuery.set($event)"
+          (keyup.enter)="searchCatalog(1)"
+        />
+      </div>
+      <div class="w-32">
+        <select
+          class="w-full p-inputtext p-component"
+          [ngModel]="catalogSelectedUf()"
+          (ngModelChange)="catalogSelectedUf.set($event); searchCatalog(1)"
+        >
+          <option value="">UF (Todas)</option>
+          <option value="ES">ES</option>
+          <option value="RJ">RJ</option>
+          <option value="MG">MG</option>
+          <option value="SP">SP</option>
+          <option value="BA">BA</option>
+          <option value="PR">PR</option>
+          <option value="SC">SC</option>
+          <option value="RS">RS</option>
+          <option value="GO">GO</option>
+          <option value="MT">MT</option>
+          <option value="MS">MS</option>
+          <option value="DF">DF</option>
+          <option value="PE">PE</option>
+          <option value="CE">CE</option>
+          <option value="PA">PA</option>
+          <option value="AM">AM</option>
+        </select>
+      </div>
+      <div class="w-36">
+        <select
+          class="w-full p-inputtext p-component"
+          [ngModel]="catalogSelectedTipo()"
+          (ngModelChange)="catalogSelectedTipo.set($event); searchCatalog(1)"
+        >
+          <option value="">Tipo (Todos)</option>
+          <option value="igreja">Igreja</option>
+          <option value="congregacao">Congregação</option>
+        </select>
+      </div>
+      <p-button label="Buscar" icon="pi pi-search" [loading]="catalogLoading()" (onClick)="searchCatalog(1)" />
+    </div>
+
+    <!-- Tabela com Resultados do Catálogo -->
+    <div class="border border-surface rounded-border overflow-hidden">
+      <p-table [value]="catalogItems()" [loading]="catalogLoading()" [paginator]="false">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Igreja / Congregação</th>
+            <th>Localização</th>
+            <th>Presbitério</th>
+            <th>Sínodo</th>
+            <th style="width: 140px;" class="text-center">Ação</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>
+              <div class="font-semibold text-surface-900 dark:text-surface-100">{{ item.nome }}</div>
+              <div class="text-xs text-muted-color">Código Oficial: #{{ item.id }}</div>
+            </td>
+            <td>
+              <div class="text-sm font-medium">{{ item.cidade }} / {{ item.uf }}</div>
+              <div class="text-xs text-muted-color">{{ item.bairro || item.endereco || '—' }}</div>
+            </td>
+            <td>
+              <div class="text-sm">{{ item.presbiterio_nome }}</div>
+              <p-tag [value]="item.presbiterio_sigla" severity="secondary" />
+            </td>
+            <td>
+              <div class="text-sm">{{ item.sinodo_nome }}</div>
+              <p-tag [value]="item.sinodo_sigla" severity="contrast" />
+            </td>
+            <td class="text-center">
+              <p-button
+                label="Importar"
+                icon="pi pi-download"
+                size="small"
+                severity="primary"
+                [loading]="importingCatalog()"
+                (onClick)="importCatalogItem(item)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center p-6 text-muted-color">
+              Nenhuma igreja encontrada no catálogo com os filtros informados.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Paginação do Catálogo -->
+    @if (catalogTotal() > 15) {
+      <div class="flex justify-between items-center text-sm text-muted-color">
+        <span>Mostrando página {{ catalogCurrentPage() }} (Total: {{ catalogTotal() }} igrejas)</span>
+        <div class="flex gap-1">
+          <p-button
+            icon="pi pi-chevron-left"
+            size="small"
+            severity="secondary"
+            [disabled]="catalogCurrentPage() <= 1"
+            (onClick)="searchCatalog(catalogCurrentPage() - 1)"
+          />
+          <p-button
+            icon="pi pi-chevron-right"
+            size="small"
+            severity="secondary"
+            [disabled]="catalogItems().length < 15"
+            (onClick)="searchCatalog(catalogCurrentPage() + 1)"
+          />
+        </div>
+      </div>
+    }
+  </div>
+</p-dialog>

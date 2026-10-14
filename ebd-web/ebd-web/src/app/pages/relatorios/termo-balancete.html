@@ -65,7 +65,7 @@
         {{ termo()?.igreja }}
       </h2>
       <div class="text-xs text-surface-500 mt-1">
-        CNPJ: {{ termo()?.cnpj }} • Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)
+        CNPJ: {{ termo()?.cnpj }} • {{ termo()?.presbiterio || 'Presbitério de Vitória • Sínodo Central' }}
       </div>
       <div class="mt-3 inline-block px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-md text-primary font-bold text-sm tracking-wide uppercase">
         Termo de Aprovação de Contas & Parecer da Comissão de Exame de Contas
@@ -117,7 +117,7 @@
         {{ termo()?.parecer_texto }}
       </p>
       <div class="text-right text-xs text-surface-500 italic">
-        Campo Verde - MT, {{ termo()?.data_emissao }}.
+        Cariacica - ES, {{ termo()?.data_emissao }}.
       </div>
     </div>
 

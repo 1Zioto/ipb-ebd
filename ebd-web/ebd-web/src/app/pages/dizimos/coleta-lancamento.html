@@ -1,105 +1,1017 @@
-<p-button label="Voltar às coletas" icon="pi pi-arrow-left" [text]="true" routerLink="/dizimos/coletas" styleClass="mb-3" />
-@if (coleta()) {
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
-    <div>
-      <h2 class="m-0">Coleta de {{ coleta()?.date | date: 'dd/MM/yyyy' }} — {{ coleta()?.service_meeting }}</h2>
-      <p-tag [value]="coleta()?.status" class="mt-2" [severity]="coleta()?.status === 'Aberta' || coleta()?.status === 'Reaberta para correção' ? 'success' : 'secondary'" />
-    </div>
-    @if ((coleta()?.status === 'Aberta' || coleta()?.status === 'Reaberta para correção') && auth.can('dizimos.coleta.fechar')) {
-      <p-button label="Fechar coleta" icon="pi pi-lock" severity="danger" (onClick)="showCloseModal.set(true)" />
-    } @else if (coleta()?.status === 'Fechada' && auth.can('dizimos.coleta.reabrir')) {
-      <p-button label="Reabrir coleta" icon="pi pi-lock-open" severity="warn" (onClick)="showReopenModal.set(true)" />
-    }
-  </div>
-  <div class="grid grid-cols-12 gap-4 mb-4">
-    <div class="col-span-12 md:col-span-4"><div class="card mb-0"><span class="text-muted-color">Total arrecadado</span><div class="text-2xl font-semibold">{{ coleta()?.total_amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</div></div></div>
-    <div class="col-span-12 md:col-span-4"><div class="card mb-0"><span class="text-muted-color">Envelopes</span><div class="text-2xl font-semibold">{{ coleta()?.entry_count }}</div></div></div>
-    <div class="col-span-12 md:col-span-4"><div class="card mb-0"><span class="text-muted-color">Não identificados</span><div class="text-2xl font-semibold">{{ coleta()?.unidentified_count }}</div></div></div>
-  </div>
-}
+<!-- ======================================================== -->
+<!-- TELA DE CONFERÊNCIA FINANCEIRA DE DÍZIMOS E OFERTAS (IPB)-->
+<!-- ======================================================== -->
+<div class="space-y-6">
 
-@if (coleta()?.status === 'Aberta' || coleta()?.status === 'Reaberta para correção') {
-  <div class="card mb-4">
-    <h3 class="mt-0">Lançamento rápido de envelope</h3>
-    <form (ngSubmit)="submitLancamento()" (keydown.enter)="$event.preventDefault(); submitLancamento()" class="grid grid-cols-12 gap-3">
-      <div class="col-span-12 md:col-span-5 relative">
-        <label class="block mb-2">Pesquisar dizimista</label>
-        <input #searchInput pInputText class="w-full" [(ngModel)]="searchTerm" name="searchTerm" (input)="onSearchChange()" placeholder="Nome ou n° do envelope..." [disabled]="isUnidentified" autocomplete="off" />
-        @if (searchLoading()) {
-          <div class="absolute z-10 mt-1 w-full p-2 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border">Buscando...</div>
-        } @else if (filteredTithers().length > 0 && !isUnidentified) {
-          <div class="absolute z-10 mt-1 w-full bg-surface-0 dark:bg-surface-900 border border-surface rounded-border">
-            @for (t of filteredTithers(); track t.id) {
-              <button type="button" class="w-full text-left p-2 hover:bg-surface-100 dark:hover:bg-surface-800" (click)="selectPerson(t)">
-                <strong>{{ t.full_name }}</strong> @if (t.envelope_number) { <span class="text-muted-color">Env #{{ t.envelope_number }}</span> }
-              </button>
-            }
-          </div>
-        }
-      </div>
-      <div class="col-span-12 md:col-span-3 flex items-end">
-        <div class="flex items-center gap-2 mb-2">
-          <p-checkbox [(ngModel)]="isUnidentified" name="isUnidentified" [binary]="true" inputId="unid" (onChange)="searchTerm = ''; selectedPerson = null" />
-          <label for="unid">Não identificada</label>
+  <!-- NAVEGAÇÃO & CABEÇALHO -->
+  <div class="flex items-center justify-between">
+    <p-button
+      label="Voltar às Conferências"
+      icon="pi pi-arrow-left"
+      [text]="true"
+      routerLink="/dizimos/coletas"
+      styleClass="text-sm font-bold"
+    />
+    <div class="text-xs text-muted-color">
+      Fuso Horário Oficial: <strong>America/Sao_Paulo (Brasília)</strong>
+    </div>
+  </div>
+
+  @if (coleta()) {
+    <!-- CABEÇALHO DA CONFERÊNCIA -->
+    <div class="bg-surface-card p-6 rounded-2xl border border-surface shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="font-mono font-black text-sm px-2.5 py-1 rounded bg-primary/10 text-primary border border-primary/20">
+            {{ coleta()?.code || ('CONF-' + coleta()?.id) }}
+          </span>
+          @if (isAberta()) {
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500/15 text-emerald-700 border border-emerald-500/30">
+              <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              EM ANDAMENTO
+            </span>
+          } @else {
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-surface-ground text-surface-600 border border-surface">
+              🔒 ENCERRADA
+            </span>
+          }
+        </div>
+        <h1 class="m-0 text-2xl lg:text-3xl font-black text-surface-900 tracking-tight">
+          {{ coleta()?.service_meeting || 'Culto Noturno Dominical' }}
+        </h1>
+        <div class="text-xs text-muted-color mt-1">
+          Data: <strong>{{ coleta()?.date | date: 'dd/MM/yyyy' }}</strong> •
+          Abertura: <strong>{{ coleta()?.opened_at ? (coleta()?.opened_at | date: 'HH:mm') : '00:00' }}</strong> •
+          Responsável: <strong>{{ coleta()?.creator?.name || 'Diácono' }}</strong>
+          @if (!isAberta() && coleta()?.closed_by) {
+            • Encerrada às: <strong>{{ coleta()?.closed_at ? (coleta()?.closed_at | date: 'HH:mm') : '' }}</strong> por <strong>{{ coleta()?.closer?.name }}</strong>
+          }
         </div>
       </div>
-      <div class="col-span-12 md:col-span-2"><label class="block mb-2">Valor</label><input #amountInput pInputText class="w-full" type="number" step="0.01" min="0.01" [(ngModel)]="amount" name="amount" /></div>
-      <div class="col-span-12 md:col-span-2">
-        <label class="block mb-2">Forma</label>
-        <select class="w-full p-inputtext p-component" [(ngModel)]="contributionType" name="contributionType">
-          <option value="envelope">Envelope</option><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="transferencia">Transferência</option><option value="outros">Outros</option>
-        </select>
-      </div>
-      <div class="col-span-12"><p-button type="submit" label="Salvar (Enter)" [loading]="saving()" /></div>
-    </form>
-  </div>
-}
 
-<div class="card">
-  <h4 class="mt-0">Histórico dos envelopes</h4>
-  @if (coleta()?.privacy_notice) {
-    <p-message severity="info">{{ coleta()?.privacy_notice }}</p-message>
-  } @else {
-    <p-table [value]="lancamentos()">
-      <ng-template pTemplate="header"><tr><th>Membro</th><th>Forma</th><th>Valor</th><th>Hora</th><th>Operador</th></tr></ng-template>
-      <ng-template pTemplate="body" let-l>
-        <tr>
-          <td>
-            @if (l.is_unidentified) { <p-tag value="Não identificada" severity="warn" /> }
-            @else { <strong>{{ l.person?.full_name }}</strong> @if (l.person?.envelope_number) { <span class="text-muted-color">(Env. #{{ l.person?.envelope_number }})</span> } }
-          </td>
-          <td>{{ l.contribution_type | uppercase }}</td>
-          <td>{{ l.amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</td>
-          <td>{{ l.created_at | date: 'HH:mm:ss' }}</td>
-          <td>{{ l.creator?.name || 'Operador' }}</td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage"><tr><td colspan="5">Nenhum envelope lançado nesta coleta.</td></tr></ng-template>
-    </p-table>
+      <!-- Ações do Cabeçalho -->
+      <div class="flex flex-wrap items-center gap-2">
+        @if (isAberta() && auth.can('dizimos.coleta.fechar')) {
+          <p-button
+            label="Encerrar Conferência"
+            icon="pi pi-lock"
+            severity="danger"
+            size="large"
+            [raised]="true"
+            (onClick)="iniciarEncerramento()"
+            pTooltip="Conferir totais em 4 etapas e encerrar a conferência com impressão em duas vias"
+          />
+        } @else if (!isAberta()) {
+          <p-button
+            label="Reimprimir Comprovante (2 Vias)"
+            icon="pi pi-print"
+            severity="primary"
+            size="large"
+            [raised]="true"
+            (onClick)="abrirComprovante(true)"
+            pTooltip="Reimprimir comprovante térmico oficial de duas vias"
+          />
+          @if (auth.can('dizimos.coleta.reabrir')) {
+            <p-button
+              label="Reabrir Conferência"
+              icon="pi pi-lock-open"
+              severity="warn"
+              [outlined]="true"
+              (onClick)="showReopenModal.set(true)"
+              pTooltip="Reabrir conferência para correções canônicas autorizadas"
+            />
+          }
+        }
+      </div>
+    </div>
+
+    <!-- RESUMO FINANCEIRO EM TEMPO REAL -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Total Dízimos -->
+      <div class="card mb-0 bg-surface-card border border-surface rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-muted-color">Total de Dízimos</span>
+          <span class="text-xl">✉️</span>
+        </div>
+        <div class="text-2xl font-black text-surface-900 mt-2">
+          {{ totalDizimos() | currency: 'BRL' : 'symbol' : '1.2-2' }}
+        </div>
+        <div class="text-xs text-muted-color mt-1">
+          Somatório dos envelopes individuais
+        </div>
+      </div>
+
+      <!-- Quantidade de Envelopes -->
+      <div class="card mb-0 bg-surface-card border border-surface rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-muted-color">Quantidade de Envelopes</span>
+          <span class="text-xl">📦</span>
+        </div>
+        <div class="text-2xl font-black text-surface-900 mt-2">
+          {{ qtdEnvelopes() }}
+        </div>
+        <div class="text-xs text-muted-color mt-1">
+          Envelopes lançados na sessão
+        </div>
+      </div>
+
+      <!-- Total Ofertas Avulsas -->
+      <div class="card mb-0 bg-surface-card border border-surface rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-muted-color">Ofertas Avulsas</span>
+          <span class="text-xl">🪙</span>
+        </div>
+        <div class="text-2xl font-black text-surface-900 mt-2">
+          {{ totalOfertasAvulsas() | currency: 'BRL' : 'symbol' : '1.2-2' }}
+        </div>
+        <div class="text-xs text-muted-color mt-1">
+          Salva, Pix e transferências avulsas
+        </div>
+      </div>
+
+      <!-- TOTAL GERAL -->
+      <div class="card mb-0 bg-surface-card border-2 border-emerald-500/40 rounded-xl p-5 shadow-sm bg-gradient-to-br from-surface-card to-emerald-500/10">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Total Geral</span>
+          <span class="text-xl">💰</span>
+        </div>
+        <div class="text-3xl font-black text-emerald-700 dark:text-emerald-400 mt-2">
+          {{ totalGeral() | currency: 'BRL' : 'symbol' : '1.2-2' }}
+        </div>
+        <div class="text-xs text-emerald-700/80 dark:text-emerald-400/80 font-bold mt-1">
+          Dízimos + Ofertas Avulsas
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ======================================================== -->
+  <!-- SEÇÃO: LANÇAMENTO RÁPIDO DE ENVELOPES (QUANDO ABERTA)    -->
+  <!-- ======================================================== -->
+  @if (isAberta()) {
+    <div class="card bg-surface-card border-2 border-primary/20 rounded-2xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-4 border-b pb-3">
+        <div>
+          <h2 class="m-0 text-lg font-black text-surface-900">
+            Lançamento de Envelopes
+          </h2>
+          <p class="text-xs text-muted-color m-0">
+            Identifique o membro por busca ou QR Code, informe o valor e confirme
+          </p>
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded-full font-bold bg-primary/10 text-primary">
+          Atalho: Tecla Enter para confirmar
+        </span>
+      </div>
+
+      <form (ngSubmit)="submitLancamento()" (keydown.enter)="$event.preventDefault(); submitLancamento()" class="space-y-4">
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <!-- Campo Busca / Identificação do Membro -->
+          <div class="col-span-12 md:col-span-6 relative">
+            <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">
+              Contribuinte / Membro
+            </label>
+            <div class="flex gap-2">
+              <input
+                #searchInput
+                pInputText
+                class="w-full text-base font-semibold"
+                [(ngModel)]="searchTerm"
+                name="searchTerm"
+                (input)="onSearchChange()"
+                placeholder="Digite o nome ou número do envelope..."
+                [disabled]="isUnidentified"
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Dropdown Autocomplete de Membros -->
+            @if (searchLoading()) {
+              <div class="absolute z-20 mt-1 w-full p-3 bg-surface-card border border-surface rounded-xl shadow-lg text-xs text-muted-color flex items-center gap-2">
+                <i class="pi pi-spin pi-spinner text-primary"></i> Buscando membros no cadastro...
+              </div>
+            } @else if (filteredTithers().length > 0 && !isUnidentified) {
+              <div class="absolute z-20 mt-1 w-full bg-surface-card border border-surface rounded-xl shadow-xl overflow-hidden divide-y divide-surface max-h-60 overflow-y-auto">
+                @for (t of filteredTithers(); track t.id) {
+                  <button
+                    type="button"
+                    class="w-full text-left p-3 hover:bg-surface-hover flex items-center justify-between transition-colors"
+                    (click)="selectPerson(t)"
+                  >
+                    <div>
+                      <div class="font-bold text-surface-900 text-sm">{{ t.full_name }}</div>
+                      <div class="text-xs text-muted-color">CPF: {{ t.cpf || 'Não informado' }}</div>
+                    </div>
+                    @if (t.envelope_number) {
+                      <span class="font-mono font-black text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                        Env #{{ t.envelope_number }}
+                      </span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Checkbox Não Identificado -->
+            <div class="flex items-center gap-2 mt-2">
+              <p-checkbox
+                [(ngModel)]="isUnidentified"
+                name="isUnidentified"
+                [binary]="true"
+                inputId="unidCheck"
+                (onChange)="searchTerm = ''; selectedPerson = null"
+              />
+              <label for="unidCheck" class="text-xs font-semibold text-surface-700 cursor-pointer">
+                Contribuinte não identificado / anônimo
+              </label>
+            </div>
+          </div>
+
+          <!-- Campo de Valor em Reais -->
+          <div class="col-span-12 md:col-span-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">
+              Valor do Envelope (R$)
+            </label>
+            <input
+              #amountInput
+              pInputText
+              class="w-full text-lg font-black text-emerald-700 dark:text-emerald-400"
+              type="number"
+              step="0.01"
+              min="0.01"
+              [(ngModel)]="amount"
+              name="amount"
+              placeholder="0,00"
+            />
+            <!-- Botões de Valor Rápido -->
+            <div class="flex flex-wrap gap-1 mt-1.5">
+              <button type="button" class="text-[11px] px-1.5 py-0.5 rounded bg-surface-ground hover:bg-surface-hover border border-surface font-bold text-surface-700" (click)="addQuickAmount(20)">+20</button>
+              <button type="button" class="text-[11px] px-1.5 py-0.5 rounded bg-surface-ground hover:bg-surface-hover border border-surface font-bold text-surface-700" (click)="addQuickAmount(50)">+50</button>
+              <button type="button" class="text-[11px] px-1.5 py-0.5 rounded bg-surface-ground hover:bg-surface-hover border border-surface font-bold text-surface-700" (click)="addQuickAmount(100)">+100</button>
+              <button type="button" class="text-[11px] px-1.5 py-0.5 rounded bg-surface-ground hover:bg-surface-hover border border-surface font-bold text-surface-700" (click)="addQuickAmount(200)">+200</button>
+            </div>
+          </div>
+
+          <!-- Forma de Recebimento -->
+          <div class="col-span-12 md:col-span-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">
+              Forma de Recebimento
+            </label>
+            <select
+              class="w-full p-inputtext text-base font-bold rounded-lg bg-surface-card text-surface-900 border border-surface"
+              [(ngModel)]="paymentMethod"
+              name="paymentMethod"
+            >
+              <option value="dinheiro">💵 Dinheiro (Espécie)</option>
+              <option value="pix">⚡ Pix</option>
+              <option value="transferencia">🏦 Transferência Bancária</option>
+              <option value="outros">Outros</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Botão de Confirmação Principal -->
+        <div class="flex items-center justify-between pt-2">
+          <div class="text-xs text-muted-color">
+            * O envelope registrado é adicionado imediatamente à lista e os totais são atualizados em tempo real.
+          </div>
+          <p-button
+            type="submit"
+            label="Confirmar Lançamento (Enter)"
+            icon="pi pi-check"
+            severity="success"
+            size="large"
+            [raised]="true"
+            [loading]="saving()"
+            [disabled]="!amount || amount <= 0"
+          />
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- ======================================================== -->
+  <!-- SEÇÃO: OFERTAS AVULSAS (SALVA / CULTO)                   -->
+  <!-- ======================================================== -->
+  <div class="card bg-surface-card border border-surface rounded-2xl p-6 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 border-b pb-3">
+      <div>
+        <h2 class="m-0 text-lg font-black text-surface-900 flex items-center gap-2">
+          <span>🪙</span> Ofertas Avulsas do Culto
+        </h2>
+        <p class="text-xs text-muted-color m-0">
+          Valores recolhidos sem identificação por envelope (ofertas na salva durante o culto). Não misturar com dízimos identificados.
+        </p>
+      </div>
+      @if (isAberta()) {
+        <p-button
+          label="Salvar Ofertas Avulsas"
+          icon="pi pi-save"
+          severity="primary"
+          [loading]="savingOfertas()"
+          (onClick)="salvarOfertasAvulsas()"
+        />
+      }
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+      <!-- Ofertas em Dinheiro -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">
+          Ofertas em Dinheiro (R$)
+        </label>
+        <input
+          pInputText
+          type="number"
+          step="0.01"
+          min="0"
+          class="w-full text-base font-bold"
+          [(ngModel)]="ofertaDinheiro"
+          [disabled]="!isAberta()"
+          placeholder="0,00"
+        />
+      </div>
+
+      <!-- Ofertas por Pix -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">
+          Ofertas por Pix (R$)
+        </label>
+        <input
+          pInputText
+          type="number"
+          step="0.01"
+          min="0"
+          class="w-full text-base font-bold"
+          [(ngModel)]="ofertaPix"
+          [disabled]="!isAberta()"
+          placeholder="0,00"
+        />
+      </div>
+
+      <!-- Ofertas por Transferência -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">
+          Ofertas por Transferência (R$)
+        </label>
+        <input
+          pInputText
+          type="number"
+          step="0.01"
+          min="0"
+          class="w-full text-base font-bold"
+          [(ngModel)]="ofertaTransferencia"
+          [disabled]="!isAberta()"
+          placeholder="0,00"
+        />
+      </div>
+
+      <!-- Total Calculado de Ofertas -->
+      <div class="p-3 bg-surface-ground rounded-xl border border-surface flex flex-col justify-center">
+        <span class="text-[11px] font-bold uppercase text-muted-color">Total de Ofertas Avulsas</span>
+        <span class="text-xl font-black text-surface-900 mt-0.5">
+          {{ totalOfertasAvulsas() | currency: 'BRL' : 'symbol' : '1.2-2' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- TABELA: LISTA DE ENVELOPES LANÇADOS                      -->
+  <!-- ======================================================== -->
+  <div class="card bg-surface-card border border-surface rounded-2xl overflow-hidden shadow-sm">
+    <div class="p-5 border-b border-surface flex items-center justify-between">
+      <div>
+        <h3 class="m-0 text-base font-black text-surface-900">
+          Envelopes Lançados nesta Conferência ({{ lancamentos().length }})
+        </h3>
+        <p class="text-xs text-muted-color m-0">
+          Rastreabilidade completa de cada dízimo individual
+        </p>
+      </div>
+      <span class="font-mono text-xs font-bold text-muted-color">
+        Total Dízimos: {{ totalDizimos() | currency: 'BRL' : 'symbol' : '1.2-2' }}
+      </span>
+    </div>
+
+    @if (coleta()?.privacy_notice) {
+      <div class="p-4">
+        <p-message severity="info">{{ coleta()?.privacy_notice }}</p-message>
+      </div>
+    } @else {
+      <p-table [value]="lancamentos()" [paginator]="true" [rows]="20" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr class="bg-surface-ground text-xs uppercase tracking-wider">
+            <th>Contribuinte / Membro</th>
+            <th class="text-center">Forma</th>
+            <th class="text-right">Valor</th>
+            <th class="text-center">Horário</th>
+            <th>Operador</th>
+            @if (isAberta()) {
+              <th class="text-center">Ações</th>
+            }
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-l>
+          <tr class="hover:bg-surface-hover text-sm">
+            <!-- Nome / Contribuinte -->
+            <td>
+              @if (l.is_unidentified) {
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded">
+                  ⚠️ Não identificado
+                </span>
+              } @else {
+                <div class="font-bold text-surface-900">
+                  {{ l.person?.full_name || l.contribuinte_nome || 'Membro' }}
+                </div>
+                @if (l.envelope_number || l.person?.envelope_number) {
+                  <span class="text-[11px] font-mono text-primary font-bold">
+                    Envelope #{{ l.envelope_number || l.person?.envelope_number }}
+                  </span>
+                }
+              }
+            </td>
+
+            <!-- Forma de Recebimento -->
+            <td class="text-center">
+              <span class="text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-surface-ground border border-surface">
+                {{ l.payment_method || 'DINHEIRO' }}
+              </span>
+            </td>
+
+            <!-- Valor -->
+            <td class="text-right font-black text-surface-900">
+              {{ l.amount | currency: 'BRL' : 'symbol' : '1.2-2' }}
+            </td>
+
+            <!-- Horário -->
+            <td class="text-center text-xs text-muted-color">
+              {{ l.created_at ? (l.created_at | date: 'HH:mm:ss') : '--:--' }}
+            </td>
+
+            <!-- Operador -->
+            <td class="text-xs text-muted-color">
+              {{ l.creator?.name || 'Diácono' }}
+            </td>
+
+            <!-- Ações (quando aberta) -->
+            @if (isAberta()) {
+              <td class="text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <p-button
+                    icon="pi pi-pencil"
+                    severity="secondary"
+                    size="small"
+                    [text]="true"
+                    (onClick)="abrirEdicao(l)"
+                    pTooltip="Editar este lançamento"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    size="small"
+                    [text]="true"
+                    (onClick)="abrirExclusao(l)"
+                    pTooltip="Excluir este lançamento"
+                  />
+                </div>
+              </td>
+            }
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="isAberta() ? 6 : 5" class="text-center py-8 text-muted-color">
+              Nenhum envelope lançado até o momento nesta conferência.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+
+  <!-- BOTÃO INFERIOR DE ENCERRAMENTO -->
+  @if (isAberta() && auth.can('dizimos.coleta.fechar')) {
+    <div class="p-6 bg-surface-card border-2 border-red-500/20 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm">
+      <div>
+        <h3 class="m-0 text-base font-black text-surface-900">
+          Pronto para encerrar esta conferência?
+        </h3>
+        <p class="text-xs text-muted-color m-0">
+          Revise os dízimos e ofertas avulsas em 4 etapas antes da conclusão definitiva e emissão das duas vias.
+        </p>
+      </div>
+      <p-button
+        label="Encerrar Conferência Agora"
+        icon="pi pi-lock"
+        severity="danger"
+        size="large"
+        [raised]="true"
+        (onClick)="iniciarEncerramento()"
+      />
+    </div>
   }
 </div>
 
-<p-dialog header="Aviso de contribuição existente" [visible]="showDuplicateModal()" (visibleChange)="showDuplicateModal.set($event)" [modal]="true">
-  <p>{{ duplicateMessage }}</p>
-  <p>Deseja adicionar outro lançamento para esta pessoa nesta mesma coleta?</p>
+<!-- ======================================================== -->
+<!-- MODAL: ENCERRAMENTO EM 4 ETAPAS                          -->
+<!-- ======================================================== -->
+<p-dialog
+  header="Encerramento de Conferência (4 Etapas)"
+  [visible]="showCloseModal()"
+  (visibleChange)="showCloseModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '40rem', maxWidth: '95vw' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="space-y-4 pt-2">
+    <!-- Indicador Visual de Etapas -->
+    <div class="grid grid-cols-4 gap-2 text-center text-xs font-bold border-b pb-3">
+      <div class="py-1 rounded" [ngClass]="closeStep() === 1 ? 'bg-primary text-white' : 'bg-surface-ground text-muted-color'">
+        1. Dízimos
+      </div>
+      <div class="py-1 rounded" [ngClass]="closeStep() === 2 ? 'bg-primary text-white' : 'bg-surface-ground text-muted-color'">
+        2. Ofertas
+      </div>
+      <div class="py-1 rounded" [ngClass]="closeStep() === 3 ? 'bg-primary text-white' : 'bg-surface-ground text-muted-color'">
+        3. Resumo
+      </div>
+      <div class="py-1 rounded" [ngClass]="closeStep() === 4 ? 'bg-danger text-white' : 'bg-surface-ground text-muted-color'">
+        4. Confirmar
+      </div>
+    </div>
+
+    <!-- ETAPA 1: REVISÃO DOS DÍZIMOS -->
+    @if (closeStep() === 1) {
+      <div class="space-y-3">
+        <h3 class="text-sm font-black text-surface-900 m-0">Etapa 1 — Revisão dos Dízimos por Envelope</h3>
+        <div class="p-3 bg-surface-ground rounded-xl space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-muted-color">Quantidade total de envelopes:</span>
+            <strong class="text-sm">{{ qtdEnvelopes() }}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-color">Total de dízimos em Dinheiro:</span>
+            <strong>{{ dizimosDinheiro() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-color">Total de dízimos por Pix:</span>
+            <strong>{{ dizimosPix() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-color">Total de dízimos por Transferência:</span>
+            <strong>{{ dizimosTransferencia() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+          <div class="border-t border-surface pt-2 flex justify-between text-sm font-black text-primary">
+            <span>Total Geral dos Dízimos:</span>
+            <span>{{ totalDizimos() | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ETAPA 2: CONFERÊNCIA DAS OFERTAS AVULSAS -->
+    @if (closeStep() === 2) {
+      <div class="space-y-3">
+        <h3 class="text-sm font-black text-surface-900 m-0">Etapa 2 — Conferência das Ofertas Avulsas</h3>
+        <p class="text-xs text-muted-color m-0">
+          Confirme os valores arrecadados na salva ou avulsamente (fora dos envelopes):
+        </p>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-muted-color mb-1">Ofertas em Dinheiro (R$)</label>
+            <input pInputText type="number" step="0.01" min="0" class="w-full text-base font-bold" [(ngModel)]="ofertaDinheiro" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-muted-color mb-1">Ofertas por Pix (R$)</label>
+            <input pInputText type="number" step="0.01" min="0" class="w-full text-base font-bold" [(ngModel)]="ofertaPix" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-muted-color mb-1">Ofertas por Transferência (R$)</label>
+            <input pInputText type="number" step="0.01" min="0" class="w-full text-base font-bold" [(ngModel)]="ofertaTransferencia" />
+          </div>
+
+          <div class="p-3 bg-surface-ground rounded-xl flex justify-between items-center text-sm font-bold text-surface-900">
+            <span>Total de Ofertas Avulsas:</span>
+            <span class="text-emerald-600">{{ totalOfertasAvulsas() | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ETAPA 3: RESUMO GERAL -->
+    @if (closeStep() === 3) {
+      <div class="space-y-3">
+        <h3 class="text-sm font-black text-surface-900 m-0">Etapa 3 — Resumo Financeiro Geral</h3>
+
+        <!-- Tabela Dízimos vs Ofertas -->
+        <div class="p-3 bg-surface-ground rounded-xl space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span>Total Dízimos (Envelopes):</span>
+            <strong>{{ totalDizimos() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Total Ofertas Avulsas:</span>
+            <strong>{{ totalOfertasAvulsas() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+          <div class="border-t border-b py-2 flex justify-between text-base font-black text-emerald-600">
+            <span>TOTAL GERAL ARRECADADO:</span>
+            <span>{{ totalGeral() | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Consolidado por Forma de Recebimento -->
+        <div class="p-3 bg-surface-ground rounded-xl space-y-1.5 text-xs">
+          <div class="font-bold uppercase tracking-wider text-muted-color mb-1">Consolidado por Recebimento:</div>
+          <div class="flex justify-between">
+            <span>Dinheiro em Espécie (Dízimos + Ofertas):</span>
+            <strong>{{ consolidadoDinheiro() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Pix (Dízimos + Ofertas):</span>
+            <strong>{{ consolidadoPix() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Transferência Bancária (Dízimos + Ofertas):</span>
+            <strong>{{ consolidadoTransferencia() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ETAPA 4: CONFIRMAÇÃO SOLENE -->
+    @if (closeStep() === 4) {
+      <div class="space-y-4 text-center py-2">
+        <div class="w-14 h-14 mx-auto rounded-full bg-red-500/10 text-red-600 flex items-center justify-center text-2xl font-bold">
+          🔒
+        </div>
+        <h3 class="text-base font-black text-surface-900 m-0">
+          Deseja realmente encerrar esta conferência?
+        </h3>
+        <p class="text-xs text-muted-color max-w-md mx-auto">
+          Ao confirmar o encerramento, todos os lançamentos de envelopes serão bloqueados para edições normais e o sistema disparará automaticamente a <strong>impressão das duas vias oficiais</strong> (1ª Via Tesouraria e 2ª Via Arquivo da Igreja).
+        </p>
+        <div class="p-3 bg-surface-ground rounded-xl text-xs flex justify-around">
+          <div>
+            <span class="text-muted-color block">Envelopes</span>
+            <strong class="text-base">{{ qtdEnvelopes() }}</strong>
+          </div>
+          <div>
+            <span class="text-muted-color block">Total Geral</span>
+            <strong class="text-base text-emerald-600">{{ totalGeral() | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" severity="secondary" (onClick)="cancelDuplicateModal()" />
-    <p-button label="Adicionar outro lançamento" (onClick)="confirmForceLancamento()" />
+    <div class="flex items-center justify-between pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [text]="true"
+        [disabled]="closingInProgress()"
+        (onClick)="showCloseModal.set(false)"
+      />
+
+      <div class="flex items-center gap-2">
+        @if (closeStep() > 1) {
+          <p-button
+            label="Voltar"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [disabled]="closingInProgress()"
+            (onClick)="voltarEtapa()"
+          />
+        }
+
+        @if (closeStep() < 4) {
+          <p-button
+            label="Avançar"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            severity="primary"
+            (onClick)="avancarEtapa()"
+          />
+        } @else {
+          <p-button
+            label="Confirmar Encerramento & Imprimir"
+            icon="pi pi-check"
+            severity="danger"
+            [raised]="true"
+            [loading]="closingInProgress()"
+            (onClick)="confirmarEncerramentoDefinitivo()"
+          />
+        }
+      </div>
+    </div>
   </ng-template>
 </p-dialog>
-<p-dialog header="Confirmar fechamento" [visible]="showCloseModal()" (visibleChange)="showCloseModal.set($event)" [modal]="true">
-  <p>Ao fechar a coleta, os lançamentos normais serão bloqueados.</p>
-  <p>Envelopes: <strong>{{ coleta()?.entry_count }}</strong> · Total: <strong>{{ coleta()?.total_amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong></p>
+
+<!-- ======================================================== -->
+<!-- MODAL: EDIÇÃO DE LANÇAMENTO                              -->
+<!-- ======================================================== -->
+<p-dialog
+  header="Editar Lançamento de Envelope"
+  [visible]="showEditModal()"
+  (visibleChange)="showEditModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '28rem', maxWidth: '95vw' }"
+>
+  <div class="space-y-3 pt-2">
+    <div>
+      <label class="block text-xs font-bold uppercase text-muted-color mb-1">Valor (R$)</label>
+      <input pInputText type="number" step="0.01" min="0.01" class="w-full text-base font-bold" [(ngModel)]="editAmount" />
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase text-muted-color mb-1">Forma de Recebimento</label>
+      <select class="w-full p-inputtext text-sm font-bold rounded-lg border border-surface bg-surface-card" [(ngModel)]="editPaymentMethod">
+        <option value="dinheiro">Dinheiro (Espécie)</option>
+        <option value="pix">Pix</option>
+        <option value="transferencia">Transferência Bancária</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase text-muted-color mb-1">Nº do Envelope</label>
+      <input pInputText class="w-full text-sm" [(ngModel)]="editEnvelopeNumber" />
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase text-muted-color mb-1">Motivo do Ajuste</label>
+      <input pInputText class="w-full text-sm" [(ngModel)]="editReason" placeholder="Ex: Digitação incorreta de valor..." />
+    </div>
+  </div>
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" severity="secondary" (onClick)="showCloseModal.set(false)" />
-    <p-button label="Confirmar fechamento" severity="danger" (onClick)="closeColeta()" />
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showEditModal.set(false)" />
+      <p-button label="Salvar Alterações" severity="success" [loading]="editSaving()" (onClick)="salvarEdicao()" />
+    </div>
   </ng-template>
 </p-dialog>
-<p-dialog header="Motivo da reabertura" [visible]="showReopenModal()" (visibleChange)="showReopenModal.set($event)" [modal]="true">
-  <label class="block mb-2">Motivo da correção</label>
-  <textarea pTextarea class="w-full" rows="3" [(ngModel)]="reopenReason"></textarea>
+
+<!-- ======================================================== -->
+<!-- MODAL: EXCLUSÃO DE LANÇAMENTO                            -->
+<!-- ======================================================== -->
+<p-dialog
+  header="Excluir Lançamento"
+  [visible]="showDeleteModal()"
+  (visibleChange)="showDeleteModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '26rem', maxWidth: '95vw' }"
+>
+  <div class="space-y-3 pt-2">
+    <p class="text-sm m-0 text-surface-800">
+      Deseja realmente remover o envelope de <strong>{{ deletingLancamento?.amount | currency: 'BRL' : 'symbol' : '1.2-2' }}</strong>?
+    </p>
+    <div>
+      <label class="block text-xs font-bold uppercase text-muted-color mb-1">Motivo da Exclusão (Opcional)</label>
+      <input pInputText class="w-full text-sm" [(ngModel)]="deleteReason" placeholder="Ex: Lançamento duplicado acidental..." />
+    </div>
+  </div>
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" severity="secondary" (onClick)="showReopenModal.set(false)" />
-    <p-button label="Confirmar reabertura" severity="warn" [disabled]="!reopenReason.trim()" (onClick)="reopenColeta()" />
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showDeleteModal.set(false)" />
+      <p-button label="Confirmar Exclusão" severity="danger" [loading]="deleteSaving()" (onClick)="confirmarExclusao()" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ======================================================== -->
+<!-- MODAL: DUPLICIDADE IDENTIFICADA                          -->
+<!-- ======================================================== -->
+<p-dialog
+  header="Aviso de Contribuição Existente"
+  [visible]="showDuplicateModal()"
+  (visibleChange)="showDuplicateModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '28rem', maxWidth: '95vw' }"
+>
+  <div class="space-y-3 pt-2 text-sm text-surface-800">
+    <p class="m-0">{{ duplicateMessage }}</p>
+    <p class="m-0 text-xs text-muted-color">
+      Deseja adicionar outro lançamento legítimo para esta pessoa / envelope nesta mesma conferência?
+    </p>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <p-button label="Cancelar" severity="secondary" (onClick)="cancelDuplicateModal()" />
+      <p-button label="Confirmar Outro Lançamento" severity="primary" (onClick)="confirmForceLancamento()" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ======================================================== -->
+<!-- MODAL: MOTIVO DA REABERTURA                              -->
+<!-- ======================================================== -->
+<p-dialog
+  header="Motivo da Reabertura Canônica"
+  [visible]="showReopenModal()"
+  (visibleChange)="showReopenModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '28rem', maxWidth: '95vw' }"
+>
+  <div class="space-y-3 pt-2">
+    <label class="block text-xs font-bold uppercase text-muted-color mb-1">Justificativa da Correção</label>
+    <textarea pTextarea class="w-full text-sm" rows="3" [(ngModel)]="reopenReason" placeholder="Descreva o motivo canônico para reabertura desta conferência..."></textarea>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showReopenModal.set(false)" />
+      <p-button label="Reabrir Conferência" severity="warn" [disabled]="!reopenReason.trim()" (onClick)="reabrirConferencia()" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ======================================================== -->
+<!-- MODAL: COMPROVANTE DE IMPRESSÃO (2 VIAS)                 -->
+<!-- ======================================================== -->
+<p-dialog
+  header="Comprovante Oficial de Arrecadação (Duas Vias)"
+  [visible]="showComprovanteModal()"
+  (visibleChange)="showComprovanteModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '42rem', maxWidth: '95vw' }"
+>
+  @if (carregandoComprovante()) {
+    <div class="py-12 text-center text-muted-color">
+      <i class="pi pi-spin pi-spinner text-3xl mb-2 text-emerald-600"></i>
+      <p>Gerando comprovante térmico oficial...</p>
+    </div>
+  } @else if (comprovanteData()) {
+    <div class="space-y-4">
+      <div class="flex items-center justify-between p-3 bg-surface-ground rounded-xl border border-surface print:hidden">
+        <span class="text-xs text-muted-color">
+          Pronto para impressão (1ª e 2ª vias formatadas).
+        </span>
+        <p-button
+          label="Imprimir Agora"
+          icon="pi pi-print"
+          severity="primary"
+          [raised]="true"
+          (onClick)="imprimirComprovanteWeb()"
+        />
+      </div>
+
+      <!-- ÁREA IMPRESSÃO DAS DUAS VIAS -->
+      <div class="bg-white text-black p-4 border border-surface-300 rounded-lg font-mono text-xs max-h-[65vh] overflow-y-auto">
+        
+        <!-- 1ª VIA - TESOURARIA -->
+        <div class="text-center border-b pb-2 mb-3">
+          <div class="font-black text-sm uppercase">IGREJA PRESBITERIANA DO BRASIL</div>
+          <div class="font-bold text-xs uppercase">{{ comprovanteData()?.instituicao?.nome }}</div>
+          <div class="text-[10px] text-gray-600">{{ comprovanteData()?.instituicao?.jurisdicao }}</div>
+          <div class="text-[10px] text-gray-600">CNPJ: {{ comprovanteData()?.instituicao?.cnpj }}</div>
+          <div class="font-black text-xs mt-1 bg-gray-100 py-0.5 border-t border-b">CONFERENCIA DE ARRECADACAO</div>
+          <div class="text-[11px] font-bold mt-1">Conferencia: {{ comprovanteData()?.conferencia?.code }}</div>
+          <div class="text-[10px]">Data: {{ comprovanteData()?.conferencia?.date }} | Culto: {{ comprovanteData()?.conferencia?.culto }}</div>
+          <div class="text-[10px]">Abertura: {{ comprovanteData()?.conferencia?.opened_at }} | Enc.: {{ comprovanteData()?.conferencia?.closed_at }}</div>
+          <div class="text-[10px]">Responsavel: {{ comprovanteData()?.conferencia?.responsavel_encerramento }}</div>
+        </div>
+
+        <div class="mb-3">
+          <div class="font-bold text-[11px] border-b pb-0.5 mb-1 flex justify-between">
+            <span>DETALHAMENTO DOS DIZIMOS</span>
+            <span>FORMA / VALOR</span>
+          </div>
+          @for (d of comprovanteData()?.dizimos?.itens; track d.id) {
+            <div class="flex justify-between py-0.5 text-[11px]">
+              <span class="truncate pr-2">@if (d.envelope) { [{{ d.envelope }}] } {{ d.contribuinte }}</span>
+              <span class="whitespace-nowrap font-bold">{{ d.forma }} {{ d.valor | currency: 'BRL' : '' : '1.2-2' }}</span>
+            </div>
+          }
+          <div class="border-t border-dashed pt-1 mt-1 flex justify-between font-bold text-[11px]">
+            <span>Envelopes: {{ comprovanteData()?.dizimos?.quantidade_envelopes }}</span>
+            <span>TOTAL DIZIMOS: {{ comprovanteData()?.dizimos?.total | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3 border-t pt-2">
+          <div class="font-bold text-[11px] border-b pb-0.5 mb-1">OFERTAS AVULSAS (NAO IDENTIFICADAS)</div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Dinheiro:</span><span>{{ comprovanteData()?.ofertas_avulsas?.dinheiro | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Pix:</span><span>{{ comprovanteData()?.ofertas_avulsas?.pix | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Transferencia:</span><span>{{ comprovanteData()?.ofertas_avulsas?.transferencia | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="border-t border-dashed pt-1 mt-1 flex justify-between font-bold text-[11px]">
+            <span>TOTAL OFERTAS:</span>
+            <span>{{ comprovanteData()?.ofertas_avulsas?.total | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3 border-t-2 border-black pt-2">
+          <div class="font-black text-center text-xs mb-1">RESUMO GERAL</div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Total Dizimos:</span><span>{{ comprovanteData()?.resumo_geral?.total_dizimos | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Total Ofertas:</span><span>{{ comprovanteData()?.resumo_geral?.total_ofertas | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="border-t-2 border-b-2 border-black py-1 my-1 flex justify-between font-black text-sm">
+            <span>TOTAL GERAL:</span>
+            <span>{{ comprovanteData()?.resumo_geral?.total_geral | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+
+          <div class="text-[10px] font-bold mt-1">TOTAL CONSOLIDADO POR RECEBIMENTO:</div>
+          <div class="flex justify-between text-[10px] py-0.5"><span>• Dinheiro:</span><span>{{ comprovanteData()?.consolidado_recebimento?.dinheiro | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[10px] py-0.5"><span>• Pix:</span><span>{{ comprovanteData()?.consolidado_recebimento?.pix | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[10px] py-0.5"><span>• Transferencia:</span><span>{{ comprovanteData()?.consolidado_recebimento?.transferencia | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+        </div>
+
+        <div class="border-t pt-3 mt-3 text-center text-[10px]">
+          <div class="mb-4">
+            <div>________________________________________________</div>
+            <div class="font-bold">{{ comprovanteData()?.conferencia?.responsavel_encerramento }}</div>
+            <div>Responsavel pela Conferencia / Diaconato</div>
+          </div>
+          @if (comprovanteData()?.meta?.is_reimpressao) {
+            <div class="font-black text-xs text-red-600 border border-red-600 py-0.5 my-1 uppercase">** REIMPRESSAO OFICIAL **</div>
+            <div class="text-[9px]">Reimpresso em {{ comprovanteData()?.meta?.reimpresso_em }} por {{ comprovanteData()?.meta?.reimpresso_por }}</div>
+          }
+          <div class="font-black text-xs mt-2 uppercase border-t pt-1">================ 1ª VIA — TESOURARIA ================</div>
+        </div>
+
+        <!-- LINHA DE CORTE -->
+        <div class="my-6 border-b-2 border-dashed border-gray-400 text-center relative">
+          <span class="bg-white px-3 text-[10px] text-gray-500 absolute -top-2 left-1/2 -translate-x-1/2">
+            ✂ CORTE AQUI ENTRE AS DUAS VIAS ✂
+          </span>
+        </div>
+
+        <!-- 2ª VIA - ARQUIVO DA IGREJA -->
+        <div class="text-center border-b pb-2 mb-3">
+          <div class="font-black text-sm uppercase">IGREJA PRESBITERIANA DO BRASIL</div>
+          <div class="font-bold text-xs uppercase">{{ comprovanteData()?.instituicao?.nome }}</div>
+          <div class="text-[10px] text-gray-600">{{ comprovanteData()?.instituicao?.jurisdicao }}</div>
+          <div class="text-[10px] text-gray-600">CNPJ: {{ comprovanteData()?.instituicao?.cnpj }}</div>
+          <div class="font-black text-xs mt-1 bg-gray-100 py-0.5 border-t border-b">CONFERENCIA DE ARRECADACAO</div>
+          <div class="text-[11px] font-bold mt-1">Conferencia: {{ comprovanteData()?.conferencia?.code }}</div>
+          <div class="text-[10px]">Data: {{ comprovanteData()?.conferencia?.date }} | Culto: {{ comprovanteData()?.conferencia?.culto }}</div>
+          <div class="text-[10px]">Abertura: {{ comprovanteData()?.conferencia?.opened_at }} | Enc.: {{ comprovanteData()?.conferencia?.closed_at }}</div>
+          <div class="text-[10px]">Responsavel: {{ comprovanteData()?.conferencia?.responsavel_encerramento }}</div>
+        </div>
+
+        <div class="mb-3">
+          <div class="font-bold text-[11px] border-b pb-0.5 mb-1 flex justify-between">
+            <span>DETALHAMENTO DOS DIZIMOS</span>
+            <span>FORMA / VALOR</span>
+          </div>
+          @for (d of comprovanteData()?.dizimos?.itens; track d.id) {
+            <div class="flex justify-between py-0.5 text-[11px]">
+              <span class="truncate pr-2">@if (d.envelope) { [{{ d.envelope }}] } {{ d.contribuinte }}</span>
+              <span class="whitespace-nowrap font-bold">{{ d.forma }} {{ d.valor | currency: 'BRL' : '' : '1.2-2' }}</span>
+            </div>
+          }
+          <div class="border-t border-dashed pt-1 mt-1 flex justify-between font-bold text-[11px]">
+            <span>Envelopes: {{ comprovanteData()?.dizimos?.quantidade_envelopes }}</span>
+            <span>TOTAL DIZIMOS: {{ comprovanteData()?.dizimos?.total | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3 border-t pt-2">
+          <div class="font-bold text-[11px] border-b pb-0.5 mb-1">OFERTAS AVULSAS (NAO IDENTIFICADAS)</div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Dinheiro:</span><span>{{ comprovanteData()?.ofertas_avulsas?.dinheiro | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Pix:</span><span>{{ comprovanteData()?.ofertas_avulsas?.pix | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Transferencia:</span><span>{{ comprovanteData()?.ofertas_avulsas?.transferencia | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="border-t border-dashed pt-1 mt-1 flex justify-between font-bold text-[11px]">
+            <span>TOTAL OFERTAS:</span>
+            <span>{{ comprovanteData()?.ofertas_avulsas?.total | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3 border-t-2 border-black pt-2">
+          <div class="font-black text-center text-xs mb-1">RESUMO GERAL</div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Total Dizimos:</span><span>{{ comprovanteData()?.resumo_geral?.total_dizimos | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[11px] py-0.5"><span>Total Ofertas:</span><span>{{ comprovanteData()?.resumo_geral?.total_ofertas | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="border-t-2 border-b-2 border-black py-1 my-1 flex justify-between font-black text-sm">
+            <span>TOTAL GERAL:</span>
+            <span>{{ comprovanteData()?.resumo_geral?.total_geral | currency: 'BRL' : 'symbol' : '1.2-2' }}</span>
+          </div>
+
+          <div class="text-[10px] font-bold mt-1">TOTAL CONSOLIDADO POR RECEBIMENTO:</div>
+          <div class="flex justify-between text-[10px] py-0.5"><span>• Dinheiro:</span><span>{{ comprovanteData()?.consolidado_recebimento?.dinheiro | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[10px] py-0.5"><span>• Pix:</span><span>{{ comprovanteData()?.consolidado_recebimento?.pix | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+          <div class="flex justify-between text-[10px] py-0.5"><span>• Transferencia:</span><span>{{ comprovanteData()?.consolidado_recebimento?.transferencia | currency: 'BRL' : 'symbol' : '1.2-2' }}</span></div>
+        </div>
+
+        <div class="border-t pt-3 mt-3 text-center text-[10px]">
+          <div class="mb-4">
+            <div>________________________________________________</div>
+            <div class="font-bold">{{ comprovanteData()?.conferencia?.responsavel_encerramento }}</div>
+            <div>Responsavel pela Conferencia / Diaconato</div>
+          </div>
+          @if (comprovanteData()?.meta?.is_reimpressao) {
+            <div class="font-black text-xs text-red-600 border border-red-600 py-0.5 my-1 uppercase">** REIMPRESSAO OFICIAL **</div>
+            <div class="text-[9px]">Reimpresso em {{ comprovanteData()?.meta?.reimpresso_em }} por {{ comprovanteData()?.meta?.reimpresso_por }}</div>
+          }
+          <div class="font-black text-xs mt-2 uppercase border-t pt-1">============= 2ª VIA — ARQUIVO DA IGREJA =============</div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <p-button label="Fechar" severity="secondary" [text]="true" (onClick)="showComprovanteModal.set(false)" />
+      <p-button label="Imprimir (2 Vias)" icon="pi pi-print" severity="primary" (onClick)="imprimirComprovanteWeb()" />
+    </div>
   </ng-template>
 </p-dialog>

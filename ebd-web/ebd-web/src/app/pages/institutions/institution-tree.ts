@@ -37,23 +37,28 @@ export class InstitutionTreePage implements OnInit {
   }
 
   isSelf(node: InstitutionTreeNode): boolean {
+    if (node.is_self !== undefined) return Boolean(node.is_self);
     return Boolean(this.userInstId && node.id === this.userInstId);
   }
 
   canEdit(node: InstitutionTreeNode): boolean {
-    return this.isProgrammer || this.isSelf(node);
+    if (this.isProgrammer) return true;
+    if (node.can_edit !== undefined) return Boolean(node.can_edit);
+    return this.isSelf(node);
   }
 
   canViewDashboard(node: InstitutionTreeNode): boolean {
-    return this.isProgrammer || this.isSelf(node) || true; // Dashboard de métricas é visível para a árvore permitida
+    if (this.isProgrammer) return true;
+    if (node.can_view_metrics !== undefined) return Boolean(node.can_view_metrics);
+    return this.isSelf(node);
   }
 
   loadTree(): void {
     this.loading.set(true);
     this.instService.getTree().subscribe({
       next: (res) => {
-        // Expandir por padrão o primeiro nível
-        const tree = this.expandNodes(res.tree, true);
+        // Por padrão expande todos os nós para visualização completa da estrutura conciliar
+        const tree = this.setExpansion(res.tree, true);
         this.treeData.set(tree);
         this.loading.set(false);
       },
@@ -61,12 +66,16 @@ export class InstitutionTreePage implements OnInit {
     });
   }
 
-  private expandNodes(nodes: InstitutionTreeNode[], expandCurrent: boolean): InstitutionTreeNode[] {
+  setExpansion(nodes: InstitutionTreeNode[], expanded: boolean): InstitutionTreeNode[] {
     return nodes.map((node) => ({
       ...node,
-      expanded: expandCurrent,
-      children: this.expandNodes(node.children || [], false),
+      expanded,
+      children: this.setExpansion(node.children || [], expanded),
     }));
+  }
+
+  toggleAll(expanded: boolean): void {
+    this.treeData.set(this.setExpansion(this.treeData(), expanded));
   }
 
   toggleNode(node: InstitutionTreeNode, event: Event): void {

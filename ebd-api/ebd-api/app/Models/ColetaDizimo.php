@@ -17,6 +17,7 @@ class ColetaDizimo extends Model
 
     protected $fillable = [
         'institution_id',
+        'code',
         'date',
         'description',
         'service_meeting',
@@ -29,6 +30,12 @@ class ColetaDizimo extends Model
         'verified_at',
         'entry_count',
         'total_amount',
+        'total_dizimos',
+        'oferta_dinheiro',
+        'oferta_pix',
+        'oferta_transferencia',
+        'total_ofertas',
+        'total_geral',
         'unidentified_count',
         'notes',
     ];
@@ -40,7 +47,13 @@ class ColetaDizimo extends Model
             'opened_at' => 'datetime',
             'closed_at' => 'datetime',
             'verified_at' => 'datetime',
-            'total_amount' => 'decimal:2',
+            'total_amount' => 'float',
+            'total_dizimos' => 'float',
+            'oferta_dinheiro' => 'float',
+            'oferta_pix' => 'float',
+            'oferta_transferencia' => 'float',
+            'total_ofertas' => 'float',
+            'total_geral' => 'float',
             'entry_count' => 'integer',
             'unidentified_count' => 'integer',
         ];
@@ -64,6 +77,11 @@ class ColetaDizimo extends Model
     public function lancamentos(): HasMany
     {
         return $this->hasMany(LancamentoDizimo::class, 'coleta_id');
+    }
+
+    public function impressoes(): HasMany
+    {
+        return $this->hasMany(ConferenciaImpressao::class, 'coleta_id')->orderBy('created_at', 'desc');
     }
 
     public function isOpen(): bool

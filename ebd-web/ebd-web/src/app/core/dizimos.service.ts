@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import {
   ColetaDizimo,
   LancamentoDizimo,
+  ComprovanteConferencia,
   AlertaDizimo,
   AcompanhamentoDizimo,
   SolicitacaoDiaconato,
@@ -20,17 +21,18 @@ export class DizimosService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/dizimos`;
 
-  // --- Coletas ---
-  getColetas(params?: { status?: string; date_from?: string; date_to?: string; page?: number }): Observable<Paginated<ColetaDizimo>> {
+  // --- Coletas & Conferências ---
+  getColetas(params?: { status?: string; date_from?: string; date_to?: string; search?: string; page?: number }): Observable<Paginated<ColetaDizimo>> {
     let p = new HttpParams();
     if (params?.status) p = p.set('status', params.status);
     if (params?.date_from) p = p.set('date_from', params.date_from);
     if (params?.date_to) p = p.set('date_to', params.date_to);
+    if (params?.search) p = p.set('search', params.search);
     if (params?.page) p = p.set('page', params.page.toString());
     return this.http.get<Paginated<ColetaDizimo>>(`${this.baseUrl}/coletas`, { params: p });
   }
 
-  openColeta(data: { date: string; service_meeting?: string; description?: string; notes?: string }): Observable<ColetaDizimo> {
+  openColeta(data: { date?: string; service_meeting?: string; description?: string; notes?: string }): Observable<ColetaDizimo> {
     return this.http.post<ColetaDizimo>(`${this.baseUrl}/coletas`, data);
   }
 
@@ -42,6 +44,9 @@ export class DizimosService {
     person_id?: number | null;
     amount: number;
     contribution_type?: string;
+    payment_method?: string;
+    envelope_number?: string | null;
+    contribuinte_nome?: string | null;
     is_unidentified?: boolean;
     notes?: string;
     force?: boolean;
@@ -52,16 +57,55 @@ export class DizimosService {
     );
   }
 
-  closeColeta(coletaId: number, verifierId?: number): Observable<ColetaDizimo> {
-    return this.http.post<ColetaDizimo>(`${this.baseUrl}/coletas/${coletaId}/fechar`, { verifier_id: verifierId });
+  updateLancamento(coletaId: number, lancamentoId: number, data: {
+    amount?: number;
+    payment_method?: string;
+    envelope_number?: string | null;
+    notes?: string;
+    reason?: string;
+  }): Observable<LancamentoDizimo> {
+    return this.http.put<LancamentoDizimo>(`${this.baseUrl}/coletas/${coletaId}/lancamentos/${lancamentoId}`, data);
+  }
+
+  deleteLancamento(coletaId: number, lancamentoId: number, reason?: string): Observable<{ message: string; coleta: ColetaDizimo }> {
+    return this.http.delete<{ message: string; coleta: ColetaDizimo }>(`${this.baseUrl}/coletas/${coletaId}/lancamentos/${lancamentoId}`, {
+      body: { reason }
+    });
+  }
+
+  saveOfertas(coletaId: number, ofertas: {
+    oferta_dinheiro: number;
+    oferta_pix: number;
+    oferta_transferencia: number;
+  }): Observable<ColetaDizimo> {
+    return this.http.post<ColetaDizimo>(`${this.baseUrl}/coletas/${coletaId}/ofertas`, ofertas);
+  }
+
+  closeColeta(coletaId: number, verifierId?: number, ofertas?: {
+    oferta_dinheiro?: number;
+    oferta_pix?: number;
+    oferta_transferencia?: number;
+  }): Observable<{ coleta: ColetaDizimo; comprovante: ComprovanteConferencia; message: string }> {
+    return this.http.post<{ coleta: ColetaDizimo; comprovante: ComprovanteConferencia; message: string }>(
+      `${this.baseUrl}/coletas/${coletaId}/fechar`,
+      { verifier_id: verifierId, ...(ofertas || {}) }
+    );
   }
 
   reopenColeta(coletaId: number, reason: string): Observable<ColetaDizimo> {
     return this.http.post<ColetaDizimo>(`${this.baseUrl}/coletas/${coletaId}/reabrir`, { reason });
   }
 
-  updateLancamento(coletaId: number, lancamentoId: number, data: { amount?: number; notes?: string; reason: string }): Observable<LancamentoDizimo> {
-    return this.http.put<LancamentoDizimo>(`${this.baseUrl}/coletas/${coletaId}/lancamentos/${lancamentoId}`, data);
+  getComprovante(coletaId: number): Observable<ComprovanteConferencia> {
+    return this.http.get<ComprovanteConferencia>(`${this.baseUrl}/coletas/${coletaId}/comprovante`);
+  }
+
+  reimprimir(coletaId: number): Observable<ComprovanteConferencia> {
+    return this.http.post<ComprovanteConferencia>(`${this.baseUrl}/coletas/${coletaId}/reimprimir`, {});
+  }
+
+  registrarImpressao(coletaId: number, logData: { via: string; tipo?: string; status?: string; device_info?: string }): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/coletas/${coletaId}/impressoes`, logData);
   }
 
   // --- Pastoral ---

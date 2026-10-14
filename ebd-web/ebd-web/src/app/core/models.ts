@@ -42,7 +42,7 @@ export interface Institution {
   organization_date?: string | null;
   status: string;
   parent_institution_id?: number | null;
-  parent?: { id: number; name: string; short_name: string; type: string; code?: string } | null;
+  parent?: { id: number; name: string; short_name: string; type: string; code?: string; parent?: { id: number; name: string; short_name: string; type: string } | null } | null;
   zipcode?: string | null;
   street?: string | null;
   number?: string | null;
@@ -63,6 +63,9 @@ export interface Institution {
   denominational_code?: string | null;
   share_financials_with_parent?: boolean;
   notes?: string | null;
+  can_edit?: boolean;
+  can_view_metrics?: boolean;
+  is_structural_only?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -77,10 +80,14 @@ export interface InstitutionTreeNode {
   city?: string | null;
   state?: string | null;
   parent_institution_id?: number | null;
-  members_count: number;
-  subordinates_count: number;
+  members_count?: number | null;
+  subordinates_count?: number | null;
   children: InstitutionTreeNode[];
   expanded?: boolean;
+  can_edit?: boolean;
+  can_view_metrics?: boolean;
+  is_self?: boolean;
+  is_structural_only?: boolean;
 }
 
 export interface InstitutionBreadcrumb {
@@ -104,6 +111,28 @@ export interface InstitutionSubordinateSummary {
   subordinates_count: number;
   share_financials_with_parent?: boolean;
   revenue_total: number | null;
+}
+
+export interface IpbCatalogItem {
+  id: number;
+  nome: string;
+  tipo: 'igreja' | 'congregacao';
+  endereco: string;
+  bairro: string;
+  cep: string;
+  cidade: string;
+  uf: string;
+  codigo_ibge?: string;
+  telefone?: string;
+  email?: string;
+  site?: string;
+  data_organizacao?: string | null;
+  presbiterio_id?: number | null;
+  presbiterio_nome: string;
+  presbiterio_sigla: string;
+  sinodo_id?: number | null;
+  sinodo_nome: string;
+  sinodo_sigla: string;
 }
 
 export interface InstitutionLinkRequest {
@@ -182,6 +211,7 @@ export interface Person {
   is_tither?: boolean;
   tither_since?: string | null;
   envelope_number?: string | null;
+  cpf?: string | null;
   notes: string | null;
   family?: { id: number; name: string; relationship: FamilyRelationship; is_head: boolean } | null;
   created_at?: string;
@@ -222,10 +252,11 @@ export interface Family {
 
 export interface ColetaDizimo {
   id: number;
+  code?: string;
   date: string;
   description: string | null;
   service_meeting: string | null;
-  status: 'Aberta' | 'Em conferência' | 'Fechada' | 'Reaberta para correção' | 'Cancelada';
+  status: 'Aberta' | 'Em conferência' | 'Fechada' | 'Reaberta para correção' | 'Cancelada' | 'EM ANDAMENTO' | string;
   created_by: number;
   creator?: { id: number; name: string };
   opened_at: string;
@@ -237,9 +268,16 @@ export interface ColetaDizimo {
   verified_at?: string | null;
   entry_count: number;
   total_amount: number;
+  total_dizimos?: number;
+  oferta_dinheiro?: number;
+  oferta_pix?: number;
+  oferta_transferencia?: number;
+  total_ofertas?: number;
+  total_geral?: number;
   unidentified_count: number;
   notes?: string | null;
   lancamentos?: LancamentoDizimo[];
+  impressoes?: ConferenciaImpressao[];
   privacy_notice?: string;
 }
 
@@ -250,11 +288,85 @@ export interface LancamentoDizimo {
   person?: { id: number; full_name: string; envelope_number?: string | null };
   amount: number;
   contribution_type: string;
+  payment_method?: string;
+  envelope_number?: string | null;
+  contribuinte_nome?: string | null;
   is_unidentified: boolean;
   notes?: string | null;
   created_by: number;
   creator?: { id: number; name: string };
   created_at?: string;
+}
+
+export interface ConferenciaImpressao {
+  id: number;
+  coleta_id: number;
+  via: string;
+  tipo: 'original' | 'reimpressao';
+  status: string;
+  user_id?: number;
+  user?: { id: number; name: string };
+  device_info?: string;
+  created_at: string;
+}
+
+export interface ComprovanteConferencia {
+  conferencia: {
+    id: number;
+    code: string;
+    date: string;
+    culto: string;
+    status: string;
+    opened_at: string;
+    closed_at: string;
+    responsavel_abertura: string;
+    responsavel_encerramento: string;
+    conferente_duplo?: string;
+  };
+  instituicao: {
+    nome: string;
+    cnpj: string;
+    jurisdicao: string;
+  };
+  dizimos: {
+    itens: {
+      id: number;
+      envelope?: string;
+      contribuinte: string;
+      valor: number;
+      forma: string;
+      hora: string;
+    }[];
+    quantidade_envelopes: number;
+    total_dinheiro: number;
+    total_pix: number;
+    total_transferencia: number;
+    total: number;
+  };
+  ofertas_avulsas: {
+    dinheiro: number;
+    pix: number;
+    transferencia: number;
+    total: number;
+  };
+  resumo_geral: {
+    total_dizimos: number;
+    total_ofertas: number;
+    total_geral: number;
+  };
+  consolidado_recebimento: {
+    dinheiro: number;
+    pix: number;
+    transferencia: number;
+    total_geral: number;
+  };
+  meta: {
+    is_reimpressao: boolean;
+    reimpressao_texto?: string | null;
+    reimpresso_por?: string | null;
+    reimpresso_em?: string | null;
+    emitido_em: string;
+  };
 }
 
 export interface AlertaDizimo {

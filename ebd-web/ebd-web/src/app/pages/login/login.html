@@ -193,13 +193,18 @@
 
               <div>
                 <label class="block text-xs font-semibold text-muted-color mb-1.5">Estado (UF)</label>
-                <input
-                  pInputText
-                  class="w-full"
+                <p-select
+                  [options]="stateOptions"
+                  optionLabel="label"
+                  optionValue="value"
                   [ngModel]="state()"
                   (ngModelChange)="state.set($event)"
                   name="state"
-                  placeholder="Ex: ES"
+                  placeholder="Selecione o Estado (UF)"
+                  styleClass="w-full"
+                  [filter]="true"
+                  filterPlaceholder="Buscar estado..."
+                  appendTo="body"
                 />
               </div>
             </div>

@@ -12,10 +12,20 @@
     </div>
     <p class="text-muted-color mb-0">{{ isNew() ? 'Cadastrar nova unidade na estrutura denominacional' : formatType(institutionData()?.type || '') }}</p>
   </div>
-  <div class="flex flex-wrap gap-2">
+  <div class="flex flex-wrap gap-2 items-center">
+    @if (!canEditInstitution()) {
+      <p-tag value="Somente Leitura Estrutural" severity="secondary" icon="pi pi-lock" />
+    }
     @if (!isNew() && institutionId()) {
-      <p-button label="Dashboard" icon="pi pi-chart-bar" severity="secondary" [routerLink]="['/instituicoes', institutionId(), 'dashboard']" />
-      <p-button label="Nova Vinculada" icon="pi pi-plus" [routerLink]="['/instituicoes/nova']" [queryParams]="{ parent_id: institutionId() }" />
+      @if (canEditInstitution()) {
+        <p-button label="Consultar Catálogo IPB" icon="pi pi-search" severity="info" (onClick)="openCatalogDialog()" />
+      }
+      @if (canViewMetrics()) {
+        <p-button label="Dashboard" icon="pi pi-chart-bar" severity="secondary" [routerLink]="['/instituicoes', institutionId(), 'dashboard']" />
+      }
+      @if (canEditInstitution()) {
+        <p-button label="Nova Vinculada" icon="pi pi-plus" [routerLink]="['/instituicoes/nova']" [queryParams]="{ parent_id: institutionId() }" />
+      }
     }
     <p-button label="Voltar" severity="secondary" routerLink="/instituicoes" />
   </div>
@@ -38,10 +48,18 @@
   @if (!isNew()) {
     <div class="flex flex-wrap gap-2 mb-4">
       <p-button label="Dados Cadastrais" [outlined]="activeTab() !== 'general'" (onClick)="activeTab.set('general')" />
-      <p-button [label]="'Vinculadas (' + subordinatesList().length + ')'" [outlined]="activeTab() !== 'subordinates'" (onClick)="activeTab.set('subordinates')" />
-      <p-button label="Solicitações de Vínculo" [outlined]="activeTab() !== 'link_requests'" (onClick)="activeTab.set('link_requests')" [badge]="receivedLinkRequests().length ? '' + receivedLinkRequests().length : undefined" />
-      <p-button label="Histórico" [outlined]="activeTab() !== 'transfer'" (onClick)="activeTab.set('transfer')" />
+      @if (canViewMetrics()) {
+        <p-button [label]="'Vinculadas (' + subordinatesList().length + ')'" [outlined]="activeTab() !== 'subordinates'" (onClick)="activeTab.set('subordinates')" />
+        <p-button label="Solicitações de Vínculo" [outlined]="activeTab() !== 'link_requests'" (onClick)="activeTab.set('link_requests')" [badge]="receivedLinkRequests().length ? '' + receivedLinkRequests().length : undefined" />
+        <p-button label="Histórico" [outlined]="activeTab() !== 'transfer'" (onClick)="activeTab.set('transfer')" />
+      }
     </div>
+  }
+
+  @if (!canEditInstitution()) {
+    <p-message severity="warn" styleClass="mb-3 w-full">
+      <strong>Visualização Estrutural:</strong> Esta instituição está acima ou no mesmo nível hierárquico da sua igreja. O acesso é restrito à leitura estrutural de jurisdição. Não é permitido editar seus dados nem visualizar suas métricas financeiras ou de membresia.
+    </p-message>
   }
 
   @if (activeTab() === 'general') {
@@ -60,12 +78,46 @@
           </select>
         </div>
         <div class="col-span-12 md:col-span-4"><label class="block mb-2">Código</label><input pInputText class="w-full" formControlName="code" readonly /></div>
-        <div class="col-span-12">
-          <label class="block mb-2">Instituição Superior</label>
-          @if (institutionData()?.parent) {
-            <p-tag [value]="institutionData()?.parent?.name + ' · ' + formatType(institutionData()?.parent?.type || '')" />
+        <div class="col-span-12 p-4 bg-surface-50 dark:bg-surface-800 rounded-border border border-surface flex flex-col gap-3">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div class="font-medium text-sm text-surface-900 dark:text-surface-100 flex items-center gap-2">
+              <i class="pi pi-sitemap text-primary"></i>
+              <span>Jurisdição Eclesiástica e Concílios Superiores</span>
+            </div>
+            <div class="flex gap-2">
+              <p-button label="Ver Árvore Completa" icon="pi pi-external-link" size="small" severity="secondary" [outlined]="true" routerLink="/instituicoes/arvore" />
+              @if (canEditInstitution()) {
+                <p-button label="Vincular do Catálogo IPB" icon="pi pi-link" size="small" severity="info" (onClick)="openCatalogDialog()" />
+              }
+            </div>
+          </div>
+
+          @if (breadcrumbsList().length > 1) {
+            <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-surface">
+              <span class="text-xs text-muted-color">Caminho Conciliar:</span>
+              @for (crumb of breadcrumbsList(); track crumb.id; let last = $last) {
+                <div class="flex items-center gap-1">
+                  @if (!last) {
+                    <a [routerLink]="['/instituicoes', crumb.id]" class="text-xs font-medium text-primary hover:underline px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded-border flex items-center gap-1">
+                      <i class="pi pi-building text-xs"></i>
+                      <span>{{ crumb.name }}</span>
+                      <span class="text-muted-color text-[10px]">({{ formatType(crumb.type) }})</span>
+                    </a>
+                    <i class="pi pi-chevron-right text-xs text-muted-color"></i>
+                  } @else {
+                    <span class="text-xs font-semibold px-2 py-1 bg-primary-50 dark:bg-primary-950/30 text-primary rounded-border">
+                      {{ crumb.name }} (Atual)
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          } @else if (institutionData()?.parent) {
+            <div class="text-xs text-muted-color">
+              Vinculada ao: <a [routerLink]="['/instituicoes', institutionData()?.parent?.id]" class="text-primary font-medium hover:underline">{{ institutionData()?.parent?.name }}</a> ({{ formatType(institutionData()?.parent?.type || '') }})
+            </div>
           } @else {
-            <span class="text-muted-color">Nenhuma instituição superior vinculada</span>
+            <div class="text-xs text-muted-color">Nenhuma instituição superior vinculada no momento.</div>
           }
         </div>
         <div class="col-span-12 md:col-span-4"><label class="block mb-2">CNPJ</label><input pInputText class="w-full" formControlName="cnpj" /></div>
@@ -98,7 +150,9 @@
           <label for="share-fin">Permitir que a instituição superior veja o valor total arrecadado</label>
         </div>
       </div>
-      <div class="mt-4"><p-button type="submit" label="Salvar Alterações" icon="pi pi-check" [loading]="saving()" [disabled]="form.invalid" /></div>
+      @if (canEditInstitution()) {
+        <div class="mt-4"><p-button type="submit" label="Salvar Alterações" icon="pi pi-check" [loading]="saving()" [disabled]="form.invalid" /></div>
+      }
     </form>
   }
 
@@ -235,3 +289,182 @@
     </div>
   }
 }
+
+<!-- Dialog de Consulta e Vinculação ao Catálogo Oficial da IPB -->
+<p-dialog
+  [(visible)]="catalogDialogVisible"
+  [modal]="true"
+  [header]="'Catálogo Oficial da IPB — Consultar e Vincular'"
+  [style]="{ width: '92vw', maxWidth: '1000px' }"
+  [breakpoints]="{ '960px': '95vw', '640px': '100vw' }"
+>
+  <div class="flex flex-col gap-4">
+    <div class="text-sm text-muted-color">
+      Pesquise entre as <strong>4.371 igrejas e congregações</strong> oficiais da Igreja Presbiteriana do Brasil para vincular automaticamente a sua igreja ao Presbitério e Sínodo canônicos.
+    </div>
+
+    <!-- Filtros de Busca -->
+    <div class="flex flex-wrap md:flex-nowrap gap-2 items-center">
+      <div class="flex-1 min-w-[200px]">
+        <input
+          pInputText
+          class="w-full"
+          placeholder="Buscar por nome da igreja, cidade, bairro, CEP ou código..."
+          [ngModel]="catalogSearchQuery()"
+          (ngModelChange)="catalogSearchQuery.set($event)"
+          (keyup.enter)="searchCatalog(1)"
+        />
+      </div>
+      <div class="w-32">
+        <select
+          class="w-full p-inputtext p-component"
+          [ngModel]="catalogSelectedUf()"
+          (ngModelChange)="catalogSelectedUf.set($event); searchCatalog(1)"
+        >
+          <option value="">UF (Todas)</option>
+          <option value="ES">ES</option>
+          <option value="RJ">RJ</option>
+          <option value="MG">MG</option>
+          <option value="SP">SP</option>
+          <option value="BA">BA</option>
+          <option value="PR">PR</option>
+          <option value="SC">SC</option>
+          <option value="RS">RS</option>
+          <option value="GO">GO</option>
+          <option value="MT">MT</option>
+          <option value="MS">MS</option>
+          <option value="DF">DF</option>
+          <option value="PE">PE</option>
+          <option value="CE">CE</option>
+          <option value="PA">PA</option>
+          <option value="AM">AM</option>
+        </select>
+      </div>
+      <div class="w-36">
+        <select
+          class="w-full p-inputtext p-component"
+          [ngModel]="catalogSelectedTipo()"
+          (ngModelChange)="catalogSelectedTipo.set($event); searchCatalog(1)"
+        >
+          <option value="">Tipo (Todos)</option>
+          <option value="igreja">Igreja</option>
+          <option value="congregacao">Congregação</option>
+        </select>
+      </div>
+      <p-button label="Buscar" icon="pi pi-search" [loading]="catalogLoading()" (onClick)="searchCatalog(1)" />
+    </div>
+
+    <!-- Painel de Confirmação quando selecionada -->
+    @if (selectedCatalogItem()) {
+      <div class="p-4 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 rounded-xl">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase font-bold tracking-wider text-primary">Igreja Selecionada</span>
+              <p-tag [value]="selectedCatalogItem()?.tipo === 'congregacao' ? 'Congregação' : 'Igreja'" severity="info" />
+              <p-tag [value]="'ID IPB: ' + selectedCatalogItem()?.id" severity="secondary" />
+            </div>
+            <h3 class="m-0 text-lg font-bold text-surface-900 dark:text-surface-100 mt-1">
+              {{ selectedCatalogItem()?.nome }}
+            </h3>
+            <div class="text-sm text-surface-700 dark:text-surface-300 mt-1 flex flex-wrap gap-x-4 gap-y-1">
+              <span>📍 {{ selectedCatalogItem()?.cidade }}/{{ selectedCatalogItem()?.uf }} — {{ selectedCatalogItem()?.bairro || 'Centro' }}</span>
+              <span>🏛️ <strong>Presbitério:</strong> {{ selectedCatalogItem()?.presbiterio_nome }} ({{ selectedCatalogItem()?.presbiterio_sigla }})</span>
+              <span>🌐 <strong>Sínodo:</strong> {{ selectedCatalogItem()?.sinodo_nome }} ({{ selectedCatalogItem()?.sinodo_sigla }})</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <p-button
+              label="Confirmar Vinculação"
+              icon="pi pi-check"
+              severity="success"
+              [loading]="linkingCatalog()"
+              (onClick)="confirmVincularCatalogo()"
+            />
+            <p-button
+              label="Trocar"
+              icon="pi pi-times"
+              severity="secondary"
+              [disabled]="linkingCatalog()"
+              (onClick)="selectedCatalogItem.set(null)"
+            />
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tabela com Resultados do Catálogo -->
+    <div class="border border-surface rounded-border overflow-hidden">
+      <p-table [value]="catalogItems()" [loading]="catalogLoading()" [paginator]="false">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Igreja / Congregação</th>
+            <th>Localização</th>
+            <th>Presbitério</th>
+            <th>Sínodo</th>
+            <th style="width: 120px;" class="text-center">Ação</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr [class.bg-primary-50]="selectedCatalogItem()?.id === item.id">
+            <td>
+              <div class="font-semibold text-surface-900 dark:text-surface-100">{{ item.nome }}</div>
+              <div class="text-xs text-muted-color">Código Oficial: #{{ item.id }}</div>
+            </td>
+            <td>
+              <div class="text-sm font-medium">{{ item.cidade }} / {{ item.uf }}</div>
+              <div class="text-xs text-muted-color">{{ item.bairro || item.endereco || '—' }}</div>
+            </td>
+            <td>
+              <div class="text-sm">{{ item.presbiterio_nome }}</div>
+              <p-tag [value]="item.presbiterio_sigla" severity="secondary" />
+            </td>
+            <td>
+              <div class="text-sm">{{ item.sinodo_nome }}</div>
+              <p-tag [value]="item.sinodo_sigla" severity="contrast" />
+            </td>
+            <td class="text-center">
+              <p-button
+                [label]="selectedCatalogItem()?.id === item.id ? 'Selecionado' : 'Vincular'"
+                [icon]="selectedCatalogItem()?.id === item.id ? 'pi pi-check' : 'pi pi-link'"
+                [severity]="selectedCatalogItem()?.id === item.id ? 'success' : 'primary'"
+                size="small"
+                (onClick)="selectCatalogItem(item)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center p-6 text-muted-color">
+              Nenhuma igreja encontrada no catálogo com os filtros informados.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Paginação do Catálogo -->
+    @if (catalogTotal() > 15) {
+      <div class="flex justify-between items-center text-sm text-muted-color">
+        <span>Mostrando página {{ catalogCurrentPage() }} (Total: {{ catalogTotal() }} igrejas)</span>
+        <div class="flex gap-1">
+          <p-button
+            icon="pi pi-chevron-left"
+            size="small"
+            severity="secondary"
+            [disabled]="catalogCurrentPage() <= 1"
+            (onClick)="searchCatalog(catalogCurrentPage() - 1)"
+          />
+          <p-button
+            icon="pi pi-chevron-right"
+            size="small"
+            severity="secondary"
+            [disabled]="catalogItems().length < 15"
+            (onClick)="searchCatalog(catalogCurrentPage() + 1)"
+          />
+        </div>
+      </div>
+    }
+  </div>
+</p-dialog>

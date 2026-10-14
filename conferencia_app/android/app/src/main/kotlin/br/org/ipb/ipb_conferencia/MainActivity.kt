@@ -3,16 +3,17 @@ package br.org.ipb.ipb_conferencia
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import android.bluetooth.BluetoothSocket
-import java.nio.charset.Charset
-import java.util.UUID
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.OutputStream
+import java.nio.charset.Charset
+import java.util.UUID
 
 class MainActivity : FlutterActivity() {
     private val printerChannelName = "br.org.ipb.conferencia/thermal_printer"
@@ -72,14 +73,15 @@ class MainActivity : FlutterActivity() {
         }
         pendingBluetoothResult = result
         pendingBluetoothAction = action
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.BLUETOOTH_SCAN
-            ),
-            bluetoothPermissionRequest
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                bluetoothPermissionRequest
+            )
+        } else {
+            action()
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -95,12 +97,12 @@ class MainActivity : FlutterActivity() {
         pendingBluetoothResult = null
         pendingBluetoothAction = null
 
-        if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             action?.invoke()
         } else {
             result?.error(
                 "BLUETOOTH_PERMISSION_DENIED",
-                "Permita o acesso Bluetooth para usar a impressora térmica.",
+                "Permita o acesso a Dispositivos Próximos / Bluetooth para usar a impressora.",
                 null
             )
         }
@@ -129,31 +131,40 @@ class MainActivity : FlutterActivity() {
                 }
             result.success(devices)
         } catch (e: SecurityException) {
-            result.error("BLUETOOTH_PERMISSION_DENIED", "Permissão Bluetooth negada.", null)
+            result.error("BLUETOOTH_PERMISSION_DENIED", "Permissão Bluetooth negada: ${e.message}", null)
         } catch (e: Exception) {
             result.error("BLUETOOTH_LIST_FAILED", e.message, null)
         }
     }
 
     @Throws(Exception::class)
-    private fun createConnectedSocket(device: BluetoothDevice): BluetoothSocket {
-        val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    private fun connectSocket(device: BluetoothDevice): BluetoothSocket {
+        val sppUuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+        var socket: BluetoothSocket? = null
+
+        // Tentativa 1: Socket RFCOMM padrão SPP
         try {
-            val s = device.createRfcommSocketToServiceRecord(uuid)
-            s.connect()
-            return s
+            socket = device.createRfcommSocketToServiceRecord(sppUuid)
+            socket.connect()
+            return socket
         } catch (e1: Exception) {
-            try {
-                val m = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
-                val s = m.invoke(device, 1) as BluetoothSocket
-                s.connect()
-                return s
-            } catch (e2: Exception) {
-                val s = device.createInsecureRfcommSocketToServiceRecord(uuid)
-                s.connect()
-                return s
-            }
+            try { socket?.close() } catch (ignored: Exception) {}
         }
+
+        // Tentativa 2: Fallback canal 1 via reflexão (Resolve POS-58 e chipsets MediaTek/Qualcomm)
+        try {
+            val method = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+            socket = method.invoke(device, 1) as BluetoothSocket
+            socket.connect()
+            return socket
+        } catch (e2: Exception) {
+            try { socket?.close() } catch (ignored: Exception) {}
+        }
+
+        // Tentativa 3: Socket Insecure SPP
+        socket = device.createInsecureRfcommSocketToServiceRecord(sppUuid)
+        socket.connect()
+        return socket
     }
 
     private fun printText(
@@ -164,6 +175,7 @@ class MainActivity : FlutterActivity() {
     ) {
         Thread {
             var socket: BluetoothSocket? = null
+            var output: OutputStream? = null
             try {
                 val adapter = bluetoothAdapter()
                 if (adapter == null) {
@@ -179,9 +191,15 @@ class MainActivity : FlutterActivity() {
                     return@Thread
                 }
 
-                adapter.cancelDiscovery()
+                try {
+                    if (adapter.isDiscovering) {
+                        adapter.cancelDiscovery()
+                    }
+                } catch (ignored: Exception) {}
+
                 val device = adapter.getRemoteDevice(address)
-                socket = createConnectedSocket(device)
+                socket = connectSocket(device)
+                output = socket.outputStream
 
                 val charset = try {
                     Charset.forName("CP850")
@@ -193,29 +211,31 @@ class MainActivity : FlutterActivity() {
                     }
                 }
 
-                socket.outputStream.use { output ->
-                    output.write(byteArrayOf(0x1B, 0x40)) // ESC @
-                    output.write(byteArrayOf(0x1B, 0x74, 0x02)) // CP850
-                    output.write(text.toByteArray(charset))
-                    output.write(byteArrayOf(0x0A, 0x0A, 0x0A))
-                    if (cutPaper) {
-                        output.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
-                    }
-                    output.flush()
+                output.write(byteArrayOf(0x1B, 0x40)) // ESC @ (Reset)
+                output.write(byteArrayOf(0x1B, 0x74, 0x02)) // Seleciona code page CP850
+                output.write(text.toByteArray(charset))
+                output.write(byteArrayOf(0x0A, 0x0A, 0x0A, 0x0A)) // 4 quebras de linha para sair da guilhotina/serrilha
+                if (cutPaper) {
+                    output.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00)) // GS V 66 0 (Corte)
                 }
+                output.flush()
+
+                // Pausa crucial de 1000ms com o socket ABERTO para drenar o buffer de RFCOMM para a impressora
                 try {
-                    Thread.sleep(800)
+                    Thread.sleep(1000)
                 } catch (ignored: InterruptedException) {}
+
                 runOnUiThread { result.success(true) }
             } catch (e: SecurityException) {
                 runOnUiThread {
-                    result.error("BLUETOOTH_PERMISSION_DENIED", "Permissão Bluetooth negada.", null)
+                    result.error("BLUETOOTH_PERMISSION_DENIED", "Permissão Bluetooth negada: ${e.message}", null)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     result.error("PRINT_FAILED", "Falha ao imprimir: ${e.message}", null)
                 }
             } finally {
+                try { output?.close() } catch (ignored: Exception) {}
                 try { socket?.close() } catch (ignored: Exception) {}
             }
         }.start()
@@ -229,6 +249,7 @@ class MainActivity : FlutterActivity() {
     ) {
         Thread {
             var socket: BluetoothSocket? = null
+            var output: OutputStream? = null
             try {
                 val adapter = bluetoothAdapter()
                 if (adapter == null) {
@@ -244,32 +265,40 @@ class MainActivity : FlutterActivity() {
                     return@Thread
                 }
 
-                adapter.cancelDiscovery()
-                val device = adapter.getRemoteDevice(address)
-                socket = createConnectedSocket(device)
-
-                socket.outputStream.use { output ->
-                    output.write(byteArrayOf(0x1B, 0x40)) // ESC @
-                    output.write(bytes)
-                    output.write(byteArrayOf(0x0A, 0x0A, 0x0A))
-                    if (cutPaper) {
-                        output.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
-                    }
-                    output.flush()
-                }
                 try {
-                    Thread.sleep(800)
+                    if (adapter.isDiscovering) {
+                        adapter.cancelDiscovery()
+                    }
+                } catch (ignored: Exception) {}
+
+                val device = adapter.getRemoteDevice(address)
+                socket = connectSocket(device)
+                output = socket.outputStream
+
+                output.write(byteArrayOf(0x1B, 0x40)) // ESC @ (Reset)
+                output.write(bytes)
+                output.write(byteArrayOf(0x0A, 0x0A, 0x0A, 0x0A)) // 4 quebras de linha
+                if (cutPaper) {
+                    output.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
+                }
+                output.flush()
+
+                // Pausa crucial de 1000ms com o socket ABERTO
+                try {
+                    Thread.sleep(1000)
                 } catch (ignored: InterruptedException) {}
+
                 runOnUiThread { result.success(true) }
             } catch (e: SecurityException) {
                 runOnUiThread {
-                    result.error("BLUETOOTH_PERMISSION_DENIED", "Permissão Bluetooth negada.", null)
+                    result.error("BLUETOOTH_PERMISSION_DENIED", "Permissão Bluetooth negada: ${e.message}", null)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     result.error("PRINT_FAILED", "Falha ao imprimir: ${e.message}", null)
                 }
             } finally {
+                try { output?.close() } catch (ignored: Exception) {}
                 try { socket?.close() } catch (ignored: Exception) {}
             }
         }.start()

@@ -11,7 +11,11 @@
 
 <div class="card mb-4 flex flex-col sm:flex-row gap-2">
   <input pInputText class="flex-1" placeholder="Pesquisar instituição por nome, tipo ou cidade..." [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
-  <p-button label="Recarregar" icon="pi pi-refresh" severity="secondary" (onClick)="loadTree()" />
+  <div class="flex gap-2">
+    <p-button label="Expandir Tudo" icon="pi pi-angle-double-down" severity="secondary" [outlined]="true" (onClick)="toggleAll(true)" />
+    <p-button label="Recolher Tudo" icon="pi pi-angle-double-up" severity="secondary" [outlined]="true" (onClick)="toggleAll(false)" />
+    <p-button label="Recarregar" icon="pi pi-refresh" severity="secondary" (onClick)="loadTree()" />
+  </div>
 </div>
 
 <div class="card">
@@ -37,24 +41,28 @@
             <i class="pi pi-circle-fill text-xs text-muted-color"></i>
           }
           <div>
-            @if (canEdit(node)) {
-              <a [routerLink]="['/instituicoes', node.id]" class="font-medium text-primary">{{ node.name }}</a>
-            } @else {
-              <span class="font-medium">{{ node.name }}</span>
-            }
+            <a [routerLink]="['/instituicoes', node.id]" class="font-medium text-primary hover:underline">{{ node.name }}</a>
             @if (node.short_name && node.short_name !== node.name) { <span class="text-muted-color"> ({{ node.short_name }})</span> }
-            <div class="flex flex-wrap gap-2 mt-1">
+            <div class="flex flex-wrap gap-2 mt-1 items-center">
               <p-tag [value]="getTypeLabel(node.type)" />
               <p-tag [value]="node.status" [severity]="node.status === 'ativa' ? 'success' : 'secondary'" />
               @if (node.city) { <span class="text-muted-color text-sm">{{ node.city }}/{{ node.state }}</span> }
-              <span class="text-muted-color text-sm">{{ node.members_count }} membros</span>
+              @if (canViewDashboard(node) && node.members_count !== null && node.members_count !== undefined) {
+                <span class="text-muted-color text-sm font-medium">{{ node.members_count }} membros</span>
+              } @else {
+                <p-tag value="Apenas Estrutural" severity="secondary" icon="pi pi-shield" />
+              }
             </div>
           </div>
         </div>
-        <div class="flex gap-2">
-          <p-button [label]="isSelf(node) ? 'Dashboard' : 'Ver Métricas'" icon="pi pi-chart-bar" size="small" severity="secondary" [routerLink]="['/instituicoes', node.id, 'dashboard']" />
+        <div class="flex gap-2 items-center">
+          @if (canViewDashboard(node)) {
+            <p-button [label]="isSelf(node) ? 'Dashboard' : 'Ver Métricas'" icon="pi pi-chart-bar" size="small" severity="secondary" [routerLink]="['/instituicoes', node.id, 'dashboard']" />
+          }
           @if (canEdit(node)) {
             <p-button label="Editar" icon="pi pi-pencil" size="small" [routerLink]="['/instituicoes', node.id]" />
+          } @else {
+            <p-button label="Visualizar" icon="pi pi-eye" size="small" severity="secondary" [outlined]="true" [routerLink]="['/instituicoes', node.id]" />
           }
         </div>
       </div>

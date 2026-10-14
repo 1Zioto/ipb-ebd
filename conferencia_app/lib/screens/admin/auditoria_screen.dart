@@ -304,7 +304,7 @@ class _AuditoriaScreenState extends State<AuditoriaScreen> {
       drawer: const AppDrawer(currentRoute: 'auditoria'),
       body: Column(
         children: [
-          // Banner de Conformidade Canônica e LGPD
+          // Banner de Conformidade Estatutária e LGPD
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             color: const Color(0xFFFEF3C7),

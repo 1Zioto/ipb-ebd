@@ -1234,14 +1234,14 @@
             {{ f.igreja || 'Igreja Presbiteriana em Campo Verde' }}
           </h2>
           <div class="text-xs text-surface-600 mt-0.5">
-            {{ f.presbiterio || 'Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)' }}
+            {{ f.presbiterio || 'Presbitério de Vitória • Sínodo Central' }}
           </div>
           <div class="mt-2 inline-block px-4 py-1 bg-primary/10 text-primary font-black uppercase tracking-wider rounded-md text-xs">
-            Ficha Cadastral Canônica e Ministerial Oficial
+            Ficha Cadastral Oficial
           </div>
         </div>
 
-        <!-- Matriz de Assentamento Canônico e Pessoal -->
+        <!-- Matriz de Assentamento e Dados Pessoais -->
         <div class="grid grid-cols-3 gap-3 py-3 border-b border-surface-200">
           <div>
             <span class="text-surface-500 block font-bold text-[10px] uppercase">Nome Completo do Membro</span>
@@ -1252,7 +1252,7 @@
             <strong class="font-mono text-sm text-surface-900">{{ membro.roll_number || 'S/N' }}</strong>
           </div>
           <div>
-            <span class="text-surface-500 block font-bold text-[10px] uppercase">Situação Canônica</span>
+            <span class="text-surface-500 block font-bold text-[10px] uppercase">Situação do Membro</span>
             <span class="font-bold text-surface-900">{{ getStatusBadge(membro.canonical_status).label }}</span>
           </div>
 

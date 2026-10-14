@@ -28,6 +28,8 @@ export class InstitutionDashboardPage implements OnInit {
 
   consolidated = signal<boolean>(true);
   loading = signal<boolean>(true);
+  unauthorized = signal<boolean>(false);
+  unauthorizedMessage = signal<string>('');
 
   // Drilldown modal
   showDrilldown = signal<boolean>(false);
@@ -46,12 +48,25 @@ export class InstitutionDashboardPage implements OnInit {
 
   loadAll(id: number): void {
     this.loading.set(true);
+    this.unauthorized.set(false);
     this.instService.get(id).subscribe({
       next: (res) => {
         this.institutionData.set(res.data);
+        if (res.data.can_view_metrics === false) {
+          this.unauthorized.set(true);
+          this.unauthorizedMessage.set('Esta instituição está acima ou no mesmo nível hierárquico da sua igreja. O acesso a métricas, membros e finanças é restrito à própria igreja e suas congregações subordinadas.');
+          this.loading.set(false);
+          return;
+        }
         this.loadDashboardData(id);
       },
-      error: () => this.loading.set(false),
+      error: (err) => {
+        if (err.status === 403) {
+          this.unauthorized.set(true);
+          this.unauthorizedMessage.set(err.error?.message || 'Acesso não autorizado às métricas desta instituição.');
+        }
+        this.loading.set(false);
+      },
     });
   }
 

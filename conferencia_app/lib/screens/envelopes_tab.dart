@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/api_service.dart';
 import '../core/thermal_printer.dart';
 import '../models/models.dart';
 import 'qr_scanner_modal.dart';
@@ -232,6 +233,7 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
         forma: entry.forma,
         valor: entry.valor,
         id: entry.id.length > 6 ? entry.id.substring(entry.id.length - 6) : entry.id,
+        responsavel: ApiService.instance.currentUser?.name,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();

@@ -32,7 +32,7 @@ class RolCanonicoScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             const Text(
-              'Rol Canônico de Membros',
+              'Rol de Membros',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF065F46)),
             ),
           ],
@@ -50,7 +50,7 @@ class RolCanonicoScreen extends StatelessWidget {
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Livro Canônico Oficial do Conselho da Igreja Presbiteriana do Brasil (Constituição da IPB, Art. 12).',
+                    'Livro Oficial do Conselho da Igreja Presbiteriana do Brasil (Constituição da IPB, Art. 12).',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF065F46)),
                   ),
                 ),

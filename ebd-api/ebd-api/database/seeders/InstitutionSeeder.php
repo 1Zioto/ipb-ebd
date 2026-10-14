@@ -28,14 +28,15 @@ class InstitutionSeeder extends Seeder
             ]
         );
 
-        // 2. Sínodo Central
+        // 2. Sínodo Central Espíritossantense (SCE)
         $sinodo = Institution::firstOrCreate(
-            ['name' => 'Sínodo Central'],
+            ['name' => 'Sínodo Central Espíritossantense'],
             [
-                'short_name' => 'Sínodo Central',
+                'short_name' => 'SCE',
                 'type' => 'sinodo',
                 'status' => 'ativa',
                 'parent_institution_id' => $supremo->id,
+                'denominational_code' => '12',
                 'city' => 'Vitória',
                 'state' => 'ES',
                 'country' => 'Brasil',
@@ -43,6 +44,19 @@ class InstitutionSeeder extends Seeder
         );
 
         // 3. Presbitérios
+        $presbSudeste = Institution::firstOrCreate(
+            ['name' => 'Presbitério Sudeste Espírito Santo'],
+            [
+                'short_name' => 'PSES',
+                'type' => 'presbiterio',
+                'status' => 'ativa',
+                'parent_institution_id' => $sinodo->id,
+                'denominational_code' => '218',
+                'city' => 'Cariacica',
+                'state' => 'ES',
+            ]
+        );
+
         $presbVitoria = Institution::firstOrCreate(
             ['name' => 'Presbitério de Vitória'],
             [
@@ -69,20 +83,23 @@ class InstitutionSeeder extends Seeder
 
         // 4. Igrejas
         $igrejaCampoVerde = Institution::firstOrCreate(
-            ['name' => 'Igreja Presbiteriana em Campo Verde'],
+            ['name' => 'Igreja Presbiteriana de Campo Verde'],
             [
                 'short_name' => 'IP Campo Verde',
                 'type' => 'igreja',
                 'status' => 'ativa',
-                'parent_institution_id' => $presbVitoria->id,
+                'parent_institution_id' => $presbSudeste->id,
+                'denominational_code' => '2520',
                 'city' => 'Cariacica',
                 'state' => 'ES',
-                'street' => 'Rua Principal',
-                'number' => '100',
+                'street' => 'Av. Obede Emerick',
+                'number' => 'S/N',
                 'district' => 'Campo Verde',
-                'zipcode' => '29140-000',
-                'phone' => '(27) 3333-4444',
-                'email' => 'contato@ipcampoverde.org.br',
+                'zipcode' => '29155-845',
+                'phone' => '(27) 3386-1652',
+                'email' => 'contato@ipbemcampoverde.com.br',
+                'website' => 'http://ipbemcampoverde.com.br',
+                'organization_date' => '1995-12-31',
             ]
         );
 
@@ -98,33 +115,23 @@ class InstitutionSeeder extends Seeder
             ]
         );
 
-        // 5. Congregações
-        $congCampoGrande = Institution::firstOrCreate(
-            ['name' => 'Congregação Campo Grande'],
+        // 5. Congregação (Campo Verde tem apenas a congregação de Bela Aurora)
+        $congBelaAurora = Institution::firstOrCreate(
+            ['name' => 'Congregação Presbiteriana de Bela Aurora'],
             [
-                'short_name' => 'Cong. Campo Grande',
+                'short_name' => 'Cong. Bela Aurora',
                 'type' => 'congregacao',
                 'status' => 'ativa',
                 'parent_institution_id' => $igrejaCampoVerde->id,
                 'city' => 'Cariacica',
                 'state' => 'ES',
-            ]
-        );
-
-        $congJardimAmerica = Institution::firstOrCreate(
-            ['name' => 'Congregação Jardim América'],
-            [
-                'short_name' => 'Cong. Jardim América',
-                'type' => 'congregacao',
-                'status' => 'ativa',
-                'parent_institution_id' => $igrejaCampoVerde->id,
-                'city' => 'Cariacica',
-                'state' => 'ES',
+                'country' => 'Brasil',
+                'share_financials_with_parent' => true,
             ]
         );
 
         // Registrar históricos iniciais
-        foreach ([$supremo, $sinodo, $presbVitoria, $presbNorte, $igrejaCampoVerde, $igrejaVilaVelha, $congCampoGrande, $congJardimAmerica] as $inst) {
+        foreach ([$supremo, $sinodo, $presbVitoria, $presbNorte, $igrejaCampoVerde, $igrejaVilaVelha, $congBelaAurora] as $inst) {
             InstitutionHistory::firstOrCreate(
                 ['institution_id' => $inst->id, 'event_type' => 'criacao'],
                 [

@@ -10,7 +10,7 @@ import 'ebd/calendario_escalas_screen.dart';
 import 'ebd/ebd_dashboard_screen.dart';
 import 'etiquetas_membros_screen.dart';
 import 'financeiro/livro_caixa_screen.dart';
-import 'home_screen.dart';
+import 'conferencias_list_screen.dart';
 import 'instituicoes/instituicoes_screen.dart';
 import 'login_screen.dart';
 import 'secretaria/boletim_screen.dart';
@@ -86,7 +86,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   void _openConferencia({int initialTab = 0}) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => HomeScreen(initialTab: initialTab),
+        builder: (_) => const ConferenciasListScreen(),
       ),
     );
   }
@@ -395,7 +395,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   label: 'ROL MEMBROS',
                   value: '${_members.isNotEmpty ? _members.length : 342}',
                   valueExtra: 'ativos',
-                  subtext: 'Rol Canônico Atualizado',
+                  subtext: 'Rol de Membros Atualizado',
                   icon: Icons.people_alt_rounded,
                   color: const Color(0xFF7C3AED),
                   lightColor: const Color(0xFFF5F3FF),
@@ -1006,7 +1006,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               },
             ),
             _MenuCardItem(
-              title: 'Rol Canônico',
+              title: 'Rol de Membros',
               subtitle: 'Comungantes e não-comungantes',
               icon: Icons.menu_book_rounded,
               iconColor: const Color(0xFF8B5CF6),

@@ -55,18 +55,22 @@ class _ConfiguracoesImpressoraScreenState
       if (!mounted) return;
       setState(() => _printers = devices);
       if (_printerAddress == null && devices.isNotEmpty) {
-        final best = devices.firstWhere(
-          (d) {
-            final n = d.name.toUpperCase();
-            return n.contains('POS') ||
-                n.contains('PRINTER') ||
-                n.contains('58') ||
-                n.contains('80') ||
-                n.contains('MPT');
-          },
-          orElse: () => devices.first,
-        );
-        _savePrinter(best.address);
+        try {
+          final best = devices.firstWhere(
+            (d) {
+              final n = d.name.toUpperCase();
+              return n.contains('POS') ||
+                  n.contains('PRINTER') ||
+                  n.contains('5808') ||
+                  n.contains('MPT') ||
+                  n.contains('RPP');
+            },
+          );
+          _savePrinter(best.address);
+        } catch (_) {
+          // Nenhum dispositivo com nome evidente de impressora.
+          // Deixa o usuário escolher no dropdown sem forçar fones ou outros aparelhos.
+        }
       }
       if (showFeedback) {
         if (devices.isEmpty) {
@@ -384,7 +388,7 @@ class _ConfiguracoesImpressoraScreenState
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                   ),
                   subtitle: const Text(
-                    'Emite o termo canônico de conferência com espaço para assinaturas da comissão.',
+                    'Emite o termo de conferência com espaço para assinaturas da comissão.',
                     style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                   ),
                   secondary: const Icon(Icons.receipt_long_outlined),

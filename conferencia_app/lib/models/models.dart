@@ -1,3 +1,23 @@
+double asDouble(dynamic value, [double defaultValue = 0.0]) {
+  if (value == null) return defaultValue;
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    final cleaned = value.replaceAll(',', '.').trim();
+    return double.tryParse(cleaned) ?? defaultValue;
+  }
+  return defaultValue;
+}
+
+int asInt(dynamic value, [int defaultValue = 0]) {
+  if (value == null) return defaultValue;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    final trimmed = value.trim();
+    return int.tryParse(trimmed) ?? (double.tryParse(trimmed)?.toInt() ?? defaultValue);
+  }
+  return defaultValue;
+}
+
 class UserModel {
   final int? id;
   final String name;
@@ -60,19 +80,128 @@ class MemberModel {
       : 'IPB:ID$id';
 }
 
+class ColetaModel {
+  final int id;
+  final String code;
+  final String date;
+  final String serviceMeeting;
+  final String? description;
+  final String status;
+  final String? creatorName;
+  final String? closerName;
+  final String? openedAt;
+  final String? closedAt;
+  final int entryCount;
+  final double totalAmount;
+  final double totalDizimos;
+  final double ofertaDinheiro;
+  final double ofertaPix;
+  final double ofertaTransferencia;
+  final double totalOfertas;
+  final double totalGeral;
+  final String? notes;
+
+  const ColetaModel({
+    required this.id,
+    required this.code,
+    required this.date,
+    required this.serviceMeeting,
+    this.description,
+    required this.status,
+    this.creatorName,
+    this.closerName,
+    this.openedAt,
+    this.closedAt,
+    required this.entryCount,
+    required this.totalAmount,
+    required this.totalDizimos,
+    required this.ofertaDinheiro,
+    required this.ofertaPix,
+    required this.ofertaTransferencia,
+    required this.totalOfertas,
+    required this.totalGeral,
+    this.notes,
+  });
+
+  bool get isAberta {
+    final s = status.toLowerCase().trim();
+    return s == 'aberta' ||
+        s.contains('reaberta') ||
+        s.contains('andamento') ||
+        s.contains('conferência') ||
+        s.contains('conferencia');
+  }
+
+  factory ColetaModel.fromJson(Map<String, dynamic> json) {
+    final rawId = asInt(json['id']);
+    final totalDiz = asDouble(json['total_dizimos'], asDouble(json['total_amount']));
+    final ofDin = asDouble(json['oferta_dinheiro']);
+    final ofPix = asDouble(json['oferta_pix']);
+    final ofTransf = asDouble(json['oferta_transferencia']);
+    final totOf = asDouble(json['total_ofertas'], ofDin + ofPix + ofTransf);
+    final totGeral = asDouble(json['total_geral'], totalDiz + totOf);
+
+    return ColetaModel(
+      id: rawId,
+      code: json['code']?.toString() ?? 'CONF-${rawId.toString().padLeft(6, '0')}',
+      date: json['date']?.toString().split('T')[0] ?? '',
+      serviceMeeting: json['service_meeting']?.toString() ?? 'Culto de Domingo',
+      description: json['description']?.toString(),
+      status: json['status']?.toString() ?? 'Aberta',
+      creatorName: json['creator'] is Map ? json['creator']['name']?.toString() : json['creator_name']?.toString(),
+      closerName: json['closer'] is Map ? json['closer']['name']?.toString() : json['closer_name']?.toString(),
+      openedAt: json['opened_at']?.toString(),
+      closedAt: json['closed_at']?.toString(),
+      entryCount: asInt(json['entry_count']),
+      totalAmount: asDouble(json['total_amount'], totGeral),
+      totalDizimos: totalDiz,
+      ofertaDinheiro: ofDin,
+      ofertaPix: ofPix,
+      ofertaTransferencia: ofTransf,
+      totalOfertas: totOf,
+      totalGeral: totGeral,
+      notes: json['notes']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'code': code,
+        'date': date,
+        'service_meeting': serviceMeeting,
+        'description': description,
+        'status': status,
+        'creator_name': creatorName,
+        'closer_name': closerName,
+        'opened_at': openedAt,
+        'closed_at': closedAt,
+        'entry_count': entryCount,
+        'total_amount': totalAmount,
+        'total_dizimos': totalDizimos,
+        'oferta_dinheiro': ofertaDinheiro,
+        'oferta_pix': ofertaPix,
+        'oferta_transferencia': ofertaTransferencia,
+        'total_ofertas': totalOfertas,
+        'total_geral': totalGeral,
+        'notes': notes,
+      };
+}
+
 class EnvelopeEntry {
   final String id;
   final int? personId;
   final String membro;
+  final String? envelopeNumber;
   final double valor;
   final String destinacao; // 'dizimo' | 'oferta' | 'missoes' | 'construcao'
-  final String forma;      // 'dinheiro' | 'pix' | 'cartao'
+  final String forma;      // 'dinheiro' | 'pix' | 'transferencia' | 'cartao'
   final String timestamp;
 
   const EnvelopeEntry({
     required this.id,
     this.personId,
     required this.membro,
+    this.envelopeNumber,
     required this.valor,
     required this.destinacao,
     required this.forma,
@@ -82,12 +211,13 @@ class EnvelopeEntry {
   factory EnvelopeEntry.fromJson(Map<String, dynamic> json) {
     return EnvelopeEntry(
       id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      personId: json['person_id'] is int ? json['person_id'] : int.tryParse(json['person_id']?.toString() ?? ''),
-      membro: json['membro']?.toString() ?? 'Oferta',
-      valor: (json['valor'] as num?)?.toDouble() ?? 0.0,
-      destinacao: json['destinacao']?.toString() ?? 'dizimo',
-      forma: json['forma']?.toString() ?? 'dinheiro',
-      timestamp: json['timestamp']?.toString() ?? '',
+      personId: json['person_id'] != null ? asInt(json['person_id']) : null,
+      membro: json['membro']?.toString() ?? json['contribuinte']?.toString() ?? json['person']?['full_name']?.toString() ?? json['contribuinte_nome']?.toString() ?? 'Oferta',
+      envelopeNumber: json['envelope_number']?.toString() ?? json['envelope']?.toString() ?? json['person']?['envelope_number']?.toString(),
+      valor: asDouble(json['valor'], asDouble(json['amount'])),
+      destinacao: json['destinacao']?.toString() ?? json['contribution_type']?.toString() ?? 'dizimo',
+      forma: json['forma']?.toString() ?? json['payment_method']?.toString() ?? 'dinheiro',
+      timestamp: json['timestamp']?.toString() ?? json['hora']?.toString() ?? json['created_at']?.toString() ?? '',
     );
   }
 
@@ -95,6 +225,7 @@ class EnvelopeEntry {
         'id': id,
         'person_id': personId,
         'membro': membro,
+        'envelope_number': envelopeNumber,
         'valor': valor,
         'destinacao': destinacao,
         'forma': forma,

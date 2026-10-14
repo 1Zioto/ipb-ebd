@@ -5,18 +5,15 @@ import '../core/api_service.dart';
 import '../core/thermal_printer.dart';
 import '../models/models.dart';
 import '../widgets/app_drawer.dart';
-import 'cedulas_tab.dart';
 import 'configuracoes_impressora_screen.dart';
-import 'ebd/ebd_dashboard_screen.dart';
 import 'envelopes_tab.dart';
 import 'etiquetas_membros_screen.dart';
 import 'fechamento_tab.dart';
-import 'login_screen.dart';
-import 'main_menu_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
-  const HomeScreen({super.key, this.initialTab = 0});
+  final ColetaModel? coleta;
+  const HomeScreen({super.key, this.initialTab = 0, this.coleta});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -28,11 +25,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<MemberModel> _members = [];
   final Map<double, int> _cashCounts = {};
 
-  String? _printerAddress;
+  late ColetaModel? _currentColeta;
 
   @override
   void initState() {
     super.initState();
+    _currentColeta = widget.coleta;
     _currentTab = widget.initialTab;
     _initCashCounts();
     _loadSavedState();
@@ -47,12 +45,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkPrinterStatus() async {
-    final selected = await ThermalPrinterService.instance.selectedPrinter();
-    if (!mounted) return;
-    setState(() => _printerAddress = selected?.address);
+    await ThermalPrinterService.instance.selectedPrinter();
   }
 
   Future<void> _loadSavedState() async {
+    // Se recebemos uma conferência online, buscar os lançamentos do servidor
+    if (_currentColeta != null && !ApiService.instance.isOffline) {
+      try {
+        final details = await ApiService.instance.getConferenciaDetails(_currentColeta!.id);
+        if (details['entries'] != null && details['entries'] is List<EnvelopeEntry>) {
+          setState(() {
+            _entries = details['entries'] as List<EnvelopeEntry>;
+            if (details['coleta'] != null) {
+              _currentColeta = details['coleta'] as ColetaModel;
+            }
+          });
+          return;
+        }
+      } catch (_) {}
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final entriesRaw = prefs.getString('ipb_conferencia_entries');
     if (entriesRaw != null) {
@@ -98,7 +110,65 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _members = members);
   }
 
-  void _handleAddEntry(EnvelopeEntry entry) {
+  void _handleAddEntry(EnvelopeEntry entry) async {
+    if (_currentColeta != null && !ApiService.instance.isOffline) {
+      try {
+        final saved = await ApiService.instance.addEnvelopeLancamento(
+          _currentColeta!.id,
+          personId: entry.personId,
+          amount: entry.valor,
+          forma: entry.forma,
+          envelopeNumber: entry.envelopeNumber,
+          membro: entry.membro,
+          destinacao: entry.destinacao,
+        );
+        setState(() {
+          _entries.insert(0, saved);
+        });
+        _saveState();
+        return;
+      } catch (e) {
+        if (e is DuplicateEntryException) {
+          // Confirmar duplicação
+          if (mounted) {
+            final force = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Envelope Já Lançado'),
+                content: Text('Este envelope já foi lançado nesta conferência. Deseja adicionar mesmo assim?'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF047857), foregroundColor: Colors.white),
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: const Text('Lançar Mesmo Assim'),
+                  ),
+                ],
+              ),
+            );
+            if (force == true) {
+              final forcedEntry = await ApiService.instance.addEnvelopeLancamento(
+                _currentColeta!.id,
+                personId: entry.personId,
+                amount: entry.valor,
+                forma: entry.forma,
+                envelopeNumber: entry.envelopeNumber,
+                membro: entry.membro,
+                destinacao: entry.destinacao,
+                force: true,
+              );
+              setState(() {
+                _entries.insert(0, forcedEntry);
+              });
+              _saveState();
+              return;
+            }
+          }
+          return;
+        }
+      }
+    }
+
     setState(() {
       _entries.insert(0, entry);
     });
@@ -118,15 +188,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
+              final intId = int.tryParse(id);
+              if (_currentColeta != null && intId != null && !ApiService.instance.isOffline) {
+                try {
+                  await ApiService.instance.deleteEnvelopeLancamento(_currentColeta!.id, intId);
+                } catch (_) {}
+              }
               setState(() {
                 _entries.removeWhere((e) => e.id == id);
               });
               _saveState();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Entrada removida.')),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Entrada removida.')),
+                );
+              }
             },
             child: const Text('Remover'),
           ),
@@ -135,39 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _handleUpdateCashCount(double val, int qty) {
-    setState(() {
-      _cashCounts[val] = qty;
-    });
-    _saveState();
-  }
 
-  void _handleResetCash() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Zerar contagem?'),
-        content: const Text('Deseja zerar a contagem de todas as cédulas e moedas físicas?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              setState(() {
-                _cashCounts.forEach((k, _) => _cashCounts[k] = 0);
-              });
-              _saveState();
-            },
-            child: const Text('Zerar'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _handleResetSession() {
     showDialog(
@@ -200,60 +246,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _handleLogout() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sair do sistema?'),
-        content: const Text('Os lançamentos salvos nesta sessão permanecerão guardados no aparelho.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              await ApiService.instance.logout();
-              if (!mounted) return;
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            },
-            child: const Text('Sair'),
-          ),
-        ],
-      ),
-    );
-  }
 
-  double get totalFisico {
-    double t = 0.0;
-    _cashCounts.forEach((val, qty) => t += val * qty);
-    return t;
-  }
 
-  double get totalEnvelopesDinheiro {
-    return _entries
-        .where((e) => e.forma == 'dinheiro')
-        .fold(0.0, (sum, e) => sum + e.valor);
-  }
-
-  double get totalPix {
-    return _entries
-        .where((e) => e.forma == 'pix')
-        .fold(0.0, (sum, e) => sum + e.valor);
-  }
-
-  double get totalCartao {
-    return _entries
-        .where((e) => e.forma == 'cartao')
-        .fold(0.0, (sum, e) => sum + e.valor);
-  }
-
-  double get totalGeral => totalFisico + totalPix + totalCartao;
-  double get diferencaDinheiro => totalFisico - totalEnvelopesDinheiro;
+  double get totalGeral => _entries.fold(0.0, (sum, e) => sum + e.valor);
 
   @override
   Widget build(BuildContext context) {
@@ -298,31 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          // Botão Menu Principal (Painel Android)
-          IconButton(
-            tooltip: 'Menu Principal',
-            icon: const Icon(Icons.grid_view_rounded, color: Color(0xFF047857)),
-            onPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-                );
-              }
-            },
-          ),
-          // Botão Direto para EBD Dominical
-          IconButton(
-            tooltip: 'Escola Bíblica Dominical (EBD)',
-            icon: const Icon(Icons.school, color: Color(0xFF047857)),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
-              );
-            },
-          ),
-          // Botão Etiquetas e QR Codes dos Membros
+          // Apenas o botão de QR Codes conforme solicitado
           IconButton(
             tooltip: 'Etiquetas & QR Codes',
             onPressed: () {
@@ -332,37 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.qr_code_2, color: Color(0xFF047857)),
-          ),
-          // Botão Rápido Impressora POS
-          IconButton(
-            tooltip: 'Configurar Impressora POS',
-            onPressed: () {
-              setState(() => _currentTab = 3);
-            },
-            icon: Stack(
-              children: [
-                const Icon(Icons.print_outlined, color: Color(0xFF047857)),
-                if (_printerAddress != null)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: _handleLogout,
-            icon: const Icon(Icons.logout, color: Color(0xFF64748B)),
+            icon: const Icon(Icons.qr_code_2, color: Color(0xFF047857), size: 26),
           ),
         ],
       ),
@@ -370,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           // HUD Totalizador no topo
-          if (_currentTab != 3)
+          if (_currentTab != 2)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               color: Colors.white,
@@ -398,11 +339,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       _buildMiniPill('${_entries.length}', 'Envelopes'),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       _buildMiniPill(
-                        diferencaDinheiro.abs() < 0.01 ? '100% OK' : (diferencaDinheiro > 0 ? '+R\$ ${diferencaDinheiro.toInt()}' : 'Dif'),
-                        'Batimento',
-                        color: diferencaDinheiro.abs() < 0.01 ? const Color(0xFF047857) : Colors.orange,
+                        userName.split(' ').first,
+                        'Responsável',
+                        color: const Color(0xFF047857),
                       ),
                     ],
                   ),
@@ -420,15 +361,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   onAddEntry: _handleAddEntry,
                   onRemoveEntry: _handleRemoveEntry,
                 ),
-                CedulasTab(
-                  cashCounts: _cashCounts,
-                  onUpdateCount: _handleUpdateCashCount,
-                  onReset: _handleResetCash,
-                ),
                 FechamentoTab(
                   entries: _entries,
-                  cashCounts: _cashCounts,
+                  cashCounts: const {},
                   onResetSession: _handleResetSession,
+                  coleta: _currentColeta,
+                  onColetaUpdated: (updated) {
+                    setState(() => _currentColeta = updated);
+                  },
                 ),
                 const ConfiguracoesImpressoraScreen(),
               ],
@@ -447,11 +387,6 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.mail_outline),
             selectedIcon: Icon(Icons.mail, color: Color(0xFF047857)),
             label: 'Envelopes',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calculate_outlined),
-            selectedIcon: Icon(Icons.calculate, color: Color(0xFF047857)),
-            label: 'Cédulas',
           ),
           NavigationDestination(
             icon: Icon(Icons.verified_outlined),

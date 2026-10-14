@@ -35,7 +35,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       'perfil': 'Presbítero',
       'status': 'Ativo',
       'ultimoAcesso': 'Hoje às 09:40',
-      'permissoes': ['Atas do Conselho', 'Rol Canônico', 'Disciplina', 'EBD'],
+      'permissoes': ['Atas do Conselho', 'Rol de Membros', 'Disciplina', 'EBD'],
       'doisFatores': true,
     },
     {

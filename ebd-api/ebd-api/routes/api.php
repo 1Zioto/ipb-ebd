@@ -141,6 +141,11 @@ Route::prefix('v1')->group(function () {
             Route::post('link-requests/{linkRequest}/reject', [InstitutionController::class, 'rejectLinkRequest'])->middleware('permission:institution.manage');
             Route::post('link-requests/{linkRequest}/cancel', [InstitutionController::class, 'cancelLinkRequest'])->middleware('permission:institution.manage');
 
+            Route::get('catalogo-ipb', [InstitutionController::class, 'catalogoIpb'])->middleware('permission:institution.view');
+            Route::get('catalogo-ipb/{id}', [InstitutionController::class, 'showCatalogoIpb'])->middleware('permission:institution.view');
+            Route::post('importar-catalogo', [InstitutionController::class, 'importarCatalogo'])->middleware('permission:institution.manage');
+            Route::post('{institution}/vincular-catalogo', [InstitutionController::class, 'vincularCatalogo'])->middleware('permission:institution.manage');
+
             Route::get('/', [InstitutionController::class, 'index'])->middleware('permission:institution.view');
             Route::post('/', [InstitutionController::class, 'store'])->middleware('permission:institution.manage');
             Route::get('{institution}', [InstitutionController::class, 'show'])->middleware('permission:institution.view');
@@ -160,14 +165,19 @@ Route::prefix('v1')->group(function () {
 
         // ---- Módulo de Dízimos ----
         Route::prefix('dizimos')->group(function () {
-            // Coletas & Lançamentos Rápido
+            // Coletas & Conferências
             Route::get('coletas', [ColetaController::class, 'index'])->middleware('permission:dizimos.coleta.operar');
             Route::post('coletas', [ColetaController::class, 'store'])->middleware('permission:dizimos.coleta.operar');
             Route::get('coletas/{coleta}', [ColetaController::class, 'show'])->middleware('permission:dizimos.coleta.operar');
             Route::post('coletas/{coleta}/lancamentos', [ColetaController::class, 'storeLancamento'])->middleware('permission:dizimos.coleta.operar');
+            Route::put('coletas/{coleta}/lancamentos/{lancamento}', [ColetaController::class, 'updateLancamento'])->middleware('permission:dizimos.coleta.operar');
+            Route::delete('coletas/{coleta}/lancamentos/{lancamento}', [ColetaController::class, 'destroyLancamento'])->middleware('permission:dizimos.coleta.operar');
+            Route::post('coletas/{coleta}/ofertas', [ColetaController::class, 'saveOfertas'])->middleware('permission:dizimos.coleta.operar');
             Route::post('coletas/{coleta}/fechar', [ColetaController::class, 'close'])->middleware('permission:dizimos.coleta.fechar');
             Route::post('coletas/{coleta}/reabrir', [ColetaController::class, 'reopen'])->middleware('permission:dizimos.coleta.reabrir');
-            Route::put('coletas/{coleta}/lancamentos/{lancamento}', [ColetaController::class, 'updateLancamento'])->middleware('permission:dizimos.coleta.reabrir');
+            Route::get('coletas/{coleta}/comprovante', [ColetaController::class, 'comprovante'])->middleware('permission:dizimos.coleta.operar');
+            Route::post('coletas/{coleta}/reimprimir', [ColetaController::class, 'reimprimir'])->middleware('permission:dizimos.coleta.operar');
+            Route::post('coletas/{coleta}/impressoes', [ColetaController::class, 'registrarImpressao'])->middleware('permission:dizimos.coleta.operar');
 
             // Pastoral & Alertas & Ficha Individual
             Route::get('pastoral/dashboard', [PastoralController::class, 'dashboard'])->middleware('permission:dizimos.alertas.manage');

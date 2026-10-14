@@ -73,12 +73,45 @@ export class AuthService {
   clearSession(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem('ipb_super_admin_mode');
     this._user.set(null);
   }
 
-  can(permission: string): boolean {
+  /**
+   * Identifica exclusivamente o Usuário Master do sistema (superadmin).
+   * Apenas este perfil tem visualização e acesso à Central Super Admin.
+   */
+  readonly isMasterUser = computed(() => {
     const u = this._user();
     if (!u) return false;
-    return u.is_programmer || u.permissions.includes(permission);
+    const username = (u.username || '').toLowerCase().trim();
+    const email = (u.email || '').toLowerCase().trim();
+    return username === 'superadmin' || email === 'superadmin@ipb.org.br' || username === 'master';
+  });
+
+  /**
+   * Central Super Admin e privilégios de parametrização são exclusivos do Usuário Master.
+   */
+  readonly isSuperAdmin = computed(() => {
+    return this.isMasterUser();
+  });
+
+  setSuperAdminMode(active: boolean): void {
+    if (!this.isMasterUser()) {
+      localStorage.removeItem('ipb_super_admin_mode');
+      return;
+    }
+    if (active) {
+      localStorage.setItem('ipb_super_admin_mode', 'true');
+    } else {
+      localStorage.removeItem('ipb_super_admin_mode');
+    }
+  }
+
+  can(permission: string): boolean {
+    if (this.isSuperAdmin()) return true;
+    const u = this._user();
+    if (!u) return false;
+    return u.is_programmer || u.permissions.includes(permission) || u.permissions.includes('*');
   }
 }

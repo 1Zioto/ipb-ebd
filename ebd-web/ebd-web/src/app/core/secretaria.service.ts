@@ -202,6 +202,7 @@ export interface TermoBalancete {
   mes_extenso: string;
   igreja: string;
   cnpj: string;
+  presbiterio?: string;
   saldo_anterior: number;
   entradas: number;
   saidas: number;

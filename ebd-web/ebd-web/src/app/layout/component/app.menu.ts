@@ -11,7 +11,7 @@
  * ============================================================================
  */
 
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, effect, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -22,6 +22,7 @@ import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '@/app/core/auth.service';
 import { LayoutService } from '@/app/layout/service/layout.service';
+import { ScreenConfigService } from '@/app/core/screen-config.service';
 
 @Component({
     selector: 'app-menu',
@@ -83,12 +84,25 @@ import { LayoutService } from '@/app/layout/service/layout.service';
 export class AppMenu implements OnInit {
     private auth = inject(AuthService);
     private router = inject(Router);
+    private screenConfig = inject(ScreenConfigService);
     layoutService = inject(LayoutService);
 
     model: MenuItem[] = [];
     searchQuery = '';
 
+    constructor() {
+        // Re-renderiza o menu instantaneamente quando qualquer tela for ativada ou desativada no Super Admin
+        effect(() => {
+            this.screenConfig.version();
+            this.rebuildMenu();
+        });
+    }
+
     ngOnInit() {
+        this.rebuildMenu();
+    }
+
+    rebuildMenu(): void {
         this.model = this.visibleGroups([
             {
                 label: 'Visão Geral & Igreja',
@@ -101,50 +115,57 @@ export class AppMenu implements OnInit {
             {
                 label: 'Educação & Ministérios',
                 items: [
-                    { label: 'Classes EBD', icon: 'pi pi-fw pi-book', routerLink: ['/classes'], visible: this.can('class.view') },
-                    { label: 'Calendário', icon: 'pi pi-fw pi-calendar', routerLink: ['/calendario'], visible: this.can('event.view') },
-                    { label: 'Escalas de Serviço', icon: 'pi pi-fw pi-list', routerLink: ['/escalas'], visible: this.can('schedule.view') },
-                    { label: 'Relatórios EBD', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/relatorios'], visible: this.can('report.view') },
-                    { label: 'Relatório Anual IPB', icon: 'pi pi-fw pi-chart-pie', routerLink: ['/relatorios/anual'], visible: this.can('report.view') },
-                    { label: 'Sociedades Internas', icon: 'pi pi-fw pi-id-card', routerLink: ['/sociedades'], visible: this.can('person.view') },
-                    { label: 'Catecúmenos & Biblioteca', icon: 'pi pi-fw pi-bookmark', routerLink: ['/discipulado-biblioteca'], visible: this.can('person.view') },
+                    { label: 'Classes EBD', icon: 'pi pi-fw pi-book', routerLink: ['/classes'], visible: this.isScreenVisible('classes', 'class.view') },
+                    { label: 'Calendário', icon: 'pi pi-fw pi-calendar', routerLink: ['/calendario'], visible: this.isScreenVisible('calendario', 'event.view') },
+                    { label: 'Escalas de Serviço', icon: 'pi pi-fw pi-list', routerLink: ['/escalas'], visible: this.isScreenVisible('escalas', 'schedule.view') },
+                    { label: 'Relatórios EBD', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/relatorios'], visible: this.isScreenVisible('relatorios_ebd', 'report.view') },
+                    { label: 'Relatório Anual IPB', icon: 'pi pi-fw pi-chart-pie', routerLink: ['/relatorios/anual'], visible: this.isScreenVisible('relatorio_anual', 'report.view') },
+                    { label: 'Sociedades Internas', icon: 'pi pi-fw pi-id-card', routerLink: ['/sociedades'], visible: this.isScreenVisible('sociedades', 'person.view') },
+                    { label: 'Catecúmenos & Biblioteca', icon: 'pi pi-fw pi-bookmark', routerLink: ['/discipulado-biblioteca'], visible: this.isScreenVisible('discipulado_biblioteca', 'person.view') },
                 ],
             },
             {
                 label: 'Secretaria & Membresia',
                 items: [
-                    { label: 'Pessoas Cadastradas', icon: 'pi pi-fw pi-users', routerLink: ['/pessoas'], visible: this.can('person.view') },
-                    { label: 'Famílias', icon: 'pi pi-fw pi-users', routerLink: ['/familias'], visible: this.can('family.view') },
-                    { label: 'Rol Canônico de Membros', icon: 'pi pi-fw pi-address-book', routerLink: ['/secretaria/membros'], visible: this.can('person.view') },
-                    { label: 'Código de Disciplina', icon: 'pi pi-fw pi-shield', routerLink: ['/secretaria/disciplina'], visible: this.can('person.view') },
-                    { label: 'Estatística do Presbitério', icon: 'pi pi-fw pi-percentage', routerLink: ['/secretaria/estatistica-presbiterio'], visible: this.can('person.view') },
-                    { label: 'Cartas de Transferência', icon: 'pi pi-fw pi-envelope', routerLink: ['/secretaria/cartas'], visible: this.can('person.view') },
-                    { label: 'Livro de Atas do Conselho', icon: 'pi pi-fw pi-book', routerLink: ['/secretaria/atas'], visible: this.can('person.view') },
-                    { label: 'Boletim Informativo Semanal', icon: 'pi pi-fw pi-file-edit', routerLink: ['/secretaria/boletim'], visible: this.can('person.view') },
+                    { label: 'Pessoas Cadastradas', icon: 'pi pi-fw pi-users', routerLink: ['/pessoas'], visible: this.isScreenVisible('pessoas', 'person.view') },
+                    { label: 'Famílias', icon: 'pi pi-fw pi-users', routerLink: ['/familias'], visible: this.isScreenVisible('familias', 'family.view') },
+                    { label: 'Rol de Membros', icon: 'pi pi-fw pi-address-book', routerLink: ['/secretaria/membros'], visible: this.isScreenVisible('membros', 'person.view') },
+                    { label: 'Oficiais & Secretarias', icon: 'pi pi-fw pi-shield', routerLink: ['/secretaria/oficiais-lideranca'], visible: this.isScreenVisible('oficiais', 'person.view') },
+                    { label: 'Código de Disciplina', icon: 'pi pi-fw pi-shield', routerLink: ['/secretaria/disciplina'], visible: this.isScreenVisible('disciplina', 'person.view') },
+                    { label: 'Estatística do Presbitério', icon: 'pi pi-fw pi-percentage', routerLink: ['/secretaria/estatistica-presbiterio'], visible: this.isScreenVisible('estatistica_presbiterio', 'person.view') },
+                    { label: 'Cartas de Transferência', icon: 'pi pi-fw pi-envelope', routerLink: ['/secretaria/cartas'], visible: this.isScreenVisible('cartas', 'person.view') },
+                    { label: 'Livro de Atas do Conselho', icon: 'pi pi-fw pi-book', routerLink: ['/secretaria/atas'], visible: this.isScreenVisible('atas', 'person.view') },
+                    { label: 'Boletim Informativo Semanal', icon: 'pi pi-fw pi-file-edit', routerLink: ['/secretaria/boletim'], visible: this.isScreenVisible('boletim', 'person.view') },
                 ],
             },
             {
                 label: 'Finanças & Diaconia',
                 items: [
-                    { label: 'Livro Caixa (Tesouraria)', icon: 'pi pi-fw pi-wallet', routerLink: ['/financeiro/transacoes'], visible: this.can('financial.view') },
-                    { label: 'Contabilidade & Balancete', icon: 'pi pi-fw pi-file-excel', routerLink: ['/financeiro/contabilidade'], visible: this.can('financial.accounting.view') },
-                    { label: 'Termo com Assinaturas', icon: 'pi pi-fw pi-file-edit', routerLink: ['/financeiro/termo-balancete'], visible: this.can('financial.accounting.view') },
-                    { label: 'Cotas & Orçamento Anual', icon: 'pi pi-fw pi-chart-line', routerLink: ['/financeiro/cotas-orcamento'], visible: this.can('financial.view') },
-                    { label: 'Parecer do Exame de Contas', icon: 'pi pi-fw pi-verified', routerLink: ['/relatorios/parecer-exame-contas'], visible: this.can('financial.accounting.view') },
-                    { label: 'Contas & Caixas', icon: 'pi pi-fw pi-building-columns', routerLink: ['/financeiro/contas'], visible: this.can('financial.view') },
-                    { label: 'Plano de Contas & Custos', icon: 'pi pi-fw pi-tags', routerLink: ['/financeiro/categorias-custos'], visible: this.can('financial.view') },
-                    { label: 'Coletas & Dízimos', icon: 'pi pi-fw pi-inbox', routerLink: ['/dizimos/coletas'], visible: this.can('dizimos.coleta.operar') },
-                    { label: 'Acompanhamento Pastoral', icon: 'pi pi-fw pi-heart', routerLink: ['/dizimos/alertas'], visible: this.can('dizimos.alertas.manage') },
-                    { label: 'Patrimônio & Livro Tombo', icon: 'pi pi-fw pi-box', routerLink: ['/diaconia/patrimonio'], visible: this.can('person.view') },
-                    { label: 'Assistência Diaconal', icon: 'pi pi-fw pi-hand-heart', routerLink: ['/dizimos/diaconato'], visible: this.can('dizimos.diaconato.atender') },
-                    { label: 'Configurações de Dízimos', icon: 'pi pi-fw pi-cog', routerLink: ['/dizimos/config'], visible: this.can('dizimos.config.manage') },
+                    { label: 'Livro Caixa (Tesouraria)', icon: 'pi pi-fw pi-wallet', routerLink: ['/financeiro/transacoes'], visible: this.isScreenVisible('financeiro', 'financial.view') },
+                    { label: 'Contabilidade & Balancete', icon: 'pi pi-fw pi-file-excel', routerLink: ['/financeiro/contabilidade'], visible: this.isScreenVisible('contabilidade', 'financial.accounting.view') },
+                    { label: 'Termo com Assinaturas', icon: 'pi pi-fw pi-file-edit', routerLink: ['/financeiro/termo-balancete'], visible: this.isScreenVisible('termo_balancete', 'financial.accounting.view') },
+                    { label: 'Cotas & Orçamento Anual', icon: 'pi pi-fw pi-chart-line', routerLink: ['/financeiro/cotas-orcamento'], visible: this.isScreenVisible('cotas_orcamento', 'financial.view') },
+                    { label: 'Parecer do Exame de Contas', icon: 'pi pi-fw pi-verified', routerLink: ['/relatorios/parecer-exame-contas'], visible: this.isScreenVisible('parecer_exame_contas', 'financial.accounting.view') },
+                    { label: 'Contas & Caixas', icon: 'pi pi-fw pi-building-columns', routerLink: ['/financeiro/contas'], visible: this.isScreenVisible('contas_bancarias', 'financial.view') },
+                    { label: 'Plano de Contas & Custos', icon: 'pi pi-fw pi-tags', routerLink: ['/financeiro/categorias-custos'], visible: this.isScreenVisible('plano_contas', 'financial.view') },
+                    { label: 'Coletas & Dízimos', icon: 'pi pi-fw pi-inbox', routerLink: ['/dizimos/coletas'], visible: this.isScreenVisible('dizimos', 'dizimos.coleta.operar') },
+                    { label: 'Acompanhamento Pastoral', icon: 'pi pi-fw pi-heart', routerLink: ['/dizimos/alertas'], visible: this.isScreenVisible('alertas_pastorais', 'dizimos.alertas.manage') },
+                    { label: 'Patrimônio & Livro Tombo', icon: 'pi pi-fw pi-box', routerLink: ['/diaconia/patrimonio'], visible: this.isScreenVisible('patrimonio', 'person.view') },
+                    { label: 'Assistência Diaconal', icon: 'pi pi-fw pi-hand-heart', routerLink: ['/dizimos/diaconato'], visible: this.isScreenVisible('diaconato', 'dizimos.diaconato.atender') },
+                    { label: 'Configurações de Dízimos', icon: 'pi pi-fw pi-cog', routerLink: ['/dizimos/config'], visible: this.isScreenVisible('dizimos_config', 'dizimos.config.manage') },
                 ],
             },
             {
                 label: 'Administração & Sistema',
                 items: [
-                    { label: 'Gestão de Usuários', icon: 'pi pi-fw pi-user-edit', routerLink: ['/admin/usuarios'], visible: this.can('user.manage') },
-                    { label: 'Auditoria do Sistema', icon: 'pi pi-fw pi-search', routerLink: ['/admin/auditoria'], visible: this.can('audit.view') },
+                    {
+                        label: 'Super Admin: Telas & Igrejas',
+                        icon: 'pi pi-fw pi-sliders-h',
+                        routerLink: ['/admin/super-admin'],
+                        visible: this.auth.isSuperAdmin(),
+                    },
+                    { label: 'Gestão de Usuários', icon: 'pi pi-fw pi-user-edit', routerLink: ['/admin/usuarios'], visible: this.isScreenVisible('usuarios', 'user.manage') },
+                    { label: 'Auditoria do Sistema', icon: 'pi pi-fw pi-search', routerLink: ['/admin/auditoria'], visible: this.isScreenVisible('auditoria', 'audit.view') },
                 ],
             },
         ]);
@@ -194,6 +215,14 @@ export class AppMenu implements OnInit {
 
     private can(perm: string): boolean {
         return this.auth.can(perm);
+    }
+
+    private isScreenVisible(screenKey: string, perm: string): boolean {
+        // Se a tela estiver desativada pelo Super Admin para esta igreja, não aparece no menu
+        if (!this.screenConfig.isScreenEnabled(screenKey)) {
+            return false;
+        }
+        return this.can(perm);
     }
 
     private visibleGroups(groups: MenuItem[]): MenuItem[] {

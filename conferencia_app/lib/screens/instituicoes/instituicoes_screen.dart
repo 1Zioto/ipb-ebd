@@ -458,7 +458,7 @@ class _InstituicoesScreenState extends State<InstituicoesScreen>
         _buildOfficerCard(
           name: 'Pb. Roberto Silva',
           role: 'Vice-Presidente do Conselho',
-          mandato: 'Mandato Canônico 2024 - 2029',
+          mandato: 'Mandato 2024 - 2029',
           contact: 'Comissão de Doutrina e Educação Bíblica',
           avatarBg: const Color(0xFFEFF6FF),
           avatarColor: const Color(0xFF2563EB),
@@ -469,7 +469,7 @@ class _InstituicoesScreenState extends State<InstituicoesScreen>
         _buildOfficerCard(
           name: 'Pb. Antônio Mendes',
           role: 'Secretário do Conselho',
-          mandato: 'Mandato Canônico 2022 - 2027',
+          mandato: 'Mandato 2022 - 2027',
           contact: 'Livro de Atas, Rol de Membros e Correspondência',
           avatarBg: const Color(0xFFEFF6FF),
           avatarColor: const Color(0xFF2563EB),
@@ -480,7 +480,7 @@ class _InstituicoesScreenState extends State<InstituicoesScreen>
         _buildOfficerCard(
           name: 'Pb. Marcos Vinicius',
           role: 'Presbítero Regente',
-          mandato: 'Mandato Canônico 2023 - 2028',
+          mandato: 'Mandato 2023 - 2028',
           contact: 'Superintendência da EBD e Congregação Esperança',
           avatarBg: const Color(0xFFEFF6FF),
           avatarColor: const Color(0xFF2563EB),
@@ -491,7 +491,7 @@ class _InstituicoesScreenState extends State<InstituicoesScreen>
         _buildOfficerCard(
           name: 'Pb. Eduardo Santos',
           role: 'Presbítero Regente',
-          mandato: 'Mandato Canônico 2025 - 2030',
+          mandato: 'Mandato 2025 - 2030',
           contact: 'Comissão de Finanças, Contabilidade e Patrimônio',
           avatarBg: const Color(0xFFEFF6FF),
           avatarColor: const Color(0xFF2563EB),

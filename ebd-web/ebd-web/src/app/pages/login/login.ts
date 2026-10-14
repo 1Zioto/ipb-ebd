@@ -11,6 +11,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthService } from '../../core/auth.service';
 import { AppFloatingConfigurator } from '../../layout/component/app.floatingconfigurator';
+import { BRAZILIAN_STATES } from '../../core/screen-config.service';
 
 @Component({
   selector: 'app-login',
@@ -50,6 +51,8 @@ export class LoginPage {
   loading = signal(false);
   error = signal<string | null>(null);
   successMsg = signal<string | null>(null);
+
+  readonly stateOptions = BRAZILIAN_STATES;
 
   typeOptions = [
     { label: 'Igreja', value: 'igreja' },

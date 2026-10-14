@@ -145,7 +145,7 @@ class LivroCaixaScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${isEntrada ? '+' : '-'}R\$ ${(l['valor'] as double).toStringAsFixed(2)}',
+                        '${isEntrada ? '+' : '-'}R\$ ${(l['valor'] is num ? (l['valor'] as num).toDouble() : (double.tryParse(l['valor']?.toString() ?? '0') ?? 0.0)).toStringAsFixed(2)}',
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 12,

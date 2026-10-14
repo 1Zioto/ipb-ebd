@@ -8,6 +8,7 @@ use App\Models\Institution;
 use App\Models\InstitutionHistory;
 use App\Models\InstitutionLinkRequest;
 use App\Services\InstitutionService;
+use App\Services\IpbCatalogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,8 @@ use Illuminate\Support\Facades\DB;
 class InstitutionController extends Controller
 {
     public function __construct(
-        protected InstitutionService $institutionService
+        protected InstitutionService $institutionService,
+        protected IpbCatalogService $ipbCatalogService
     ) {}
 
     /**
@@ -26,14 +28,22 @@ class InstitutionController extends Controller
         $user = $request->user();
         $userInstId = $user->institution_id;
 
-        $allowedIds = $user->hasGlobalInstitutionAccess()
+        $manageableIds = $user->hasGlobalInstitutionAccess()
             ? null
             : ($userInstId ? $this->institutionService->getDescendantIds($userInstId, true) : []);
 
+        $ancestorIds = ($userInstId && ! $user->hasGlobalInstitutionAccess())
+            ? $this->institutionService->getAncestorIds($userInstId)
+            : [];
+
+        $visibleIds = $manageableIds !== null
+            ? array_values(array_unique(array_merge($manageableIds, $ancestorIds)))
+            : null;
+
         $query = Institution::query();
 
-        if ($allowedIds !== null) {
-            $query->whereIn('id', $allowedIds);
+        if ($visibleIds !== null) {
+            $query->whereIn('id', $visibleIds);
         }
 
         if ($search = $request->input('search')) {
@@ -66,6 +76,17 @@ class InstitutionController extends Controller
             ->orderBy('name')
             ->paginate($request->input('per_page', 20));
 
+        $institutions->getCollection()->transform(function ($item) use ($user, $manageableIds) {
+            $canEdit = $user->hasGlobalInstitutionAccess() || ($manageableIds !== null && in_array($item->id, $manageableIds, true));
+            $item->can_edit = $canEdit;
+            $item->can_view_metrics = $canEdit;
+            $item->is_structural_only = ! $canEdit;
+            if (! $canEdit) {
+                unset($item->cnpj, $item->phone, $item->whatsapp, $item->email, $item->notes);
+            }
+            return $item;
+        });
+
         return response()->json($institutions);
     }
 
@@ -75,15 +96,9 @@ class InstitutionController extends Controller
     public function tree(Request $request): JsonResponse
     {
         $user = $request->user();
-        $rootId = $request->input('root_id')
-            ? (int) $request->input('root_id')
-            : ($user->hasGlobalInstitutionAccess() ? null : $user->institution_id);
+        $rootId = $request->input('root_id') ? (int) $request->input('root_id') : null;
 
-        if ($rootId && ! $user->canAccessInstitution($rootId)) {
-            return response()->json(['message' => 'Acesso não autorizado a esta árvore.'], 403);
-        }
-
-        $tree = $this->institutionService->getTree($rootId);
+        $tree = $this->institutionService->getTree($rootId, $user);
 
         return response()->json([
             'root_id' => $rootId,
@@ -164,16 +179,25 @@ class InstitutionController extends Controller
      */
     public function show(Request $request, Institution $institution): JsonResponse
     {
-        if (! $request->user()->canAccessInstitution($institution->id)) {
-            return response()->json(['message' => 'Acesso não autorizado a esta instituição.'], 403);
-        }
+        $user = $request->user();
+        $canManage = $user->hasGlobalInstitutionAccess() || $user->canAccessInstitution($institution->id);
 
         $institution->load(['parent:id,name,short_name,type']);
 
         $breadcrumbs = $this->institutionService->getBreadcrumbs($institution->id);
 
+        $data = $institution->toArray();
+        $data['can_edit'] = $canManage;
+        $data['can_view_metrics'] = $canManage;
+        $data['is_structural_only'] = ! $canManage;
+
+        // Se for apenas visualização estrutural (acima ou irmão), remove dados sensíveis
+        if (! $canManage) {
+            unset($data['cnpj'], $data['phone'], $data['whatsapp'], $data['email'], $data['notes']);
+        }
+
         return response()->json([
-            'data' => $institution,
+            'data' => $data,
             'breadcrumbs' => $breadcrumbs,
         ]);
     }
@@ -184,7 +208,9 @@ class InstitutionController extends Controller
     public function update(Request $request, Institution $institution): JsonResponse
     {
         if (! $request->user()->canAccessInstitution($institution->id)) {
-            return response()->json(['message' => 'Acesso não autorizado a esta instituição.'], 403);
+            return response()->json([
+                'message' => 'Você não tem permissão para editar esta instituição. Ela está acima ou no mesmo nível hierárquico da sua igreja.',
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -321,10 +347,6 @@ class InstitutionController extends Controller
      */
     public function breadcrumbs(Request $request, Institution $institution): JsonResponse
     {
-        if (! $request->user()->canAccessInstitution($institution->id)) {
-            return response()->json(['message' => 'Acesso não autorizado.'], 403);
-        }
-
         $breadcrumbs = $this->institutionService->getBreadcrumbs($institution->id);
 
         return response()->json($breadcrumbs);
@@ -385,7 +407,9 @@ class InstitutionController extends Controller
     public function dashboardSummary(Request $request, Institution $institution): JsonResponse
     {
         if (! $request->user()->canAccessInstitution($institution->id)) {
-            return response()->json(['message' => 'Acesso não autorizado.'], 403);
+            return response()->json([
+                'message' => 'Você não tem permissão para visualizar métricas desta instituição. Ela está acima ou no mesmo nível hierárquico da sua igreja.',
+            ], 403);
         }
 
         $consolidated = filter_var($request->input('consolidated', true), FILTER_VALIDATE_BOOLEAN);
@@ -403,7 +427,9 @@ class InstitutionController extends Controller
     public function dashboardDrilldown(Request $request, Institution $institution): JsonResponse
     {
         if (! $request->user()->canAccessInstitution($institution->id)) {
-            return response()->json(['message' => 'Acesso não autorizado.'], 403);
+            return response()->json([
+                'message' => 'Você não tem permissão para visualizar métricas desta instituição. Ela está acima ou no mesmo nível hierárquico da sua igreja.',
+            ], 403);
         }
 
         $metric = $request->input('metric', 'members');
@@ -418,7 +444,9 @@ class InstitutionController extends Controller
     public function cultByCult(Request $request, Institution $institution): JsonResponse
     {
         if (! $request->user()->canAccessInstitution($institution->id)) {
-            return response()->json(['message' => 'Acesso não autorizado.'], 403);
+            return response()->json([
+                'message' => 'Você não tem permissão para visualizar métricas desta instituição. Ela está acima ou no mesmo nível hierárquico da sua igreja.',
+            ], 403);
         }
 
         $consolidated = filter_var($request->input('consolidated', true), FILTER_VALIDATE_BOOLEAN);
@@ -601,6 +629,93 @@ class InstitutionController extends Controller
                 'data' => $updated,
             ]);
         } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Consulta igrejas no catálogo oficial da IPB para busca e vinculação.
+     */
+    public function catalogoIpb(Request $request): JsonResponse
+    {
+        $filters = [
+            'q' => $request->input('q', $request->input('search', '')),
+            'uf' => $request->input('uf'),
+            'cidade' => $request->input('cidade'),
+            'presbiterio' => $request->input('presbiterio'),
+            'tipo' => $request->input('tipo'),
+            'page' => $request->input('page', 1),
+            'per_page' => $request->input('per_page', 25),
+        ];
+
+        $results = $this->ipbCatalogService->search($filters);
+
+        return response()->json($results);
+    }
+
+    /**
+     * Detalhes de uma igreja específica do catálogo oficial IPB.
+     */
+    public function showCatalogoIpb(int $id): JsonResponse
+    {
+        $church = $this->ipbCatalogService->find($id);
+
+        if (! $church) {
+            return response()->json(['message' => 'Igreja não encontrada no catálogo oficial da IPB.'], 404);
+        }
+
+        return response()->json(['data' => $church]);
+    }
+
+    /**
+     * Vincula uma instituição existente aos dados canônicos do catálogo oficial IPB.
+     */
+    public function vincularCatalogo(Request $request, Institution $institution): JsonResponse
+    {
+        $validated = $request->validate([
+            'catalogo_id' => 'required|integer',
+        ]);
+
+        if (! $request->user()->canAccessInstitution($institution->id)) {
+            return response()->json(['message' => 'Acesso não autorizado a esta instituição.'], 403);
+        }
+
+        try {
+            $updated = $this->ipbCatalogService->vincular(
+                $institution,
+                (int) $validated['catalogo_id'],
+                $request->user()->id
+            );
+
+            return response()->json([
+                'message' => "Instituição vinculada com sucesso à igreja oficial da IPB: {$updated->name}.",
+                'data' => $updated,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Importa uma igreja do catálogo oficial IPB criando uma nova instituição no sistema.
+     */
+    public function importarCatalogo(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'catalogo_id' => 'required|integer',
+        ]);
+
+        try {
+            $created = $this->ipbCatalogService->importar(
+                (int) $validated['catalogo_id'],
+                $request->user()->id
+            );
+
+            return response()->json([
+                'message' => "Igreja importada com sucesso do catálogo oficial: {$created->name}.",
+                'data' => $created,
+            ], 201);
+        } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
