@@ -44,10 +44,8 @@ class _ConfiguracoesImpressoraScreenState
       _loading = false;
     });
 
-    // Se já tiver impressora salva, lista para popular o dropdown
-    if (_printerAddress != null) {
-      _loadPrinters(showFeedback: false);
-    }
+    // Sempre busca pareadas para popular o dropdown e auto-selecionar se necessário
+    _loadPrinters(showFeedback: false);
   }
 
   Future<void> _loadPrinters({bool showFeedback = true}) async {
@@ -56,6 +54,20 @@ class _ConfiguracoesImpressoraScreenState
       final devices = await ThermalPrinterService.instance.listPairedDevices();
       if (!mounted) return;
       setState(() => _printers = devices);
+      if (_printerAddress == null && devices.isNotEmpty) {
+        final best = devices.firstWhere(
+          (d) {
+            final n = d.name.toUpperCase();
+            return n.contains('POS') ||
+                n.contains('PRINTER') ||
+                n.contains('58') ||
+                n.contains('80') ||
+                n.contains('MPT');
+          },
+          orElse: () => devices.first,
+        );
+        _savePrinter(best.address);
+      }
       if (showFeedback) {
         if (devices.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -351,7 +363,7 @@ class _ConfiguracoesImpressoraScreenState
                   contentPadding: EdgeInsets.zero,
                   value: _autoPrintEnvelope,
                   onChanged: _setAutoPrintEnvelope,
-                  activeColor: const Color(0xFF047857),
+                  activeThumbColor: const Color(0xFF047857),
                   title: const Text(
                     'Imprimir ao registrar envelope / oferta',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
@@ -366,7 +378,7 @@ class _ConfiguracoesImpressoraScreenState
                   contentPadding: EdgeInsets.zero,
                   value: _autoPrintFechamento,
                   onChanged: _setAutoPrintFechamento,
-                  activeColor: const Color(0xFF047857),
+                  activeThumbColor: const Color(0xFF047857),
                   title: const Text(
                     'Imprimir termo no fechamento da apuração',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),

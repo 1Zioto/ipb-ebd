@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import android.bluetooth.BluetoothSocket
 import java.nio.charset.Charset
 import java.util.UUID
 import io.flutter.embedding.android.FlutterActivity
@@ -36,6 +37,16 @@ class MainActivity : FlutterActivity() {
                             return@withBluetoothPermission
                         }
                         printText(address, text, cutPaper, result)
+                    }
+                    "printRawBytes" -> withBluetoothPermission(result) {
+                        val address = call.argument<String>("address")
+                        val bytes = call.argument<ByteArray>("bytes") ?: byteArrayOf()
+                        val cutPaper = call.argument<Boolean>("cutPaper") ?: false
+                        if (address.isNullOrBlank()) {
+                            result.error("PRINTER_REQUIRED", "Impressora Bluetooth não selecionada.", null)
+                            return@withBluetoothPermission
+                        }
+                        printRawBytes(address, bytes, cutPaper, result)
                     }
                     else -> result.notImplemented()
                 }
@@ -124,6 +135,27 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    @Throws(Exception::class)
+    private fun createConnectedSocket(device: BluetoothDevice): BluetoothSocket {
+        val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+        try {
+            val s = device.createRfcommSocketToServiceRecord(uuid)
+            s.connect()
+            return s
+        } catch (e1: Exception) {
+            try {
+                val m = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                val s = m.invoke(device, 1) as BluetoothSocket
+                s.connect()
+                return s
+            } catch (e2: Exception) {
+                val s = device.createInsecureRfcommSocketToServiceRecord(uuid)
+                s.connect()
+                return s
+            }
+        }
+    }
+
     private fun printText(
         address: String,
         text: String,
@@ -131,6 +163,7 @@ class MainActivity : FlutterActivity() {
         result: MethodChannel.Result
     ) {
         Thread {
+            var socket: BluetoothSocket? = null
             try {
                 val adapter = bluetoothAdapter()
                 if (adapter == null) {
@@ -148,20 +181,31 @@ class MainActivity : FlutterActivity() {
 
                 adapter.cancelDiscovery()
                 val device = adapter.getRemoteDevice(address)
-                val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-                val socket = device.createRfcommSocketToServiceRecord(uuid)
-                socket.connect()
+                socket = createConnectedSocket(device)
+
+                val charset = try {
+                    Charset.forName("CP850")
+                } catch (e: Exception) {
+                    try {
+                        Charset.forName("ISO-8859-1")
+                    } catch (e2: Exception) {
+                        Charset.defaultCharset()
+                    }
+                }
+
                 socket.outputStream.use { output ->
                     output.write(byteArrayOf(0x1B, 0x40)) // ESC @
                     output.write(byteArrayOf(0x1B, 0x74, 0x02)) // CP850
-                    output.write(text.toByteArray(Charset.forName("CP850")))
+                    output.write(text.toByteArray(charset))
                     output.write(byteArrayOf(0x0A, 0x0A, 0x0A))
                     if (cutPaper) {
                         output.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
                     }
                     output.flush()
                 }
-                socket.close()
+                try {
+                    Thread.sleep(800)
+                } catch (ignored: InterruptedException) {}
                 runOnUiThread { result.success(true) }
             } catch (e: SecurityException) {
                 runOnUiThread {
@@ -171,6 +215,62 @@ class MainActivity : FlutterActivity() {
                 runOnUiThread {
                     result.error("PRINT_FAILED", "Falha ao imprimir: ${e.message}", null)
                 }
+            } finally {
+                try { socket?.close() } catch (ignored: Exception) {}
+            }
+        }.start()
+    }
+
+    private fun printRawBytes(
+        address: String,
+        bytes: ByteArray,
+        cutPaper: Boolean,
+        result: MethodChannel.Result
+    ) {
+        Thread {
+            var socket: BluetoothSocket? = null
+            try {
+                val adapter = bluetoothAdapter()
+                if (adapter == null) {
+                    runOnUiThread {
+                        result.error("BLUETOOTH_UNAVAILABLE", "Este aparelho não possui Bluetooth.", null)
+                    }
+                    return@Thread
+                }
+                if (!adapter.isEnabled) {
+                    runOnUiThread {
+                        result.error("BLUETOOTH_DISABLED", "Ative o Bluetooth do aparelho.", null)
+                    }
+                    return@Thread
+                }
+
+                adapter.cancelDiscovery()
+                val device = adapter.getRemoteDevice(address)
+                socket = createConnectedSocket(device)
+
+                socket.outputStream.use { output ->
+                    output.write(byteArrayOf(0x1B, 0x40)) // ESC @
+                    output.write(bytes)
+                    output.write(byteArrayOf(0x0A, 0x0A, 0x0A))
+                    if (cutPaper) {
+                        output.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
+                    }
+                    output.flush()
+                }
+                try {
+                    Thread.sleep(800)
+                } catch (ignored: InterruptedException) {}
+                runOnUiThread { result.success(true) }
+            } catch (e: SecurityException) {
+                runOnUiThread {
+                    result.error("BLUETOOTH_PERMISSION_DENIED", "Permissão Bluetooth negada.", null)
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    result.error("PRINT_FAILED", "Falha ao imprimir: ${e.message}", null)
+                }
+            } finally {
+                try { socket?.close() } catch (ignored: Exception) {}
             }
         }.start()
     }

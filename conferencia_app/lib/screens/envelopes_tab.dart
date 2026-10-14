@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/thermal_printer.dart';
 import '../models/models.dart';
+import 'qr_scanner_modal.dart';
 
 class EnvelopesTab extends StatefulWidget {
   final List<EnvelopeEntry> entries;
@@ -23,16 +24,19 @@ class EnvelopesTab extends StatefulWidget {
 class _EnvelopesTabState extends State<EnvelopesTab> {
   final _amountController = TextEditingController();
   final _memberController = TextEditingController();
+  final _amountFocusNode = FocusNode();
 
   String _destinacao = 'dizimo';
   String _forma = 'dinheiro';
   MemberModel? _selectedMember;
   List<MemberModel> _filteredMembers = [];
+  String? _printingEntryId;
 
   @override
   void dispose() {
     _amountController.dispose();
     _memberController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -56,6 +60,67 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
       _selectedMember = member;
       _memberController.text = member.label;
       _filteredMembers = [];
+    });
+  }
+
+  Future<void> _scanEnvelopeQr() async {
+    final scanned = await QrScannerModal.show(context);
+    if (scanned == null || scanned.isEmpty) return;
+
+    // Normalização: se vier "IPB:101", "ENV:101", "101", etc.
+    String cleanCode = scanned.trim();
+    if (cleanCode.toUpperCase().startsWith('IPB:')) {
+      cleanCode = cleanCode.substring(4).trim();
+    } else if (cleanCode.toUpperCase().startsWith('ENV:')) {
+      cleanCode = cleanCode.substring(4).trim();
+    }
+
+    MemberModel? match;
+    for (final m in widget.members) {
+      final env = m.envelopeNumber?.trim();
+      if ((env != null && env.isNotEmpty && (env == cleanCode || 'IPB:$env' == scanned)) ||
+          m.qrCodePayload == scanned ||
+          'IPB:ID${m.id}' == scanned ||
+          m.id.toString() == cleanCode) {
+        match = m;
+        break;
+      }
+    }
+
+    if (match != null) {
+      _selectMember(match);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Envelope #${match.envelopeNumber ?? match.id} (${match.fullName}) identificado!'),
+          backgroundColor: const Color(0xFF047857),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      setState(() {
+        _selectedMember = null;
+        _memberController.text = 'Envelope #$cleanCode';
+        _filteredMembers = [];
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Envelope #$cleanCode lido (não localizado na lista).'),
+          backgroundColor: Colors.orange.shade800,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
+    // Foca automaticamente no campo de valor
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      _amountFocusNode.requestFocus();
+      _amountController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _amountController.text.length,
+      );
     });
   }
 
@@ -121,34 +186,87 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
     final autoPrint =
         await ThermalPrinterService.instance.autoPrintEnvelopeEnabled();
     if (autoPrint) {
-      _printReceipt(newEntry);
+      await Future.delayed(const Duration(milliseconds: 250));
+      if (mounted) {
+        _printReceipt(newEntry, isAutoPrint: true);
+      }
     }
   }
 
-  Future<void> _printReceipt(EnvelopeEntry entry) async {
+  Future<void> _printReceipt(EnvelopeEntry entry, {bool isAutoPrint = false}) async {
+    if (_printingEntryId != null) return;
+    setState(() => _printingEntryId = entry.id);
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isAutoPrint
+                    ? 'Imprimindo comprovante na POS...'
+                    : 'Enviando comprovante de ${entry.membro} para a POS...',
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 4),
+        backgroundColor: const Color(0xFF0F172A),
+      ),
+    );
+
     try {
       await ThermalPrinterService.instance.printEnvelope(
         membro: entry.membro,
         destinacao: entry.destinacao,
         forma: entry.forma,
         valor: entry.valor,
-        id: entry.id.substring(entry.id.length > 6 ? entry.id.length - 6 : 0),
+        id: entry.id.length > 6 ? entry.id.substring(entry.id.length - 6) : entry.id,
       );
       if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Comprovante de ${entry.membro} impresso na POS!'),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Comprovante de ${entry.membro} impresso na POS!'),
+              ),
+            ],
+          ),
           backgroundColor: const Color(0xFF047857),
+          duration: const Duration(seconds: 3),
         ),
       );
     } catch (e) {
       if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Falha ao imprimir na POS: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade800,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Tentar de novo',
+            textColor: Colors.white,
+            onPressed: () => _printReceipt(entry),
+          ),
         ),
       );
+    } finally {
+      if (mounted) setState(() => _printingEntryId = null);
     }
   }
 
@@ -220,17 +338,63 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
                 const SizedBox(height: 14),
 
                 // Membro / Dizimista
-                const Text('Membro / Dizimista (Opcional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Membro / Dizimista (Opcional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                    if (_selectedMember != null)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedMember = null;
+                            _memberController.clear();
+                          });
+                        },
+                        child: const Text('Limpar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.red)),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 6),
-                TextField(
-                  controller: _memberController,
-                  onChanged: _onMemberSearch,
-                  decoration: InputDecoration(
-                    hintText: 'Digite o nome ou n° do envelope...',
-                    prefixIcon: const Icon(Icons.person_search_outlined, color: Color(0xFF047857)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _memberController,
+                        onChanged: _onMemberSearch,
+                        decoration: InputDecoration(
+                          hintText: 'Digite o nome ou n° do envelope...',
+                          prefixIcon: const Icon(Icons.person_search_outlined, color: Color(0xFF047857)),
+                          suffixIcon: _memberController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedMember = null;
+                                      _memberController.clear();
+                                      _filteredMembers = [];
+                                    });
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF047857),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        elevation: 1,
+                      ),
+                      onPressed: _scanEnvelopeQr,
+                      icon: const Icon(Icons.qr_code_scanner, size: 20),
+                      label: const Text('Bipar', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                    ),
+                  ],
                 ),
                 if (_filteredMembers.isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -241,7 +405,7 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                         ),
                       ],
@@ -270,6 +434,7 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
                 const SizedBox(height: 6),
                 TextField(
                   controller: _amountController,
+                  focusNode: _amountFocusNode,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF047857)),
                   decoration: InputDecoration(
@@ -280,6 +445,7 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
                     hintText: '0,00',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
+                  onSubmitted: (_) => _submitEntry(),
                 ),
                 const SizedBox(height: 10),
 
@@ -319,9 +485,19 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Lançamentos Desta Sessão',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF0F172A)),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Lançamentos Desta Sessão',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF0F172A)),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Toque no registro ou no botão para imprimir',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                ),
+              ],
             ),
             Text(
               '${widget.entries.length} itens',
@@ -412,67 +588,120 @@ class _EnvelopesTabState extends State<EnvelopesTab> {
     if (e.forma == 'pix') icon = Icons.qr_code_2;
     if (e.forma == 'cartao') icon = Icons.credit_card;
 
+    final isPrintingThis = _printingEntryId == e.id;
+
     return Card(
-      elevation: 1,
+      elevation: isPrintingThis ? 3 : 1,
       margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFA7F3D0)),
-              ),
-              child: Icon(icon, color: const Color(0xFF047857), size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(e.membro, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${e.destinacao.toUpperCase()} • ${e.forma.toUpperCase()} • ${e.timestamp}',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isPrintingThis ? const Color(0xFF047857) : const Color(0xFFE2E8F0),
+          width: isPrintingThis ? 2 : 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: () => _printReceipt(e),
+        splashColor: const Color(0xFFECFDF5),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isPrintingThis ? const Color(0xFF047857) : const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isPrintingThis ? const Color(0xFF047857) : const Color(0xFFA7F3D0),
                   ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'R\$ ${e.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF047857)),
                 ),
-                Row(
+                child: isPrintingThis
+                    ? const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(icon, color: const Color(0xFF047857), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.print_outlined, size: 18, color: Color(0xFF047857)),
-                      tooltip: 'Imprimir na POS',
-                      onPressed: () => _printReceipt(e),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    Text(
+                      e.membro,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                     ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                      tooltip: 'Remover',
-                      onPressed: () => widget.onRemoveEntry(e.id),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${e.destinacao.toUpperCase()} • ${e.forma.toUpperCase()} • ${e.timestamp}',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'R\$ ${e.valor.toStringAsFixed(2).replaceAll('.', ',')}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                      color: Color(0xFF047857),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFECFDF5),
+                          foregroundColor: const Color(0xFF047857),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            side: const BorderSide(color: Color(0xFFA7F3D0)),
+                          ),
+                        ),
+                        onPressed: isPrintingThis ? null : () => _printReceipt(e),
+                        icon: isPrintingThis
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF047857),
+                                ),
+                              )
+                            : const Icon(Icons.print_outlined, size: 14),
+                        label: Text(
+                          isPrintingThis ? 'Imprimindo' : 'Imprimir',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                        tooltip: 'Remover',
+                        onPressed: () => widget.onRemoveEntry(e.id),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

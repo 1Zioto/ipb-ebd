@@ -19,65 +19,26 @@
 
 <!-- Resumo dos Status Canônicos -->
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-  <app-stat-card
-    title="Total Geral"
-    [value]="stats().total"
-    icon="pi pi-users"
-    color="primary"
-    [clickable]="true"
-    [selected]="statusFilter === ''"
-    (cardClick)="filtrarPorStatus('')"
-  />
+  <app-stat-card title="Total Geral" [value]="stats().total" icon="pi pi-users" color="primary" [clickable]="true"
+    [selected]="statusFilter === ''" (cardClick)="filtrarPorStatus('')" />
 
-  <app-stat-card
-    title="Comungantes"
-    [value]="stats().comungantes"
-    icon="pi pi-check-circle"
-    color="emerald"
-    [clickable]="true"
-    [selected]="statusFilter === 'comungante'"
-    (cardClick)="filtrarPorStatus('comungante')"
-  />
+  <app-stat-card title="Comungantes" [value]="stats().comungantes" icon="pi pi-check-circle" color="emerald"
+    [clickable]="true" [selected]="statusFilter === 'comungante'" (cardClick)="filtrarPorStatus('comungante')" />
 
-  <app-stat-card
-    title="Não-comungantes"
-    [value]="stats().nao_comungantes"
-    icon="pi pi-user"
-    color="blue"
-    [clickable]="true"
-    [selected]="statusFilter === 'nao_comungante'"
-    (cardClick)="filtrarPorStatus('nao_comungante')"
-  />
+  <app-stat-card title="Não-comungantes" [value]="stats().nao_comungantes" icon="pi pi-user" color="blue"
+    [clickable]="true" [selected]="statusFilter === 'nao_comungante'"
+    (cardClick)="filtrarPorStatus('nao_comungante')" />
 
-  <app-stat-card
-    title="Sob Disciplina"
-    [value]="stats().sob_disciplina"
-    icon="pi pi-shield"
-    color="rose"
-    [clickable]="true"
-    [selected]="statusFilter === 'sob_disciplina'"
-    (cardClick)="filtrarPorStatus('sob_disciplina')"
-  />
+  <app-stat-card title="Sob Disciplina" [value]="stats().sob_disciplina" icon="pi pi-shield" color="rose"
+    [clickable]="true" [selected]="statusFilter === 'sob_disciplina'"
+    (cardClick)="filtrarPorStatus('sob_disciplina')" />
 
-  <app-stat-card
-    title="Jurisdição Esp."
-    [value]="stats().jurisdicao_especial"
-    icon="pi pi-send"
-    color="amber"
-    [clickable]="true"
-    [selected]="statusFilter === 'jurisdicao_especial'"
-    (cardClick)="filtrarPorStatus('jurisdicao_especial')"
-  />
+  <app-stat-card title="Jurisdição Esp." [value]="stats().jurisdicao_especial" icon="pi pi-send" color="amber"
+    [clickable]="true" [selected]="statusFilter === 'jurisdicao_especial'"
+    (cardClick)="filtrarPorStatus('jurisdicao_especial')" />
 
-  <app-stat-card
-    title="Falecidos"
-    [value]="stats().falecidos"
-    icon="pi pi-bookmark"
-    color="violet"
-    [clickable]="true"
-    [selected]="statusFilter === 'falecido'"
-    (cardClick)="filtrarPorStatus('falecido')"
-  />
+  <app-stat-card title="Falecidos" [value]="stats().falecidos" icon="pi pi-bookmark" color="violet" [clickable]="true"
+    [selected]="statusFilter === 'falecido'" (cardClick)="filtrarPorStatus('falecido')" />
 </div>
 
 <!-- Filtros & Barra de Busca -->
@@ -85,26 +46,17 @@
   <div class="flex items-center gap-3 w-full sm:w-auto">
     <span class="p-input-icon-left w-full sm:w-80">
       <i class="pi pi-search"></i>
-      <input
-        type="text"
-        pInputText
-        class="w-full text-sm"
-        placeholder="Buscar por nome, ROL ou CPF..."
-        [(ngModel)]="searchQuery"
-        (keyup.enter)="carregarMembros()"
-      />
+      <input type="text" pInputText class="w-full text-sm" placeholder="Buscar por nome, ROL ou CPF..."
+        [(ngModel)]="searchQuery" (keyup.enter)="carregarMembros()" />
     </span>
     <p-button icon="pi pi-search" label="Buscar" (onClick)="carregarMembros()"></p-button>
   </div>
 
   <div class="flex items-center gap-2">
-    <select
-      class="p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
-      [(ngModel)]="statusFilter"
-      (change)="carregarMembros()"
-    >
+    <select class="p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+      [(ngModel)]="statusFilter" (change)="carregarMembros()">
       @for (opt of statusOptions; track opt.value) {
-        <option [value]="opt.value">{{ opt.label }}</option>
+      <option [value]="opt.value">{{ opt.label }}</option>
       }
     </select>
   </div>
@@ -112,15 +64,8 @@
 
 <!-- Tabela do Rol Canônico -->
 <div class="card p-0 overflow-hidden shadow-sm rounded-xl">
-  <p-table
-    [value]="membros()"
-    [loading]="loading()"
-    [rowHover]="true"
-    [paginator]="true"
-    [rows]="15"
-    responsiveLayout="scroll"
-    styleClass="p-datatable-sm"
-  >
+  <p-table [value]="membros()" [loading]="loading()" [rowHover]="true" [paginator]="true" [rows]="15"
+    responsiveLayout="scroll" styleClass="p-datatable-sm">
     <ng-template pTemplate="header">
       <tr>
         <th style="width: 110px">Nº ROL</th>
@@ -141,19 +86,19 @@
           </span>
         </td>
         <td>
-          <div class="font-bold text-sm text-surface-900 dark:text-surface-0 group-hover:text-primary transition-colors flex items-center gap-1.5">
+          <div
+            class="font-bold text-sm text-surface-900 dark:text-surface-0 group-hover:text-primary transition-colors flex items-center gap-1.5">
             {{ m.full_name }}
-            <i class="pi pi-id-card text-xs text-primary/70 opacity-60 group-hover:opacity-100 transition-opacity" title="Clique para ver ficha completa"></i>
+            <i class="pi pi-id-card text-xs text-primary/70 opacity-60 group-hover:opacity-100 transition-opacity"
+              title="Clique para ver ficha completa"></i>
           </div>
           @if (m.cpf) {
-            <span class="text-xs text-surface-400">CPF: {{ m.cpf }}</span>
+          <span class="text-xs text-surface-400">CPF: {{ m.cpf }}</span>
           }
         </td>
         <td>
-          <p-tag
-            [value]="getStatusBadge(m.canonical_status).label"
-            [severity]="getStatusBadge(m.canonical_status).severity"
-          ></p-tag>
+          <p-tag [value]="getStatusBadge(m.canonical_status).label"
+            [severity]="getStatusBadge(m.canonical_status).severity"></p-tag>
         </td>
         <td>
           <span class="text-sm text-surface-700 dark:text-surface-300">
@@ -168,13 +113,13 @@
         <td>
           <div class="text-xs space-y-0.5">
             @if (m.profession_date) {
-              <div><span class="text-surface-400">P. Fé:</span> {{ m.profession_date | date: 'dd/MM/yyyy' }}</div>
+            <div><span class="text-surface-400">P. Fé:</span> {{ m.profession_date | date: 'dd/MM/yyyy' }}</div>
             }
             @if (m.baptism_date) {
-              <div><span class="text-surface-400">Batismo:</span> {{ m.baptism_date | date: 'dd/MM/yyyy' }}</div>
+            <div><span class="text-surface-400">Batismo:</span> {{ m.baptism_date | date: 'dd/MM/yyyy' }}</div>
             }
             @if (!m.profession_date && !m.baptism_date) {
-              <span class="text-surface-400">—</span>
+            <span class="text-surface-400">—</span>
             }
           </div>
         </td>
@@ -182,26 +127,16 @@
           <div class="text-sm">
             {{ m.marital_status || 'Não informado' }}
             @if (m.spouse_name) {
-              <div class="text-xs text-surface-400">c/ {{ m.spouse_name }}</div>
+            <div class="text-xs text-surface-400">c/ {{ m.spouse_name }}</div>
             }
           </div>
         </td>
         <td class="text-center" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-center gap-1">
-            <button
-              pButton
-              icon="pi pi-id-card"
-              class="p-button-rounded p-button-text p-button-sm p-button-info"
-              pTooltip="Ver Tudo / Ficha"
-              (click)="abrirFichaMinisterial(m)"
-            ></button>
-            <button
-              pButton
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-text p-button-sm p-button-secondary"
-              pTooltip="Editar Canônico"
-              (click)="abrirEdicao(m)"
-            ></button>
+            <button pButton icon="pi pi-id-card" class="p-button-rounded p-button-text p-button-sm p-button-info"
+              pTooltip="Ver Tudo / Ficha" (click)="abrirFichaMinisterial(m)"></button>
+            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-sm p-button-secondary"
+              pTooltip="Editar Canônico" (click)="abrirEdicao(m)"></button>
           </div>
         </td>
       </tr>
@@ -217,12 +152,8 @@
 </div>
 
 <!-- Modal Edição Canônica -->
-<p-dialog
-  [(visible)]="editDialog"
-  [modal]="true"
-  [style]="{ width: '560px' }"
-  header="Editar Dados Canônicos do Membro"
->
+<p-dialog [(visible)]="editDialog" [modal]="true" [style]="{ width: '560px' }"
+  header="Editar Dados Canônicos do Membro">
   <div class="space-y-4 pt-2">
     <div>
       <label class="block text-xs font-medium text-surface-600 mb-1">Nome Completo</label>
@@ -236,12 +167,10 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Status Canônico</label>
-        <select
-          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
-          [(ngModel)]="selectedMembro.canonical_status"
-        >
+        <select class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="selectedMembro.canonical_status">
           @for (opt of statusOptions.slice(1); track opt.value) {
-            <option [value]="opt.value">{{ opt.label }}</option>
+          <option [value]="opt.value">{{ opt.label }}</option>
           }
         </select>
       </div>
@@ -250,10 +179,8 @@
     <div class="grid grid-cols-2 gap-3">
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Modo de Recepção</label>
-        <select
-          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
-          [(ngModel)]="selectedMembro.reception_type"
-        >
+        <select class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="selectedMembro.reception_type">
           <option value="profissao_fe_batismo">Profissão de Fé e Batismo</option>
           <option value="profissao_fe">Profissão de Fé</option>
           <option value="transferencia">Carta de Transferência</option>
@@ -263,25 +190,32 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Data da Recepção</label>
-        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="selectedMembro.reception_date" />
+        <input type="date"
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="selectedMembro.reception_date" />
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Data do Batismo</label>
-        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="selectedMembro.baptism_date" />
+        <input type="date"
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="selectedMembro.baptism_date" />
       </div>
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Data da Profissão de Fé</label>
-        <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="selectedMembro.profession_date" />
+        <input type="date"
+          class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+          [(ngModel)]="selectedMembro.profession_date" />
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Estado Civil</label>
-        <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.marital_status" placeholder="Ex: Casado(a)" />
+        <input type="text" pInputText class="w-full" [(ngModel)]="selectedMembro.marital_status"
+          placeholder="Ex: Casado(a)" />
       </div>
       <div>
         <label class="block text-xs font-medium text-surface-600 mb-1">Nome do Cônjuge</label>
@@ -310,508 +244,504 @@
 <!-- ============================================================== -->
 <!-- MODAL: DOSSIÊ COMPLETO DO MEMBRO & GERADOR DE PDF OFICIAL IPB  -->
 <!-- ============================================================== -->
-<p-dialog
-  [(visible)]="fichaDialog"
-  [modal]="true"
-  [style]="{ width: '880px', maxWidth: '96vw' }"
-  header="Dossiê Canônico & Ficha do Membro"
->
+<p-dialog [(visible)]="fichaDialog" [modal]="true" [style]="{ width: '880px', maxWidth: '96vw' }"
+  header="Dossiê Canônico & Ficha do Membro">
   @if (fichaLoading()) {
-    <div class="p-12 text-center text-surface-500">
-      <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
-      <p class="mt-3 text-sm font-medium">Carregando todas as informações do membro...</p>
-    </div>
+  <div class="p-12 text-center text-surface-500">
+    <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+    <p class="mt-3 text-sm font-medium">Carregando todas as informações do membro...</p>
+  </div>
   } @else if (fichaData(); as f) {
-    @let membro = f.membro || f.person;
-    <div class="space-y-6 pt-1">
-      
-      <!-- HERO HEADER DO MEMBRO -->
-      <div class="p-5 bg-gradient-to-r from-emerald-950/40 via-surface-card to-surface-card border border-surface rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <div class="w-16 h-16 rounded-2xl bg-primary text-primary-contrast flex items-center justify-center text-2xl font-black shadow-lg">
-            {{ getIniciais(membro.full_name) }}
-          </div>
-          <div>
-            <div class="flex flex-wrap items-center gap-2 mb-1">
-              <h2 class="text-xl font-black text-surface-900 dark:text-surface-0 m-0 leading-tight">
-                {{ membro.full_name }}
-              </h2>
-              <p-tag
-                [value]="getStatusBadge(membro.canonical_status).label"
-                [severity]="getStatusBadge(membro.canonical_status).severity"
-              />
-              @if (membro.is_active === false) {
-                <p-tag value="Inativo" severity="secondary" />
-              }
-            </div>
-            <div class="text-xs text-muted-color flex flex-wrap items-center gap-2">
-              <span class="font-mono font-bold text-surface-700 dark:text-surface-300">
-                {{ membro.roll_number || 'ROL S/N' }}
-              </span>
-              <span>&bull;</span>
-              <span>{{ membro.age ? membro.age + ' anos' : 'Idade não informada' }}</span>
-              @if (membro.birth_date) {
-                <span>({{ membro.birth_date | date: 'dd/MM/yyyy' }})</span>
-              }
-            </div>
-          </div>
+  @let membro = f.membro || f.person;
+  <div class="space-y-6 pt-1">
+
+    <!-- HERO HEADER DO MEMBRO -->
+    <div
+      class="p-5 bg-gradient-to-r from-emerald-950/40 via-surface-card to-surface-card border border-surface rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-16 h-16 rounded-2xl bg-primary text-primary-contrast flex items-center justify-center text-2xl font-black shadow-lg">
+          {{ getIniciais(membro.full_name) }}
         </div>
-
-        <!-- Botões de Ação Rápida no Topo -->
-        <div class="flex items-center gap-3 shrink-0 flex-wrap">
-          @if (pastoresDisponiveis().length > 0) {
-            <div class="flex items-center gap-1.5 bg-surface-100 dark:bg-surface-800 px-3 py-1.5 rounded-xl border border-surface-200 dark:border-surface-700">
-              <i class="pi pi-bookmark text-primary text-xs"></i>
-              <span class="text-xs font-semibold whitespace-nowrap">Pastor Responsável:</span>
-              <select
-                class="text-xs p-1 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 font-medium"
-                [ngModel]="selectedPastorId()"
-                (ngModelChange)="trocarPastor($event)"
-              >
-                @for (p of pastoresDisponiveis(); track p.id) {
-                  <option [value]="p.id">
-                    {{ p.titulo_pastoral || p.nome }} {{ p.cargo_pastoral ? '— ' + p.cargo_pastoral : '' }}
-                  </option>
-                }
-              </select>
-            </div>
-          }
-
-          <p-button
-            label="Gerar PDF Oficial"
-            icon="pi pi-file-pdf"
-            severity="danger"
-            (onClick)="imprimirFicha()"
-            title="Exportar como PDF oficial timbrado da IPB"
-          />
-          <p-button
-            label="Editar"
-            icon="pi pi-pencil"
-            [outlined]="true"
-            size="small"
-            (onClick)="abrirEdicaoDeFicha()"
-            title="Editar dados canônicos"
-          />
-        </div>
-      </div>
-
-      <!-- GRADE DE INFORMAÇÕES DETALHADAS -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        <!-- CARD 1: ASSENTAMENTOS CANÔNICOS & ECLESIÁSTICOS -->
-        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
-          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
-            <i class="pi pi-book"></i> Assentamentos Canônicos (IPB)
-          </div>
-          <div class="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <span class="text-muted-color block mb-0.5">Nº do ROL Oficial</span>
-              <span class="font-mono font-bold text-surface-900 dark:text-surface-100 text-sm">
-                {{ membro.roll_number || 'Sem número' }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Situação Canônica</span>
-              <span class="font-bold text-surface-900 dark:text-surface-100 capitalize">
-                {{ getStatusBadge(membro.canonical_status).label }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Modo de Recepção</span>
-              <span class="font-semibold text-surface-800 dark:text-surface-200">
-                {{ getModoRecepcaoLabel(membro.reception_type) }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Data de Recepção</span>
-              <span class="font-semibold text-surface-800 dark:text-surface-200">
-                {{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—' }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Profissão de Fé</span>
-              <span class="font-semibold text-surface-800 dark:text-surface-200">
-                {{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : '—' }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Data do Batismo</span>
-              <span class="font-semibold text-surface-800 dark:text-surface-200">
-                {{ membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—' }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 2: DADOS PESSOAIS, CONTATO & FAMÍLIA -->
-        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
-          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
-            <i class="pi pi-user"></i> Dados Pessoais & Família
-          </div>
-          <div class="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <span class="text-muted-color block mb-0.5">CPF</span>
-              <span class="font-mono font-medium text-surface-800 dark:text-surface-200">
-                {{ membro.cpf || 'Não informado' }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Estado Civil</span>
-              <span class="font-semibold text-surface-800 dark:text-surface-200">
-                {{ membro.marital_status || 'Não informado' }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Cônjuge</span>
-              <span class="font-semibold text-surface-800 dark:text-surface-200">
-                {{ membro.spouse_name || '—' }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Data Casamento</span>
-              <span class="font-semibold text-surface-800 dark:text-surface-200">
-                {{ membro.marriage_date ? (membro.marriage_date | date: 'dd/MM/yyyy') : '—' }}
-              </span>
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">Telefone / WhatsApp</span>
-              @if (membro.phone) {
-                <a (click)="abrirWhatsApp(membro.phone)" class="text-emerald-500 font-bold hover:underline cursor-pointer flex items-center gap-1">
-                  <i class="pi pi-whatsapp"></i> {{ membro.phone }}
-                </a>
-              } @else {
-                <span class="text-muted-color">—</span>
-              }
-            </div>
-            <div>
-              <span class="text-muted-color block mb-0.5">E-mail</span>
-              @if (membro.email) {
-                <a [href]="'mailto:' + membro.email" class="text-primary font-medium hover:underline truncate block">
-                  {{ membro.email }}
-                </a>
-              } @else {
-                <span class="text-muted-color">—</span>
-              }
-            </div>
-          </div>
-
-          @if (f.familias && f.familias.length > 0) {
-            <div class="mt-3 pt-3 border-t border-surface text-xs">
-              <span class="text-muted-color block mb-1">Família Cadastrada:</span>
-              <div class="flex flex-wrap gap-1">
-                @for (fam of f.familias; track fam.id) {
-                  <p-tag [value]="fam.name + (fam.relationship ? ' (' + fam.relationship + ')' : '')" severity="warn" icon="pi pi-home" />
-                }
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- CARD 3: ESCOLA BÍBLICA DOMINICAL & MINISTÉRIOS -->
-        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
-          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
-            <i class="pi pi-bookmark"></i> Escola Dominical & Atuação
-          </div>
-          <div class="space-y-2 text-xs">
-            <div class="flex items-center justify-between pb-2 border-b border-surface">
-              <span class="text-muted-color">Habilitação EBD:</span>
-              <div class="flex gap-1">
-                <p-tag [value]="membro.can_teach ? 'Pode Lecionar' : 'Não leciona'" [severity]="membro.can_teach ? 'success' : 'secondary'" />
-                <p-tag [value]="membro.can_superintend ? 'Pode Superintender' : 'Não superintende'" [severity]="membro.can_superintend ? 'info' : 'secondary'" />
-              </div>
-            </div>
-
-            <div>
-              <span class="text-muted-color block mb-1">Classes em que é Aluno:</span>
-              @if (f.classes_aluno && f.classes_aluno.length > 0) {
-                <div class="flex flex-wrap gap-1">
-                  @for (c of f.classes_aluno; track c) {
-                    <span class="px-2 py-0.5 rounded bg-surface-ground border border-surface font-semibold text-surface-800 dark:text-surface-200">{{ c }}</span>
-                  }
-                </div>
-              } @else {
-                <span class="text-muted-color italic">Nenhuma matrícula ativa nesta sessão.</span>
-              }
-            </div>
-
-            <div>
-              <span class="text-muted-color block mb-1">Classes que Leciona:</span>
-              @if (f.classes_professor && f.classes_professor.length > 0) {
-                <div class="flex flex-wrap gap-1">
-                  @for (c of f.classes_professor; track c) {
-                    <span class="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold">{{ c }}</span>
-                  }
-                </div>
-              } @else {
-                <span class="text-muted-color italic">Nenhuma classe designada como professor.</span>
-              }
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 4: SOCIEDADES INTERNAS & TESOURARIA -->
-        <div class="p-4 bg-surface-card border border-surface rounded-2xl">
-          <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
-            <i class="pi pi-id-card"></i> Sociedades & Dízimos
-          </div>
-          <div class="space-y-3 text-xs">
-            <div>
-              <span class="text-muted-color block mb-1">Sociedades Internas (SAF / UPH / UMP / UPA / UCP):</span>
-              @if (f.cargos_atuais && f.cargos_atuais.length > 0) {
-                <div class="space-y-1">
-                  @for (c of f.cargos_atuais; track c.sociedade) {
-                    <div class="flex items-center justify-between p-2 rounded bg-surface-ground border border-surface">
-                      <strong class="text-surface-900 dark:text-surface-100">{{ c.sociedade }}</strong>
-                      <span class="text-primary font-bold">{{ c.cargo }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <span class="text-muted-color italic">Nenhum vínculo de sociedade interna registrado.</span>
-              }
-            </div>
-
-            <div class="pt-2 border-t border-surface">
-              <span class="text-muted-color block mb-1">Tesouraria & Dízimos:</span>
-              <div class="flex items-center justify-between">
-                <div>
-                  <span class="text-muted-color">Dizimista Ativo:</span>
-                  <strong class="ml-1 text-surface-900 dark:text-surface-100">
-                    {{ membro.is_tither ? 'Sim' : 'Não' }}
-                  </strong>
-                </div>
-                <div>
-                  <span class="text-muted-color">Nº do Envelope:</span>
-                  <span class="ml-1 font-mono font-black text-amber-500">
-                    {{ membro.envelope_number ? '#' + membro.envelope_number : 'Sem envelope' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ========================================================== -->
-      <!-- DOCUMENTO OFICIAL TIMBRADO PARA IMPRESSÃO / SALVAR EM PDF  -->
-      <!-- ========================================================== -->
-      <div id="ficha-impressao-ipb" class="ipb-moldura-solene text-surface-900 bg-white shadow-sm my-4">
-        
-        <!-- Timbre da Igreja Presbiteriana do Brasil -->
-        <div class="ipb-timbre-header">
-          <img src="/ipb-logo.png" alt="Igreja Presbiteriana do Brasil" class="ipb-logo-img" onerror="this.style.display='none'" />
-          <div class="ipb-timbre-nome-ipb">Igreja Presbiteriana do Brasil</div>
-          <h2 class="ipb-timbre-nome-igreja">
-            {{ f.igreja || 'Igreja Presbiteriana em Campo Verde' }}
-          </h2>
-          <div class="ipb-timbre-jurisdicao">
-            {{ f.presbiterio || 'Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)' }}
-          </div>
-          <div class="ipb-faixa-chancela">
-            Ficha Cadastral Canônica e Histórico Ministerial
-          </div>
-        </div>
-
-        <!-- Seção I: Identificação Canônica & Registro Civil -->
-        <div class="ipb-secao-titulo">
-          <span>I. Identificação do Membro e Dados Civis</span>
-        </div>
-        <table class="ipb-tabela-dados">
-          <tbody>
-            <tr>
-              <td style="width: 45%;">
-                <span class="ipb-label">Nome Completo do Membro</span>
-                <span class="ipb-val-destaque">{{ membro.full_name }}</span>
-              </td>
-              <td style="width: 25%;">
-                <span class="ipb-label">Nº do ROL Oficial</span>
-                <span class="ipb-val font-mono" style="font-weight: 800; color: #064e3b;">{{ membro.roll_number || 'S/N' }}</span>
-              </td>
-              <td style="width: 30%;">
-                <span class="ipb-label">Situação Canônica</span>
-                <span class="ipb-badge-canonico">{{ getStatusBadge(membro.canonical_status).label }}</span>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <span class="ipb-label">Data de Nascimento / Idade</span>
-                <span class="ipb-val">{{ membro.birth_date ? (membro.birth_date | date: 'dd/MM/yyyy') : '—' }} ({{ membro.age ? membro.age + ' anos' : '—' }})</span>
-              </td>
-              <td>
-                <span class="ipb-label">CPF</span>
-                <span class="ipb-val">{{ membro.cpf || 'Não informado' }}</span>
-              </td>
-              <td>
-                <span class="ipb-label">Estado Civil / Cônjuge</span>
-                <span class="ipb-val">{{ membro.marital_status || '—' }} @if (membro.spouse_name) { (c/ {{ membro.spouse_name }}) }</span>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <span class="ipb-label">Telefone / WhatsApp</span>
-                <span class="ipb-val">{{ membro.phone || 'Não informado' }}</span>
-              </td>
-              <td>
-                <span class="ipb-label">E-mail Cadastrado</span>
-                <span class="ipb-val">{{ membro.email || 'Não informado' }}</span>
-              </td>
-              <td>
-                <span class="ipb-label">Composição Familiar</span>
-                <span class="ipb-val">
-                  @if (f.familias && f.familias.length > 0) {
-                    @for (fam of f.familias; track fam.id; let last = $last) {
-                      {{ fam.name }}{{ fam.relationship ? ' (' + fam.relationship + ')' : '' }}{{ !last ? ', ' : '' }}
-                    }
-                  } @else {
-                    —
-                  }
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Seção II: Assentamentos Canônicos & Histórico Sacramental -->
-        <div class="ipb-secao-titulo">
-          <span>II. Assentamentos Canônicos e Sacramentais</span>
-        </div>
-        <table class="ipb-tabela-dados">
-          <tbody>
-            <tr>
-              <td style="width: 35%;">
-                <span class="ipb-label">Modo de Recepção / Admissão</span>
-                <span class="ipb-val">{{ getModoRecepcaoLabel(membro.reception_type) }}</span>
-              </td>
-              <td style="width: 20%;">
-                <span class="ipb-label">Data da Admissão</span>
-                <span class="ipb-val">{{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—' }}</span>
-              </td>
-              <td style="width: 22%;">
-                <span class="ipb-label">Profissão de Fé</span>
-                <span class="ipb-val">{{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : '—' }}</span>
-              </td>
-              <td style="width: 23%;">
-                <span class="ipb-label">Batismo</span>
-                <span class="ipb-val">{{ membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—' }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Seção III: Ministérios, Escola Dominical & Sociedades Internas -->
-        <div class="ipb-secao-titulo">
-          <span>III. Atuação Eclesiástica, EBD e Sociedades Internas</span>
-        </div>
-        <table class="ipb-tabela-dados">
-          <tbody>
-            <tr>
-              <td style="width: 50%;">
-                <span class="ipb-label">Sociedades Internas (SAF / UPH / UMP / UPA / UCP)</span>
-                <span class="ipb-val">
-                  @if (f.cargos_atuais && f.cargos_atuais.length > 0) {
-                    @for (c of f.cargos_atuais; track c.sociedade; let last = $last) {
-                      <strong>{{ c.sociedade }}:</strong> {{ c.cargo }}{{ !last ? ' • ' : '' }}
-                    }
-                  } @else {
-                    Nenhum vínculo societário registrado
-                  }
-                </span>
-              </td>
-              <td style="width: 30%;">
-                <span class="ipb-label">Escola Bíblica Dominical (EBD)</span>
-                <span class="ipb-val">
-                  {{ membro.can_teach ? 'Habilitado a Lecionar' : 'Aluno Regular' }}
-                  @if (f.classes_professor && f.classes_professor.length > 0) {
-                    (Prof: {{ f.classes_professor.join(', ') }})
-                  }
-                  @if (f.classes_aluno && f.classes_aluno.length > 0) {
-                    (Classe: {{ f.classes_aluno.join(', ') }})
-                  }
-                </span>
-              </td>
-              <td style="width: 20%;">
-                <span class="ipb-label">Tesouraria / Dízimos</span>
-                <span class="ipb-val">
-                  {{ membro.is_tither ? 'Dizimista Ativo' : 'Não informado' }}
-                  @if (membro.envelope_number) {
-                    (Env. #{{ membro.envelope_number }})
-                  }
-                </span>
-              </td>
-            </tr>
-            @if (membro.notes) {
-              <tr>
-                <td colspan="3">
-                  <span class="ipb-label">Anotações Cadastrais / Observações</span>
-                  <span class="ipb-val" style="font-style: italic; color: #475569;">{{ membro.notes }}</span>
-                </td>
-              </tr>
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <h2 class="text-xl font-black text-surface-900 dark:text-surface-0 m-0 leading-tight">
+              {{ membro.full_name }}
+            </h2>
+            <p-tag [value]="getStatusBadge(membro.canonical_status).label"
+              [severity]="getStatusBadge(membro.canonical_status).severity" />
+            @if (membro.is_active === false) {
+            <p-tag value="Inativo" severity="secondary" />
             }
-          </tbody>
-        </table>
-
-        <!-- Termo de Fé e Certidão do Conselho -->
-        <div class="ipb-certidao-bloco">
-          <p class="ipb-certidao-texto">
-            Certifico para todos os devidos fins de ordem canônica e eclesiástica que os assentamentos, registros batismais, vínculos ministeriais e dados cadastrais acima conferem fielmente com os livros oficiais de Atas e Rol de Membros arquivados sob a guarda da Secretaria deste Conselho, encontrando-se o referido irmão em plena comunhão e submissão à Constituição e aos Símbolos de Fé da Igreja Presbiteriana do Brasil.
-          </p>
-        </div>
-
-        <!-- Autenticidade Digital -->
-        <div class="ipb-autenticidade-linha">
-          <div>
-            <strong>Emissão Oficial:</strong> {{ f.data_emissao || 'Hoje' }} às {{ f.hora_emissao || '10:00' }}
           </div>
-          <div>
-            <strong>Autenticidade Conciliar:</strong>
-            <span class="ipb-codigo-auth">{{ f.codigo_autenticidade || 'IPB-VERIFIED' }}</span>
-          </div>
-          <div>
-            <strong>Validação:</strong> Sistema EBD/Secretaria IPB
+          <div class="text-xs text-muted-color flex flex-wrap items-center gap-2">
+            <span class="font-mono font-bold text-surface-700 dark:text-surface-300">
+              {{ membro.roll_number || 'ROL S/N' }}
+            </span>
+            <span>&bull;</span>
+            <span>{{ membro.age ? membro.age + ' anos' : 'Idade não informada' }}</span>
+            @if (membro.birth_date) {
+            <span>({{ membro.birth_date | date: 'dd/MM/yyyy' }})</span>
+            }
           </div>
         </div>
+      </div>
 
-        <!-- Linhas de Assinatura Canônica -->
-        <div class="ipb-grid-assinaturas">
+      <!-- Botões de Ação Rápida no Topo -->
+      <div class="flex items-center gap-3 shrink-0 flex-wrap">
+        @if (pastoresDisponiveis().length > 0) {
+        <div
+          class="flex items-center gap-1.5 bg-surface-100 dark:bg-surface-800 px-3 py-1.5 rounded-xl border border-surface-200 dark:border-surface-700">
+          <i class="pi pi-bookmark text-primary text-xs"></i>
+          <span class="text-xs font-semibold whitespace-nowrap">Pastor Responsável:</span>
+          <select
+            class="text-xs p-1 rounded border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 font-medium"
+            [ngModel]="selectedPastorId()" (ngModelChange)="trocarPastor($event)">
+            @for (p of pastoresDisponiveis(); track p.id) {
+            <option [value]="p.id">
+              {{ p.titulo_pastoral || p.nome }} {{ p.cargo_pastoral ? '— ' + p.cargo_pastoral : '' }}
+            </option>
+            }
+          </select>
+        </div>
+        }
+
+        <p-button label="Gerar PDF Oficial" icon="pi pi-file-pdf" severity="danger" (onClick)="imprimirFicha()"
+          title="Exportar como PDF oficial timbrado da IPB" />
+        <p-button label="Editar" icon="pi pi-pencil" [outlined]="true" size="small" (onClick)="abrirEdicaoDeFicha()"
+          title="Editar dados canônicos" />
+      </div>
+    </div>
+
+    <!-- GRADE DE INFORMAÇÕES DETALHADAS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- CARD 1: ASSENTAMENTOS CANÔNICOS & ECLESIÁSTICOS -->
+      <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+        <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+          <i class="pi pi-book"></i> Assentamentos Canônicos (IPB)
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-xs">
           <div>
-            <div class="ipb-linha-assinatura"></div>
-            <div class="ipb-assinante-nome">
-              {{ f.pastor_responsavel?.nome || f.pastor_presidente || 'Rev. Pastor Presidente' }}
+            <span class="text-muted-color block mb-0.5">Nº do ROL Oficial</span>
+            <span class="font-mono font-bold text-surface-900 dark:text-surface-100 text-sm">
+              {{ membro.roll_number || 'Sem número' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Situação Canônica</span>
+            <span class="font-bold text-surface-900 dark:text-surface-100 capitalize">
+              {{ getStatusBadge(membro.canonical_status).label }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Modo de Recepção</span>
+            <span class="font-semibold text-surface-800 dark:text-surface-200">
+              {{ getModoRecepcaoLabel(membro.reception_type) }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Data de Recepção</span>
+            <span class="font-semibold text-surface-800 dark:text-surface-200">
+              {{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Profissão de Fé</span>
+            <span class="font-semibold text-surface-800 dark:text-surface-200">
+              {{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : '—' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Data do Batismo</span>
+            <span class="font-semibold text-surface-800 dark:text-surface-200">
+              {{ membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: DADOS PESSOAIS, CONTATO & FAMÍLIA -->
+      <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+        <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+          <i class="pi pi-user"></i> Dados Pessoais & Família
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <span class="text-muted-color block mb-0.5">CPF</span>
+            <span class="font-mono font-medium text-surface-800 dark:text-surface-200">
+              {{ membro.cpf || 'Não informado' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Estado Civil</span>
+            <span class="font-semibold text-surface-800 dark:text-surface-200">
+              {{ membro.marital_status || 'Não informado' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Cônjuge</span>
+            <span class="font-semibold text-surface-800 dark:text-surface-200">
+              {{ membro.spouse_name || '—' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Data Casamento</span>
+            <span class="font-semibold text-surface-800 dark:text-surface-200">
+              {{ membro.marriage_date ? (membro.marriage_date | date: 'dd/MM/yyyy') : '—' }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">Telefone / WhatsApp</span>
+            @if (membro.phone) {
+            <a (click)="abrirWhatsApp(membro.phone)"
+              class="text-emerald-500 font-bold hover:underline cursor-pointer flex items-center gap-1">
+              <i class="pi pi-whatsapp"></i> {{ membro.phone }}
+            </a>
+            } @else {
+            <span class="text-muted-color">—</span>
+            }
+          </div>
+          <div>
+            <span class="text-muted-color block mb-0.5">E-mail</span>
+            @if (membro.email) {
+            <a [href]="'mailto:' + membro.email" class="text-primary font-medium hover:underline truncate block">
+              {{ membro.email }}
+            </a>
+            } @else {
+            <span class="text-muted-color">—</span>
+            }
+          </div>
+        </div>
+
+        @if (f.familias && f.familias.length > 0) {
+        <div class="mt-3 pt-3 border-t border-surface text-xs">
+          <span class="text-muted-color block mb-1">Família Cadastrada:</span>
+          <div class="flex flex-wrap gap-1">
+            @for (fam of f.familias; track fam.id) {
+            <p-tag [value]="fam.name + (fam.relationship ? ' (' + fam.relationship + ')' : '')" severity="warn"
+              icon="pi pi-home" />
+            }
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- CARD 3: ESCOLA BÍBLICA DOMINICAL & MINISTÉRIOS -->
+      <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+        <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+          <i class="pi pi-bookmark"></i> Escola Dominical & Atuação
+        </div>
+        <div class="space-y-2 text-xs">
+          <div class="flex items-center justify-between pb-2 border-b border-surface">
+            <span class="text-muted-color">Habilitação EBD:</span>
+            <div class="flex gap-1">
+              <p-tag [value]="membro.can_teach ? 'Pode Lecionar' : 'Não leciona'"
+                [severity]="membro.can_teach ? 'success' : 'secondary'" />
+              <p-tag [value]="membro.can_superintend ? 'Pode Superintender' : 'Não superintende'"
+                [severity]="membro.can_superintend ? 'info' : 'secondary'" />
             </div>
-            <div class="ipb-assinante-cargo">
-              {{ f.pastor_responsavel?.cargo || 'Presidente do Conselho da Igreja' }}
-            </div>
-            <div class="ipb-assinante-cargo" style="color: #64748b;">Igreja Presbiteriana do Brasil</div>
           </div>
+
           <div>
-            <div class="ipb-linha-assinatura"></div>
-            <div class="ipb-assinante-nome">Presb. Secretário do Conselho</div>
-            <div class="ipb-assinante-cargo">Secretaria Executiva do Conselho</div>
-            <div class="ipb-assinante-cargo" style="color: #64748b;">Igreja Presbiteriana do Brasil</div>
+            <span class="text-muted-color block mb-1">Classes em que é Aluno:</span>
+            @if (f.classes_aluno && f.classes_aluno.length > 0) {
+            <div class="flex flex-wrap gap-1">
+              @for (c of f.classes_aluno; track c) {
+              <span
+                class="px-2 py-0.5 rounded bg-surface-ground border border-surface font-semibold text-surface-800 dark:text-surface-200">{{
+                c }}</span>
+              }
+            </div>
+            } @else {
+            <span class="text-muted-color italic">Nenhuma matrícula ativa nesta sessão.</span>
+            }
+          </div>
+
+          <div>
+            <span class="text-muted-color block mb-1">Classes que Leciona:</span>
+            @if (f.classes_professor && f.classes_professor.length > 0) {
+            <div class="flex flex-wrap gap-1">
+              @for (c of f.classes_professor; track c) {
+              <span
+                class="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold">{{
+                c }}</span>
+              }
+            </div>
+            } @else {
+            <span class="text-muted-color italic">Nenhuma classe designada como professor.</span>
+            }
           </div>
         </div>
+      </div>
 
-        <!-- Rodapé Solene -->
-        <div class="ipb-rodape-solene">
-          Igreja Presbiteriana do Brasil • Uma igreja bíblica, reformada, missionária e acolhedora • Soli Deo Gloria
+      <!-- CARD 4: SOCIEDADES INTERNAS & TESOURARIA -->
+      <div class="p-4 bg-surface-card border border-surface rounded-2xl">
+        <div class="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+          <i class="pi pi-id-card"></i> Sociedades & Dízimos
         </div>
+        <div class="space-y-3 text-xs">
+          <div>
+            <span class="text-muted-color block mb-1">Sociedades Internas (SAF / UPH / UMP / UPA / UCP):</span>
+            @if (f.cargos_atuais && f.cargos_atuais.length > 0) {
+            <div class="space-y-1">
+              @for (c of f.cargos_atuais; track c.sociedade) {
+              <div class="flex items-center justify-between p-2 rounded bg-surface-ground border border-surface">
+                <strong class="text-surface-900 dark:text-surface-100">{{ c.sociedade }}</strong>
+                <span class="text-primary font-bold">{{ c.cargo }}</span>
+              </div>
+              }
+            </div>
+            } @else {
+            <span class="text-muted-color italic">Nenhum vínculo de sociedade interna registrado.</span>
+            }
+          </div>
 
+          <div class="pt-2 border-t border-surface">
+            <span class="text-muted-color block mb-1">Tesouraria & Dízimos:</span>
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-muted-color">Dizimista Ativo:</span>
+                <strong class="ml-1 text-surface-900 dark:text-surface-100">
+                  {{ membro.is_tither ? 'Sim' : 'Não' }}
+                </strong>
+              </div>
+              <div>
+                <span class="text-muted-color">Nº do Envelope:</span>
+                <span class="ml-1 font-mono font-black text-amber-500">
+                  {{ membro.envelope_number ? '#' + membro.envelope_number : 'Sem envelope' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
+
+    <!-- ========================================================== -->
+    <!-- DOCUMENTO OFICIAL TIMBRADO PARA IMPRESSÃO / SALVAR EM PDF  -->
+    <!-- ========================================================== -->
+    <div id="ficha-impressao-ipb" class="ipb-moldura-solene text-surface-900 bg-white shadow-sm my-4">
+
+      <!-- Timbre da Igreja Presbiteriana do Brasil -->
+      <div class="ipb-timbre-header">
+        <img src="/ipb-logo.png" alt="Igreja Presbiteriana do Brasil" class="ipb-logo-img"
+          onerror="this.style.display='none'" />
+        <div class="ipb-timbre-nome-ipb">Igreja Presbiteriana do Brasil</div>
+        <h2 class="ipb-timbre-nome-igreja">
+          {{ f.igreja || 'Igreja Presbiteriana em Campo Verde' }}
+        </h2>
+        <div class="ipb-timbre-jurisdicao">
+          {{ f.presbiterio || 'Presbitério Campo Verde (PCVD) • Sínodo Mato Grosso (SMT)' }}
+        </div>
+        <div class="ipb-faixa-chancela">
+          Ficha Cadastral Canônica e Histórico Ministerial
+        </div>
+      </div>
+
+      <!-- Seção I: Identificação Canônica & Registro Civil -->
+      <div class="ipb-secao-titulo">
+        <span>I. Identificação do Membro e Dados Civis</span>
+      </div>
+      <table class="ipb-tabela-dados">
+        <tbody>
+          <tr>
+            <td style="width: 45%;">
+              <span class="ipb-label">Nome Completo do Membro</span>
+              <span class="ipb-val-destaque">{{ membro.full_name }}</span>
+            </td>
+            <td style="width: 25%;">
+              <span class="ipb-label">Nº do ROL Oficial</span>
+              <span class="ipb-val font-mono" style="font-weight: 800; color: #064e3b;">{{ membro.roll_number || 'S/N'
+                }}</span>
+            </td>
+            <td style="width: 30%;">
+              <span class="ipb-label">Situação Canônica</span>
+              <span class="ipb-badge-canonico">{{ getStatusBadge(membro.canonical_status).label }}</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="ipb-label">Data de Nascimento / Idade</span>
+              <span class="ipb-val">{{ membro.birth_date ? (membro.birth_date | date: 'dd/MM/yyyy') : '—' }} ({{
+                membro.age ? membro.age + ' anos' : '—' }})</span>
+            </td>
+            <td>
+              <span class="ipb-label">CPF</span>
+              <span class="ipb-val">{{ membro.cpf || 'Não informado' }}</span>
+            </td>
+            <td>
+              <span class="ipb-label">Estado Civil / Cônjuge</span>
+              <span class="ipb-val">{{ membro.marital_status || '—' }} @if (membro.spouse_name) { (c/ {{
+                membro.spouse_name }}) }</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="ipb-label">Telefone / WhatsApp</span>
+              <span class="ipb-val">{{ membro.phone || 'Não informado' }}</span>
+            </td>
+            <td>
+              <span class="ipb-label">E-mail Cadastrado</span>
+              <span class="ipb-val">{{ membro.email || 'Não informado' }}</span>
+            </td>
+            <td>
+              <span class="ipb-label">Composição Familiar</span>
+              <span class="ipb-val">
+                @if (f.familias && f.familias.length > 0) {
+                @for (fam of f.familias; track fam.id; let last = $last) {
+                {{ fam.name }}{{ fam.relationship ? ' (' + fam.relationship + ')' : '' }}{{ !last ? ', ' : '' }}
+                }
+                } @else {
+                —
+                }
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Seção II: Assentamentos Canônicos & Histórico Sacramental -->
+      <div class="ipb-secao-titulo">
+        <span>II. Assentamentos Canônicos e Sacramentais</span>
+      </div>
+      <table class="ipb-tabela-dados">
+        <tbody>
+          <tr>
+            <td style="width: 35%;">
+              <span class="ipb-label">Modo de Recepção / Admissão</span>
+              <span class="ipb-val">{{ getModoRecepcaoLabel(membro.reception_type) }}</span>
+            </td>
+            <td style="width: 20%;">
+              <span class="ipb-label">Data da Admissão</span>
+              <span class="ipb-val">{{ membro.reception_date ? (membro.reception_date | date: 'dd/MM/yyyy') : '—'
+                }}</span>
+            </td>
+            <td style="width: 22%;">
+              <span class="ipb-label">Profissão de Fé</span>
+              <span class="ipb-val">{{ membro.profession_date ? (membro.profession_date | date: 'dd/MM/yyyy') : '—'
+                }}</span>
+            </td>
+            <td style="width: 23%;">
+              <span class="ipb-label">Batismo</span>
+              <span class="ipb-val">{{ membro.baptism_date ? (membro.baptism_date | date: 'dd/MM/yyyy') : '—' }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Seção III: Ministérios, Escola Dominical & Sociedades Internas -->
+      <div class="ipb-secao-titulo">
+        <span>III. Atuação Eclesiástica, EBD e Sociedades Internas</span>
+      </div>
+      <table class="ipb-tabela-dados">
+        <tbody>
+          <tr>
+            <td style="width: 50%;">
+              <span class="ipb-label">Sociedades Internas (SAF / UPH / UMP / UPA / UCP)</span>
+              <span class="ipb-val">
+                @if (f.cargos_atuais && f.cargos_atuais.length > 0) {
+                @for (c of f.cargos_atuais; track c.sociedade; let last = $last) {
+                <strong>{{ c.sociedade }}:</strong> {{ c.cargo }}{{ !last ? ' • ' : '' }}
+                }
+                } @else {
+                Nenhum vínculo societário registrado
+                }
+              </span>
+            </td>
+            <td style="width: 30%;">
+              <span class="ipb-label">Escola Bíblica Dominical (EBD)</span>
+              <span class="ipb-val">
+                {{ membro.can_teach ? 'Habilitado a Lecionar' : 'Aluno Regular' }}
+                @if (f.classes_professor && f.classes_professor.length > 0) {
+                (Prof: {{ f.classes_professor.join(', ') }})
+                }
+                @if (f.classes_aluno && f.classes_aluno.length > 0) {
+                (Classe: {{ f.classes_aluno.join(', ') }})
+                }
+              </span>
+            </td>
+            <td style="width: 20%;">
+              <span class="ipb-label">Tesouraria / Dízimos</span>
+              <span class="ipb-val">
+                {{ membro.is_tither ? 'Dizimista Ativo' : 'Não informado' }}
+                @if (membro.envelope_number) {
+                (Env. #{{ membro.envelope_number }})
+                }
+              </span>
+            </td>
+          </tr>
+          @if (membro.notes) {
+          <tr>
+            <td colspan="3">
+              <span class="ipb-label">Anotações Cadastrais / Observações</span>
+              <span class="ipb-val" style="font-style: italic; color: #475569;">{{ membro.notes }}</span>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Termo de Fé e Certidão do Conselho -->
+      <div class="ipb-certidao-bloco">
+        <p class="ipb-certidao-texto">
+          Certifico para todos os devidos fins de ordem canônica e eclesiástica que os assentamentos, registros
+          batismais, vínculos ministeriais e dados cadastrais acima conferem fielmente com os livros oficiais de Atas e
+          Rol de Membros arquivados sob a guarda da Secretaria deste Conselho, encontrando-se o referido irmão em plena
+          comunhão e submissão à Constituição e aos Símbolos de Fé da Igreja Presbiteriana do Brasil.
+        </p>
+      </div>
+
+      <!-- Autenticidade Digital -->
+      <div class="ipb-autenticidade-linha">
+        <div>
+          <strong>Emissão Oficial:</strong> {{ f.data_emissao || 'Hoje' }} às {{ f.hora_emissao || '10:00' }}
+        </div>
+        <div>
+          <strong>Autenticidade Conciliar:</strong>
+          <span class="ipb-codigo-auth">{{ f.codigo_autenticidade || 'IPB-VERIFIED' }}</span>
+        </div>
+        <div>
+          <strong>Validação:</strong> Sistema EBD/Secretaria IPB
+        </div>
+      </div>
+
+      <!-- Linhas de Assinatura Canônica -->
+      <div class="ipb-grid-assinaturas">
+        <div>
+          <div class="ipb-linha-assinatura"></div>
+          <div class="ipb-assinante-nome">
+            {{ f.pastor_responsavel?.nome || f.pastor_presidente || 'Rev. Pastor Presidente' }}
+          </div>
+          <div class="ipb-assinante-cargo">
+            {{ f.pastor_responsavel?.cargo || 'Presidente do Conselho da Igreja' }}
+          </div>
+          <div class="ipb-assinante-cargo" style="color: #64748b;">Igreja Presbiteriana do Brasil</div>
+        </div>
+        <div>
+          <div class="ipb-linha-assinatura"></div>
+          <div class="ipb-assinante-nome">Presb. Secretário do Conselho</div>
+          <div class="ipb-assinante-cargo">Secretaria Executiva do Conselho</div>
+          <div class="ipb-assinante-cargo" style="color: #64748b;">Igreja Presbiteriana do Brasil</div>
+        </div>
+      </div>
+
+      <!-- Rodapé Solene -->
+      <div class="ipb-rodape-solene">
+        Igreja Presbiteriana do Brasil • Uma igreja bíblica, reformada, missionária e acolhedora • Soli Deo Gloria
+      </div>
+
+    </div>
+
+  </div>
   }
 
   <ng-template pTemplate="footer">
     <div class="flex items-center justify-between w-full pt-3">
       <p-button label="Fechar" icon="pi pi-times" [text]="true" (onClick)="fichaDialog = false" />
       <div class="flex items-center gap-2">
-        <p-button
-          label="Gerar PDF / Imprimir"
-          icon="pi pi-file-pdf"
-          severity="danger"
-          (onClick)="imprimirFicha()"
-        />
+        <p-button label="Gerar PDF / Imprimir" icon="pi pi-file-pdf" severity="danger" (onClick)="imprimirFicha()" />
       </div>
     </div>
   </ng-template>

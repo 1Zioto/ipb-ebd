@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/api_service.dart';
-import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService.instance.init();
-  runApp(const IpbConferenciaApp());
+  final prefs = await SharedPreferences.getInstance();
+  final skipWelcome = prefs.getBool('skip_welcome_screen') ?? false;
+
+  runApp(IpbConferenciaApp(skipWelcome: skipWelcome));
 }
 
 class IpbConferenciaApp extends StatelessWidget {
-  const IpbConferenciaApp({super.key});
+  final bool skipWelcome;
+
+  const IpbConferenciaApp({super.key, this.skipWelcome = false});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'IPB Conferência de Dízimos',
+      title: 'IPB • Gestão Integrada',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -35,9 +40,7 @@ class IpbConferenciaApp extends StatelessWidget {
           elevation: 2,
         ),
       ),
-      home: ApiService.instance.isAuthenticated
-          ? const HomeScreen()
-          : const LoginScreen(),
+      home: SplashScreen(skipWelcome: skipWelcome),
     );
   }
 }

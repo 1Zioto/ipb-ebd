@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:qr/qr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThermalPrinterDevice {
@@ -56,11 +58,37 @@ class ThermalPrinterService {
   Future<ThermalPrinterSelection?> selectedPrinter() async {
     final prefs = await SharedPreferences.getInstance();
     final address = prefs.getString(_addressKey)?.trim();
-    if (address == null || address.isEmpty) return null;
-    return ThermalPrinterSelection(
-      name: prefs.getString(_nameKey) ?? 'Impressora Bluetooth',
-      address: address,
-    );
+    if (address != null && address.isNotEmpty) {
+      return ThermalPrinterSelection(
+        name: prefs.getString(_nameKey) ?? 'Impressora Bluetooth',
+        address: address,
+      );
+    }
+    // Auto-detecta impressora pareada se ainda não configurada
+    try {
+      final devices = await listPairedDevices();
+      if (devices.isNotEmpty) {
+        final candidate = devices.firstWhere(
+          (d) {
+            final n = d.name.toUpperCase();
+            return n.contains('POS') ||
+                n.contains('PRINTER') ||
+                n.contains('58') ||
+                n.contains('80') ||
+                n.contains('MPT') ||
+                n.contains('RPP') ||
+                n.contains('BLUETOOTH');
+          },
+          orElse: () => devices.first,
+        );
+        await saveSelectedPrinter(candidate);
+        return ThermalPrinterSelection(
+          name: candidate.name,
+          address: candidate.address,
+        );
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<void> saveSelectedPrinter(ThermalPrinterDevice device) async {
@@ -103,7 +131,7 @@ class ThermalPrinterService {
     final selected = printer ?? await selectedPrinter();
     if (selected == null || !selected.isValid) {
       throw const ThermalPrinterException(
-        'Selecione a impressora termica nas configuracoes.',
+        'Nenhuma impressora térmica configurada. Pareie no Bluetooth e selecione nas configurações.',
       );
     }
     await _channel.invokeMethod<bool>('printText', {
@@ -113,28 +141,147 @@ class ThermalPrinterService {
     });
   }
 
-  Future<void> printTest() async {
-    final selected = await selectedPrinter();
-    final now = DateTime.now();
-    await printText(
-      [
-        _receiptStart,
-        _center('IGREJA PRESBITERIANA', width: 32),
-        _center('DO BRASIL', width: 32),
-        _receiptEnd,
-        '-' * 32,
-        _center('TESTE DE IMPRESSORA POS', width: 32),
-        '',
-        'Impressora: ${selected?.name ?? '-'}',
-        'Data: ${_two(now.day)}/${_two(now.month)}/${now.year}',
-        'Hora: ${_two(now.hour)}:${_two(now.minute)}:${_two(now.second)}',
-        '',
-        _center('COMUNICACAO BLUETOOTH OK', width: 32),
-        _center('DIACONATO & TESOURARIA', width: 32),
-        '-' * 32,
-        '',
-      ].join('\n'),
+  Future<void> printRawBytes(
+    List<int> bytes, {
+    ThermalPrinterSelection? printer,
+    bool cutPaper = false,
+  }) async {
+    final selected = printer ?? await selectedPrinter();
+    if (selected == null || !selected.isValid) {
+      throw const ThermalPrinterException(
+        'Nenhuma impressora térmica configurada. Pareie no Bluetooth e selecione nas configurações.',
+      );
+    }
+    await _channel.invokeMethod<bool>('printRawBytes', {
+      'address': selected.address,
+      'bytes': Uint8List.fromList(bytes),
+      'cutPaper': cutPaper,
+    });
+  }
+
+  Future<void> printMemberQrLabel({
+    required String memberName,
+    required String envelopeNumber,
+    required String qrData,
+    ThermalPrinterSelection? printer,
+  }) async {
+    final bytes = <int>[];
+
+    // Reset ESC @
+    bytes.addAll([0x1B, 0x40]);
+    // Code Page CP850
+    bytes.addAll([0x1B, 0x74, 0x02]);
+    // Alinhamento Central
+    bytes.addAll([0x1B, 0x61, 0x01]);
+
+    // Cabeçalho
+    final header = _normalizeText('IGREJA PRESBITERIANA DO BRASIL\nDIACONATO & TESOURARIA\n--------------------------------\n');
+    bytes.addAll(latin1.encode(header));
+
+    // Envelope em destaque (Double-height)
+    bytes.addAll([0x1B, 0x21, 0x20]);
+    bytes.addAll(latin1.encode('ENVELOPE #$envelopeNumber\n'));
+    bytes.addAll([0x1B, 0x21, 0x00]); // Normal
+
+    // Nome do Membro
+    final nameFormatted = _normalizeText(memberName);
+    bytes.addAll(latin1.encode('$nameFormatted\n--------------------------------\n\n'));
+
+    // QR Code universal ESC/POS Raster Bit Image (GS v 0)
+    // Funciona em 100% das impressoras térmicas (Epson, POS-58, Goojprt, MPT, etc.)
+    final rasterBytes = _buildQrRasterEscPos(qrData, moduleSize: 6);
+    bytes.addAll(rasterBytes);
+
+    // Rodapé da etiqueta
+    bytes.addAll(latin1.encode('\n\nCole no envelope do dizimo\n\n\n\n'));
+
+    // cutPaper: false para evitar erro em impressoras portáteis sem guilhotina
+    await printRawBytes(bytes, printer: printer, cutPaper: false);
+  }
+
+  static List<int> _buildQrRasterEscPos(String data, {int moduleSize = 6}) {
+    final qrCode = QrCode.fromData(
+      data: data,
+      errorCorrectLevel: QrErrorCorrectLevel.M,
     );
+    final qrImage = QrImage(qrCode);
+    final modCount = qrImage.moduleCount;
+
+    const quietZone = 2;
+    final totalModules = modCount + (quietZone * 2);
+    final widthDots = totalModules * moduleSize;
+    final heightDots = totalModules * moduleSize;
+    final widthBytes = (widthDots + 7) ~/ 8;
+
+    final bytes = <int>[];
+    // GS v 0 0 xL xH yL yH
+    bytes.addAll([
+      0x1D,
+      0x76,
+      0x30,
+      0x00,
+      widthBytes & 0xFF,
+      (widthBytes >> 8) & 0xFF,
+      heightDots & 0xFF,
+      (heightDots >> 8) & 0xFF,
+    ]);
+
+    for (int y = 0; y < heightDots; y++) {
+      final modY = (y ~/ moduleSize) - quietZone;
+      for (int byteIdx = 0; byteIdx < widthBytes; byteIdx++) {
+        int byteVal = 0;
+        for (int bit = 0; bit < 8; bit++) {
+          final x = (byteIdx * 8) + bit;
+          if (x < widthDots) {
+            final modX = (x ~/ moduleSize) - quietZone;
+            final isDark = modX >= 0 &&
+                modX < modCount &&
+                modY >= 0 &&
+                modY < modCount &&
+                qrImage.isDark(modY, modX);
+            if (isDark) {
+              byteVal |= (1 << (7 - bit));
+            }
+          }
+        }
+        bytes.add(byteVal);
+      }
+    }
+
+    return bytes;
+  }
+
+  Future<void> printTest({ThermalPrinterSelection? printer}) async {
+    final selected = printer ?? await selectedPrinter();
+    if (selected == null || !selected.isValid) {
+      throw const ThermalPrinterException(
+        'Nenhuma impressora Bluetooth pareada ou selecionada.',
+      );
+    }
+    final now = DateTime.now();
+    final bytes = <int>[];
+    bytes.addAll([0x1B, 0x40]); // Reset ESC @
+    bytes.addAll([0x1B, 0x74, 0x02]); // CP850
+    bytes.addAll([0x1B, 0x61, 0x01]); // Centralizado
+    bytes.addAll([0x1B, 0x45, 0x01]); // Negrito
+    bytes.addAll(latin1.encode('IGREJA PRESBITERIANA DO BRASIL\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('Diaconato & Tesouraria\n'));
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('TESTE DE COMUNICACAO POS\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+    bytes.addAll([0x1B, 0x61, 0x00]); // À esquerda
+    bytes.addAll(latin1.encode('Impressora: ${_normalizeText(selected.name)}\n'));
+    bytes.addAll(latin1.encode('Endereco:   ${selected.address}\n'));
+    bytes.addAll(latin1.encode('Data/Hora:  ${_two(now.day)}/${_two(now.month)}/${now.year} ${_two(now.hour)}:${_two(now.minute)}:${_two(now.second)}\n\n'));
+    bytes.addAll([0x1B, 0x61, 0x01]); // Centralizado
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('*** BLUETOOTH CONECTADO OK ***\n\n\n\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+
+    await printRawBytes(bytes, printer: selected, cutPaper: false);
   }
 
   Future<void> printEnvelope({
@@ -143,42 +290,65 @@ class ThermalPrinterService {
     required String forma,
     required double valor,
     required String id,
+    ThermalPrinterSelection? printer,
   }) async {
+    final selected = printer ?? await selectedPrinter();
+    if (selected == null || !selected.isValid) {
+      throw const ThermalPrinterException(
+        'Nenhuma impressora Bluetooth pareada ou selecionada.',
+      );
+    }
     final now = DateTime.now();
     final dateStr =
         '${_two(now.day)}/${_two(now.month)}/${now.year} ${_two(now.hour)}:${_two(now.minute)}';
 
-    final lines = <String>[
-      _receiptStart,
-      _center('IGREJA PRESBITERIANA', width: 32),
-      _center('DO BRASIL', width: 32),
-      _receiptEnd,
-      _center('Diaconato & Tesouraria', width: 32),
-      '=' * 32,
-      _center('COMPROVANTE DE ENTRADA', width: 32),
-      '-' * 32,
-      'Data: $dateStr',
-      'Reg. ID: #$id',
-      'Destinacao: ${destinacao.toUpperCase()}',
-      'Forma: ${forma.toUpperCase()}',
-      '-' * 32,
-      'Membro / Dizimista:',
-      '  $membro',
-      '=' * 32,
-      _receiptStart,
-      _center('VALOR: ${_money(valor)}', width: 32),
-      _receiptEnd,
-      '=' * 32,
-      '',
-      _center('___________________________', width: 32),
-      _center('Visto Junta Diaconal / Tesouraria', width: 32),
-      '',
-      _center('Deus ama ao que da com alegria.', width: 32),
-      _center('(2 Co 9:7)', width: 32),
-      '',
-    ];
+    final bytes = <int>[];
+    // Reset ESC @
+    bytes.addAll([0x1B, 0x40]);
+    // Code Page CP850
+    bytes.addAll([0x1B, 0x74, 0x02]);
 
-    await printText(lines.join('\n'));
+    // Cabeçalho Centralizado
+    bytes.addAll([0x1B, 0x61, 0x01]);
+    bytes.addAll([0x1B, 0x45, 0x01]); // Bold
+    bytes.addAll(latin1.encode('IGREJA PRESBITERIANA DO BRASIL\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('Diaconato & Tesouraria\n'));
+    bytes.addAll(latin1.encode('================================\n'));
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('COMPROVANTE DE ENTRADA\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+
+    // Dados à esquerda
+    bytes.addAll([0x1B, 0x61, 0x00]);
+    bytes.addAll(latin1.encode('Data/Hora:  $dateStr\n'));
+    bytes.addAll(latin1.encode('Controle:   #$id\n'));
+    bytes.addAll(latin1.encode('Destinacao: ${_destinacaoLabel(destinacao)}\n'));
+    bytes.addAll(latin1.encode('Forma:      ${_formaLabel(forma)}\n'));
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+    bytes.addAll(latin1.encode('Membro / Contribuinte:\n'));
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('  ${_normalizeText(membro)}\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('================================\n'));
+
+    // Valor em destaque (Centralizado, Double-Height, Bold)
+    bytes.addAll([0x1B, 0x61, 0x01]);
+    bytes.addAll([0x1B, 0x21, 0x20]); // Double-Height
+    bytes.addAll([0x1B, 0x45, 0x01]); // Bold
+    bytes.addAll(latin1.encode('VALOR: ${_money(valor)}\n'));
+    bytes.addAll([0x1B, 0x21, 0x00]); // Normal
+    bytes.addAll([0x1B, 0x45, 0x00]); // Bold off
+    bytes.addAll(latin1.encode('================================\n\n'));
+
+    // Assinatura e versículo
+    bytes.addAll(latin1.encode('________________________________\n'));
+    bytes.addAll(latin1.encode('Visto Junta Diaconal / Tesouraria\n\n'));
+    bytes.addAll(latin1.encode('"Deus ama ao que da com alegria."\n'));
+    bytes.addAll(latin1.encode('(2 Co 9:7)\n\n\n\n'));
+
+    await printRawBytes(bytes, printer: selected, cutPaper: false);
   }
 
   Future<void> printFechamento({
@@ -196,7 +366,14 @@ class ThermalPrinterService {
     required String conferente1,
     required String conferente2,
     required String culto,
+    ThermalPrinterSelection? printer,
   }) async {
+    final selected = printer ?? await selectedPrinter();
+    if (selected == null || !selected.isValid) {
+      throw const ThermalPrinterException(
+        'Nenhuma impressora Bluetooth pareada ou selecionada.',
+      );
+    }
     final now = DateTime.now();
     final dateStr =
         '${_two(now.day)}/${_two(now.month)}/${now.year} ${_two(now.hour)}:${_two(now.minute)}';
@@ -207,57 +384,107 @@ class ThermalPrinterService {
             ? '+ ${_money(diferencaDinheiro)} (SOBRA SALVA)'
             : '- ${_money(diferencaDinheiro.abs())} (DIFERENCA)');
 
-    final lines = <String>[
-      _receiptStart,
-      _center('IGREJA PRESBITERIANA', width: 32),
-      _center('DO BRASIL', width: 32),
-      _receiptEnd,
-      _center('Junta Diaconal & Tesouraria', width: 32),
-      '=' * 32,
-      _center('TERMO DE APURACAO DIACONAL', width: 32),
-      _center('DIZIMOS E OFERTAS', width: 32),
-      '-' * 32,
-      'Data/Hora: $dateStr',
-      'Servico: $culto',
-      '-' * 32,
-      _center('RESUMO FINANCEIRO', width: 32),
-      'Especie (Contado): ${_money(totalFisico)}',
-      'Envelopes Dinheiro: ${_money(totalEnvelopesDinheiro)}',
-      'Ofertas Salva: ${_money(diferencaDinheiro)}',
-      'PIX / Transf.: ${_money(totalPix)}',
-      'Cartoes: ${_money(totalCartao)}',
-      '=' * 32,
-      _receiptStart,
-      'TOTAL GERAL: ${_money(totalGeral)}',
-      _receiptEnd,
-      '=' * 32,
-      _center('DESTINACOES', width: 32),
-      'Dizimos: ${_money(totDizimo)}',
-      'Ofertas Gerais: ${_money(totOferta)}',
-      if (totMissoes > 0) 'Missoes: ${_money(totMissoes)}',
-      if (totConstrucao > 0) 'Construcao: ${_money(totConstrucao)}',
-      '-' * 32,
-      'Total de Envelopes: $totalEnvelopes un',
-      'Batimento Salva: $statusBatimento',
-      '-' * 32,
-      _center('COMISSAO DE CONFERENCIA', width: 32),
-      '',
-      _center('___________________________', width: 32),
-      _center('1o: $conferente1', width: 32),
-      '',
-      _center('___________________________', width: 32),
-      _center('2o: $conferente2', width: 32),
-      '',
-      _center('Deus ama ao que da com alegria.', width: 32),
-      _center('(2 Co 9:7)', width: 32),
-      '',
-    ];
+    final bytes = <int>[];
+    // Reset ESC @
+    bytes.addAll([0x1B, 0x40]);
+    // Code Page CP850
+    bytes.addAll([0x1B, 0x74, 0x02]);
 
-    await printText(lines.join('\n'));
+    // Cabeçalho Centralizado
+    bytes.addAll([0x1B, 0x61, 0x01]);
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('IGREJA PRESBITERIANA DO BRASIL\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('Junta Diaconal & Tesouraria\n'));
+    bytes.addAll(latin1.encode('================================\n'));
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('TERMO DE APURACAO DIACONAL\nDIZIMOS E OFERTAS\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+
+    // Dados à esquerda
+    bytes.addAll([0x1B, 0x61, 0x00]);
+    bytes.addAll(latin1.encode('Data/Hora: $dateStr\n'));
+    bytes.addAll(latin1.encode('Servico:   ${_normalizeText(culto)}\n'));
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+
+    bytes.addAll([0x1B, 0x61, 0x01]);
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('RESUMO FINANCEIRO\n'));
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll([0x1B, 0x61, 0x00]);
+
+    bytes.addAll(latin1.encode('Especie (Contado):  ${_money(totalFisico)}\n'));
+    bytes.addAll(latin1.encode('Envelopes Dinheiro: ${_money(totalEnvelopesDinheiro)}\n'));
+    bytes.addAll(latin1.encode('Ofertas Salva:      ${_money(diferencaDinheiro)}\n'));
+    bytes.addAll(latin1.encode('PIX / Transf.:      ${_money(totalPix)}\n'));
+    bytes.addAll(latin1.encode('Cartoes:            ${_money(totalCartao)}\n'));
+    bytes.addAll(latin1.encode('================================\n'));
+
+    // TOTAL GERAL em destaque
+    bytes.addAll([0x1B, 0x61, 0x01]);
+    bytes.addAll([0x1B, 0x21, 0x20]);
+    bytes.addAll([0x1B, 0x45, 0x01]);
+    bytes.addAll(latin1.encode('TOTAL: ${_money(totalGeral)}\n'));
+    bytes.addAll([0x1B, 0x21, 0x00]);
+    bytes.addAll([0x1B, 0x45, 0x00]);
+    bytes.addAll(latin1.encode('================================\n'));
+
+    bytes.addAll([0x1B, 0x61, 0x01]);
+    bytes.addAll(latin1.encode('DESTINACOES\n'));
+    bytes.addAll([0x1B, 0x61, 0x00]);
+    bytes.addAll(latin1.encode('Dizimos:        ${_money(totDizimo)}\n'));
+    bytes.addAll(latin1.encode('Ofertas Gerais: ${_money(totOferta)}\n'));
+    if (totMissoes > 0) {
+      bytes.addAll(latin1.encode('Missoes:        ${_money(totMissoes)}\n'));
+    }
+    if (totConstrucao > 0) {
+      bytes.addAll(latin1.encode('Construcao:     ${_money(totConstrucao)}\n'));
+    }
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+    bytes.addAll(latin1.encode('Total Envelopes: $totalEnvelopes un\n'));
+    bytes.addAll(latin1.encode('Batimento Salva: $statusBatimento\n'));
+    bytes.addAll(latin1.encode('--------------------------------\n'));
+
+    bytes.addAll([0x1B, 0x61, 0x01]);
+    bytes.addAll(latin1.encode('COMISSAO DE CONFERENCIA\n\n'));
+    bytes.addAll(latin1.encode('________________________________\n'));
+    bytes.addAll(latin1.encode('1o: ${_normalizeText(conferente1)}\n\n'));
+    bytes.addAll(latin1.encode('________________________________\n'));
+    bytes.addAll(latin1.encode('2o: ${_normalizeText(conferente2)}\n\n'));
+    bytes.addAll(latin1.encode('"Deus ama ao que da com alegria."\n'));
+    bytes.addAll(latin1.encode('(2 Co 9:7)\n\n\n\n'));
+
+    await printRawBytes(bytes, printer: selected, cutPaper: false);
   }
 
-  static const _receiptStart = '\x1BE\x01\x1B!\x18';
-  static const _receiptEnd = '\x1B!\x00\x1BE\x00';
+  static String _destinacaoLabel(String d) {
+    switch (d.toLowerCase().trim()) {
+      case 'dizimo':
+        return 'DIZIMO';
+      case 'oferta':
+        return 'OFERTA GERAL';
+      case 'missoes':
+        return 'MISSOES';
+      case 'construcao':
+        return 'CONSTRUCAO';
+      default:
+        return _normalizeText(d.toUpperCase());
+    }
+  }
+
+  static String _formaLabel(String f) {
+    switch (f.toLowerCase().trim()) {
+      case 'dinheiro':
+        return 'DINHEIRO (ESPECIE)';
+      case 'pix':
+        return 'PIX';
+      case 'cartao':
+        return 'CARTAO';
+      default:
+        return _normalizeText(f.toUpperCase());
+    }
+  }
 
   static String _normalizeText(String text) {
     const replacements = {
@@ -295,12 +522,6 @@ class ThermalPrinterService {
 
   static String _money(double value) {
     return 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
-  }
-
-  static String _center(String value, {required int width}) {
-    if (value.length >= width) return value;
-    final left = ((width - value.length) / 2).floor();
-    return '${' ' * left}$value';
   }
 
   static String _two(int value) => value.toString().padLeft(2, '0');

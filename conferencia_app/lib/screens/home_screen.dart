@@ -4,14 +4,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/api_service.dart';
 import '../core/thermal_printer.dart';
 import '../models/models.dart';
+import '../widgets/app_drawer.dart';
 import 'cedulas_tab.dart';
 import 'configuracoes_impressora_screen.dart';
+import 'ebd/ebd_dashboard_screen.dart';
 import 'envelopes_tab.dart';
+import 'etiquetas_membros_screen.dart';
 import 'fechamento_tab.dart';
 import 'login_screen.dart';
+import 'main_menu_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialTab;
+  const HomeScreen({super.key, this.initialTab = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -28,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _currentTab = widget.initialTab;
     _initCashCounts();
     _loadSavedState();
     _loadMembers();
@@ -261,11 +267,19 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 1,
         title: Row(
           children: [
-            Image.asset(
-              'assets/images/ipb-logo.png',
-              width: 30,
-              height: 30,
-              errorBuilder: (_, _, _) => const Icon(Icons.church, color: Color(0xFF047857)),
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Image.asset(
+                'assets/images/ipb-logo.png',
+                width: 28,
+                height: 28,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Icon(Icons.church, color: Color(0xFF047857), size: 24),
+              ),
             ),
             const SizedBox(width: 8),
             Column(
@@ -284,6 +298,42 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          // Botão Menu Principal (Painel Android)
+          IconButton(
+            tooltip: 'Menu Principal',
+            icon: const Icon(Icons.grid_view_rounded, color: Color(0xFF047857)),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+                );
+              }
+            },
+          ),
+          // Botão Direto para EBD Dominical
+          IconButton(
+            tooltip: 'Escola Bíblica Dominical (EBD)',
+            icon: const Icon(Icons.school, color: Color(0xFF047857)),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
+              );
+            },
+          ),
+          // Botão Etiquetas e QR Codes dos Membros
+          IconButton(
+            tooltip: 'Etiquetas & QR Codes',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EtiquetasMembrosScreen(members: _members),
+                ),
+              );
+            },
+            icon: const Icon(Icons.qr_code_2, color: Color(0xFF047857)),
+          ),
           // Botão Rápido Impressora POS
           IconButton(
             tooltip: 'Configurar Impressora POS',
@@ -316,6 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      drawer: const AppDrawer(currentRoute: 'conferencia'),
       body: Column(
         children: [
           // HUD Totalizador no topo

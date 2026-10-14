@@ -54,6 +54,10 @@ class MemberModel {
   String get label => envelopeNumber != null && envelopeNumber!.isNotEmpty
       ? '$fullName (#$envelopeNumber)'
       : fullName;
+
+  String get qrCodePayload => envelopeNumber != null && envelopeNumber!.isNotEmpty
+      ? 'IPB:$envelopeNumber'
+      : 'IPB:ID$id';
 }
 
 class EnvelopeEntry {

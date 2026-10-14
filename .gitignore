@@ -48,3 +48,11 @@ Thumbs.db
 **/build/
 **/*.iml
 **/.flutter-plugins*
+
+# Protótipos e Documentos Locais
+*prototipo*
+*proposta*
+*.html
+!**/src/**/*.html
+Checklist-*.pdf
+

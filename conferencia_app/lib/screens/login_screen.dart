@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/api_service.dart';
-import 'home_screen.dart';
+import 'main_menu_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const MainMenuScreen()),
       );
     } catch (e) {
       if (!mounted) return;
@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => const MainMenuScreen()),
     );
   }
 
@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+                          color: Colors.black.withValues(alpha: 0.06),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -104,6 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Image.asset(
                       'assets/images/ipb-logo.png',
+                      fit: BoxFit.contain,
                       errorBuilder: (_, _, _) => const Icon(
                         Icons.church,
                         size: 54,
