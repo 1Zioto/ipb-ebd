@@ -102,15 +102,6 @@ class InstitutionService
     }
 
     /**
-     * Retorna a lista de IDs de instituições ancestrais (pais recursivos).
-     */
-    public function getAncestorIds(int $institutionId): array
-    {
-        $crumbs = $this->getBreadcrumbs($institutionId);
-        return array_map(fn ($c) => (int) $c['id'], $crumbs);
-    }
-
-    /**
      * Retorna a árvore completa de instituições em formato aninhado,
      * aplicando controle de visualização de métricas e permissões de edição
      * de acordo com o nível hierárquico do usuário.
