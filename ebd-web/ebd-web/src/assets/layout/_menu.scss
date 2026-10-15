@@ -2,12 +2,12 @@
 
 .layout-sidebar {
     position: fixed;
-    width: 20rem;
+    width: 17.5rem; // ~280px conforme layout profissional Sakai
     height: calc(100vh - 8rem);
     z-index: 999;
     user-select: none;
     top: 6rem;
-    left: 2rem;
+    left: 1.5rem;
     display: flex;
     flex-direction: column;
     transition:
@@ -17,7 +17,7 @@
         padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     background-color: var(--surface-overlay);
     border-radius: var(--content-border-radius);
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem 1rem;
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
     border: 1px solid var(--surface-border);
 
@@ -66,7 +66,7 @@
         flex: 1 1 auto;
         overflow-y: auto;
         overflow-x: hidden;
-        padding-right: 0.15rem;
+        padding-right: 0.2rem;
 
         &::-webkit-scrollbar {
             width: 4px;
@@ -84,7 +84,7 @@
     top: 0;
     z-index: 10;
     background-color: var(--surface-overlay);
-    padding: 0.25rem 0.25rem 0.65rem 0.25rem;
+    padding: 0.25rem 0.15rem 0.65rem 0.15rem;
     margin-bottom: 0.35rem;
     border-bottom: 1px solid var(--surface-border);
     transition: all 0.2s ease;
@@ -94,6 +94,103 @@
     display: none !important;
 }
 
+// ==========================================
+// RESULTADOS DA BUSCA INTELIGENTE
+// ==========================================
+.menu-search-results {
+    padding: 0.25rem 0;
+
+    .search-results-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.4rem 0.5rem;
+        font-size: 0.725rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-color-secondary);
+        border-bottom: 1px dashed var(--surface-border);
+        margin-bottom: 0.4rem;
+
+        .results-count {
+            background-color: color-mix(in srgb, var(--primary-color) 12%, transparent);
+            color: var(--primary-color);
+            padding: 0.1rem 0.45rem;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 800;
+        }
+    }
+
+    .search-results-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.55rem 0.65rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            color: var(--text-color);
+            margin-bottom: 0.2rem;
+
+            .search-result-icon {
+                font-size: 0.95rem;
+                color: var(--primary-color);
+                flex-shrink: 0;
+                width: 1.25rem;
+                text-align: center;
+            }
+
+            .search-result-info {
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+                flex: 1;
+
+                .search-result-title {
+                    font-size: 0.815rem;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .search-result-category {
+                    font-size: 0.685rem;
+                    color: var(--text-color-secondary);
+                    font-weight: 500;
+                }
+            }
+
+            .search-result-arrow {
+                opacity: 0;
+                transform: translateX(-4px);
+                transition: opacity 0.15s ease, transform 0.15s ease;
+            }
+
+            &:hover {
+                background-color: color-mix(in srgb, var(--primary-color) 8%, transparent);
+
+                .search-result-arrow {
+                    opacity: 1;
+                    transform: translateX(0);
+                    color: var(--primary-color);
+                }
+            }
+        }
+    }
+}
+
+// ==========================================
+// HIERARQUIA DO MENU PRINCIPAL SAKAI
+// ==========================================
 .layout-menu {
     margin: 0;
     padding: 0;
@@ -101,11 +198,20 @@
 
     .layout-root-menuitem {
         > .layout-menuitem-root-text {
-            font-size: 0.857rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             font-weight: 700;
-            color: var(--text-color);
-            margin: 0.75rem 0;
+            letter-spacing: 0.05em;
+            color: var(--text-color-secondary);
+            margin: 0.85rem 0 0.35rem 0;
+            padding-left: 0.5rem;
+        }
+
+        &.favorites-root-item {
+            > .layout-menuitem-root-text {
+                color: #d97706;
+                margin-top: 0.25rem;
+            }
         }
 
         > a {
@@ -113,8 +219,17 @@
         }
     }
 
+    .menu-separator {
+        height: 1px;
+        background-color: var(--surface-border);
+        margin: 0.5rem 0;
+        opacity: 0.6;
+        list-style: none;
+    }
+
     a {
         user-select: none;
+        text-decoration: none;
 
         &.active-menuitem {
             > .layout-submenu-toggler {
@@ -143,78 +258,205 @@
             outline: 0 none;
             color: var(--text-color);
             cursor: pointer;
-            padding: 0.75rem 1rem;
+            padding: 0.55rem 0.75rem;
             border-radius: var(--content-border-radius);
-            transition:
-                box-shadow var(--element-transition-duration);
+            transition: all var(--element-transition-duration) ease;
+            margin: 0.1rem 0;
 
             .layout-menuitem-icon {
-                margin-right: 0.5rem;
+                margin-right: 0.65rem;
+                font-size: 0.95rem;
+                flex-shrink: 0;
+                transition: color 0.15s ease, transform 0.15s ease;
+            }
+
+            .layout-menuitem-text {
+                font-size: 0.825rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex: 1;
             }
 
             .layout-submenu-toggler {
                 font-size: 75%;
                 margin-left: auto;
-                transition: transform var(--element-transition-duration);
+                transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                color: var(--text-color-secondary);
+
+                &.is-expanded {
+                    transform: rotate(-180deg);
+                }
             }
 
+            // ==========================================
+            // ITEM ATIVO (ROTA ATIVA)
+            // ==========================================
             &.active-route {
-                font-weight: 700;
-                color: var(--primary-color);
+                font-weight: 600;
+                color: var(--primary-color) !important;
+                background-color: color-mix(in srgb, var(--primary-color) 12%, transparent) !important;
+                position: relative;
+
+                // Indicador vertical discreto na lateral esquerda
+                &::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 15%;
+                    bottom: 15%;
+                    width: 3px;
+                    border-radius: 0 4px 4px 0;
+                    background-color: var(--primary-color);
+                }
+
+                .layout-menuitem-icon {
+                    color: var(--primary-color) !important;
+                    font-weight: bold;
+                }
             }
 
+            // ==========================================
+            // HOVER DISCRETO E SUAVE
+            // ==========================================
             &:hover {
                 background-color: var(--surface-hover);
+
+                .layout-menuitem-icon {
+                    color: var(--primary-color);
+                }
+
+                .menuitem-favorite-btn {
+                    opacity: 0.65;
+                }
             }
 
             &:focus {
                 @include focused-inset();
             }
+
+            // Cabeçalho de Categoria (Accordion)
+            &.category-toggle-item {
+                font-weight: 600;
+                font-size: 0.835rem;
+                color: var(--text-color);
+                padding: 0.55rem 0.65rem;
+
+                .layout-menuitem-icon {
+                    color: var(--primary-color);
+                    opacity: 0.9;
+                }
+
+                &:hover {
+                    background-color: color-mix(in srgb, var(--primary-color) 6%, transparent);
+                    color: var(--text-color);
+                }
+            }
+
+            // Submenu Item (Página Folha)
+            &.menu-link-item {
+                padding: 0.45rem 0.65rem 0.45rem 1.65rem;
+                font-size: 0.815rem;
+                color: var(--text-color);
+
+                .layout-menuitem-icon {
+                    font-size: 0.85rem;
+                    opacity: 0.8;
+                }
+            }
         }
 
+        // ==========================================
+        // SUBMENUS ANINHADOS
+        // ==========================================
         ul {
             overflow: hidden;
             border-radius: var(--content-border-radius);
+            position: relative;
+
+            // Linha vertical guia sutil de hierarquia
+            &::before {
+                content: '';
+                position: absolute;
+                left: 1.15rem;
+                top: 0.35rem;
+                bottom: 0.35rem;
+                width: 1px;
+                background-color: var(--surface-border);
+                opacity: 0.7;
+            }
 
             li {
                 a {
-                    margin-left: 1rem;
-                }
-
-                li {
-                    a {
-                        margin-left: 2rem;
-                    }
-
-                    li {
-                        a {
-                            margin-left: 2.5rem;
-                        }
-
-                        li {
-                            a {
-                                margin-left: 3rem;
-                            }
-
-                            li {
-                                a {
-                                    margin-left: 3.5rem;
-                                }
-
-                                li {
-                                    a {
-                                        margin-left: 4rem;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    margin-left: 0.35rem;
                 }
             }
         }
     }
 }
 
+// ==========================================
+// BADGE DE PENDÊNCIAS
+// ==========================================
+.layout-menuitem-badge {
+    margin-left: auto;
+    font-size: 0.675rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.2rem 0.45rem;
+    border-radius: 9999px;
+    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    color: var(--primary-color);
+    border: 1px solid color-mix(in srgb, var(--primary-color) 25%, transparent);
+    margin-right: 0.35rem;
+    white-space: nowrap;
+
+    &.badge-warn {
+        background-color: rgba(245, 158, 11, 0.14);
+        color: #d97706;
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+}
+
+.app-dark .layout-menuitem-badge.badge-warn {
+    background-color: rgba(245, 158, 11, 0.22);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+// ==========================================
+// BOTÃO DE FAVORITO (ESTRELA)
+// ==========================================
+.menuitem-favorite-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.2rem;
+    margin-left: 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+    color: var(--text-color-secondary);
+    font-size: 0.75rem;
+
+    &:hover {
+        transform: scale(1.2);
+        color: #f59e0b !important;
+        opacity: 1 !important;
+    }
+
+    &.is-favorite {
+        opacity: 1 !important;
+        color: #f59e0b !important;
+    }
+}
+
+// ==========================================
+// ANIMAÇÕES NATIVAS DO SUBMENU
+// ==========================================
 .layout-submenu-enter-from,
 .layout-submenu-leave-to {
     max-height: 0;
@@ -222,17 +464,17 @@
 
 .layout-submenu-enter-to,
 .layout-submenu-leave-from {
-    max-height: 1000px;
+    max-height: 1200px;
 }
 
 .layout-submenu-leave-active {
     overflow: hidden;
-    transition: max-height 0.45s cubic-bezier(0, 1, 0, 1);
+    transition: max-height 0.25s cubic-bezier(0, 1, 0, 1);
 }
 
 .layout-submenu-enter-active {
     overflow: hidden;
-    transition: max-height 1s ease-in-out;
+    transition: max-height 0.3s ease-in-out;
 }
 
 // ==========================================
@@ -305,7 +547,9 @@
                     }
 
                     .layout-menuitem-text,
-                    .layout-submenu-toggler {
+                    .layout-submenu-toggler,
+                    .layout-menuitem-badge,
+                    .menuitem-favorite-btn {
                         display: none !important;
                     }
 
