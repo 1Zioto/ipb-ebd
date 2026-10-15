@@ -42,13 +42,11 @@ export class InstitutionTreePage implements OnInit {
   }
 
   canEdit(node: InstitutionTreeNode): boolean {
-    if (this.isProgrammer) return true;
     if (node.can_edit !== undefined) return Boolean(node.can_edit);
     return this.isSelf(node);
   }
 
   canViewDashboard(node: InstitutionTreeNode): boolean {
-    if (this.isProgrammer) return true;
     if (node.can_view_metrics !== undefined) return Boolean(node.can_view_metrics);
     return this.isSelf(node);
   }
