@@ -1179,7 +1179,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Versão 1.0.0 • Desenvolvido para Android',
+                  'Versão 1.1.0 • Desenvolvido para Android',
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.grey.shade400,
