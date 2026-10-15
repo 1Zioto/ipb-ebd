@@ -85,3 +85,23 @@
   --info-border: rgba(59, 130, 246, 0.3);
   --info-ink: #93c5fd;
 }
+
+/* ============================================================================
+ * Utilitários de Superfície e Bordas (Sakai / Tailwind Bridge)
+ * Evita que elementos usando classes semânticas fiquem transparentes
+ * ============================================================================ */
+.bg-surface-card {
+  background-color: var(--surface-card, #ffffff);
+}
+.bg-surface-ground {
+  background-color: var(--surface-ground, #f8fafc);
+}
+.bg-surface-overlay {
+  background-color: var(--surface-overlay, #ffffff);
+}
+.bg-surface-hover {
+  background-color: var(--surface-hover, #f1f5f9);
+}
+.border-surface {
+  border-color: var(--surface-border, #e2e8f0);
+}

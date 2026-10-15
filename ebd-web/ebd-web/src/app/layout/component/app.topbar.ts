@@ -83,11 +83,15 @@ import { AuthService } from '@/app/core/auth.service';
                 <!-- Dropdown Card Flutuante -->
                 @if (userMenuOpen()) {
                     <div
-                        class="absolute right-0 top-12 w-64 p-3 bg-surface-card border border-surface rounded-2xl shadow-2xl z-50 flex flex-col gap-2 animate-scalein"
+                        class="absolute right-0 top-12 w-64 p-3 rounded-2xl shadow-2xl flex flex-col gap-2 animate-scalein"
+                        style="background-color: var(--surface-overlay, #ffffff); border: 1px solid var(--surface-border, #e2e8f0); z-index: 1050;"
                         (click)="$event.stopPropagation()"
                     >
                         <!-- Identificação do Usuário -->
-                        <div class="flex items-center gap-3 p-2.5 bg-surface-ground rounded-xl">
+                        <div 
+                            class="flex items-center gap-3 p-2.5 rounded-xl border"
+                            style="background-color: var(--surface-ground, #f8fafc); border-color: var(--surface-border, #e2e8f0);"
+                        >
                             <div class="w-10 h-10 rounded-xl bg-primary text-primary-contrast flex items-center justify-center font-bold text-sm shadow-sm">
                                 {{ userInitials() }}
                             </div>
@@ -102,7 +106,10 @@ import { AuthService } from '@/app/core/auth.service';
                         </div>
 
                         <!-- Opções do Menu -->
-                        <div class="flex flex-col gap-1 pt-1 border-t border-surface">
+                        <div 
+                            class="flex flex-col gap-1 pt-1 border-t"
+                            style="border-top-color: var(--surface-border, #e2e8f0);"
+                        >
                             @if (auth.isMasterUser()) {
                                 <!-- Link Super Admin (Apenas Usuário Master) -->
                                 <a
