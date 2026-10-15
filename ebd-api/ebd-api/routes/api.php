@@ -1,35 +1,42 @@
 <?php
 
+use App\Http\Controllers\Api\AnnualReportController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\ClassTeacherController;
-use App\Http\Controllers\Api\EnrollmentController;
+use App\Http\Controllers\Api\CotasOrcamentoController;
+use App\Http\Controllers\Api\DiaconiaPatrimonioController;
+use App\Http\Controllers\Api\DisciplinaController;
+use App\Http\Controllers\Api\DiscipuladoBibliotecaController;
 use App\Http\Controllers\Api\Dizimos\AuditoriaController;
 use App\Http\Controllers\Api\Dizimos\ColetaController;
 use App\Http\Controllers\Api\Dizimos\DiaconatoController;
+use App\Http\Controllers\Api\Dizimos\OfflineColetaSyncController;
 use App\Http\Controllers\Api\Dizimos\PastoralController;
 use App\Http\Controllers\Api\Dizimos\TithesReportController;
 use App\Http\Controllers\Api\Dizimos\TithesSettingsController;
+use App\Http\Controllers\Api\EbdAuditController;
+use App\Http\Controllers\Api\EbdDashboardController;
+use App\Http\Controllers\Api\EbdReportController;
+use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\EventController;
-use App\Http\Controllers\Api\InstitutionController;
-use App\Http\Controllers\Api\PersonController;
+use App\Http\Controllers\Api\ExameContasController;
 use App\Http\Controllers\Api\FamilyController;
 use App\Http\Controllers\Api\Financial\FinancialAccountController;
 use App\Http\Controllers\Api\Financial\FinancialAccountingController;
 use App\Http\Controllers\Api\Financial\FinancialCategoryController;
 use App\Http\Controllers\Api\Financial\FinancialCostCenterController;
 use App\Http\Controllers\Api\Financial\FinancialTransactionController;
-use App\Http\Controllers\Api\SessionController;
-use App\Http\Controllers\Api\SystemAdminController;
-use App\Http\Controllers\Api\SecretariaController;
-use App\Http\Controllers\Api\SociedadesController;
-use App\Http\Controllers\Api\DiscipuladoBibliotecaController;
+use App\Http\Controllers\Api\InstitutionController;
+use App\Http\Controllers\Api\PersonController;
 use App\Http\Controllers\Api\RelatoriosOficiaisController;
-use App\Http\Controllers\Api\DisciplinaController;
-use App\Http\Controllers\Api\DiaconiaPatrimonioController;
-use App\Http\Controllers\Api\CotasOrcamentoController;
-use App\Http\Controllers\Api\ExameContasController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\SecretariaController;
+use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\SociedadesController;
+use App\Http\Controllers\Api\ScreenConfigController;
+use App\Http\Controllers\Api\SystemAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -37,14 +44,14 @@ Route::prefix('v1')->group(function () {
     // ---- Público ----
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/register-church', [AuthController::class, 'registerChurch']);
-
-
+    Route::get('screen-configs', [ScreenConfigController::class, 'index']);
 
     // ---- Autenticado ----
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::post('screen-configs', [ScreenConfigController::class, 'store']);
 
         Route::get('admin/users', [SystemAdminController::class, 'users'])->middleware('permission:user.manage');
         Route::post('admin/users', [SystemAdminController::class, 'storeUser'])->middleware('permission:user.manage');
@@ -103,11 +110,11 @@ Route::prefix('v1')->group(function () {
         Route::put('sessions/{session}/status', [SessionController::class, 'setStatus'])->middleware('permission:call.edit');
 
         // ---- Fase 4: Escalas ----
-        Route::get('schedules/teachers', [\App\Http\Controllers\Api\ScheduleController::class, 'teacherSchedules'])->middleware('permission:schedule.view');
-        Route::post('schedules/teachers', [\App\Http\Controllers\Api\ScheduleController::class, 'setTeacherSchedule'])->middleware('permission:schedule.manage');
-        Route::get('schedules/superintendents', [\App\Http\Controllers\Api\ScheduleController::class, 'superintendentSchedules'])->middleware('permission:schedule.view');
-        Route::post('schedules/superintendents', [\App\Http\Controllers\Api\ScheduleController::class, 'setSuperintendentSchedule'])->middleware('permission:schedule.manage');
-        Route::post('schedules/seed-fictional', [\App\Http\Controllers\Api\ScheduleController::class, 'seedFictional'])->middleware('permission:schedule.manage');
+        Route::get('schedules/teachers', [ScheduleController::class, 'teacherSchedules'])->middleware('permission:schedule.view');
+        Route::post('schedules/teachers', [ScheduleController::class, 'setTeacherSchedule'])->middleware('permission:schedule.manage');
+        Route::get('schedules/superintendents', [ScheduleController::class, 'superintendentSchedules'])->middleware('permission:schedule.view');
+        Route::post('schedules/superintendents', [ScheduleController::class, 'setSuperintendentSchedule'])->middleware('permission:schedule.manage');
+        Route::post('schedules/seed-fictional', [ScheduleController::class, 'seedFictional'])->middleware('permission:schedule.manage');
 
         // ---- Fase 5: Chamada ----
         Route::get('sessions/{session}/records', [CallController::class, 'records'])->middleware('permission:call.view');
@@ -119,17 +126,17 @@ Route::prefix('v1')->group(function () {
         Route::post('sessions/{session}/reopen', [CallController::class, 'reopen'])->middleware('permission:call.reopen');
 
         // ---- Fase 6: Dashboard & Painel do Superintendente em Tempo Real ----
-        Route::get('dashboard/summary', [\App\Http\Controllers\Api\EbdDashboardController::class, 'summary']);
-        Route::get('dashboard/superintendent-live/{eventId?}', [\App\Http\Controllers\Api\EbdDashboardController::class, 'superintendentLive'])->middleware('permission:call.view');
+        Route::get('dashboard/summary', [EbdDashboardController::class, 'summary']);
+        Route::get('dashboard/superintendent-live/{eventId?}', [EbdDashboardController::class, 'superintendentLive'])->middleware('permission:call.view');
 
         // ---- Fase 7: Relatórios EBD & Assembleia Geral ----
-        Route::get('reports/ebd/monthly', [\App\Http\Controllers\Api\EbdReportController::class, 'monthly'])->middleware('permission:report.view');
-        Route::get('reports/ebd/class/{class}', [\App\Http\Controllers\Api\EbdReportController::class, 'byClass'])->middleware('permission:report.view');
-        Route::get('reports/ebd/student/{person}', [\App\Http\Controllers\Api\EbdReportController::class, 'byStudent'])->middleware('permission:report.view');
-        Route::get('reports/annual', [\App\Http\Controllers\Api\AnnualReportController::class, 'summary'])->middleware('permission:report.view');
+        Route::get('reports/ebd/monthly', [EbdReportController::class, 'monthly'])->middleware('permission:report.view');
+        Route::get('reports/ebd/class/{class}', [EbdReportController::class, 'byClass'])->middleware('permission:report.view');
+        Route::get('reports/ebd/student/{person}', [EbdReportController::class, 'byStudent'])->middleware('permission:report.view');
+        Route::get('reports/annual', [AnnualReportController::class, 'summary'])->middleware('permission:report.view');
 
         // ---- Fase 8: Auditoria Geral EBD ----
-        Route::get('audit/logs', [\App\Http\Controllers\Api\EbdAuditController::class, 'index'])->middleware('permission:audit.view');
+        Route::get('audit/logs', [EbdAuditController::class, 'index'])->middleware('permission:audit.view');
 
         // ---- Módulo de Instituições & Estrutura Hierárquica ----
         Route::prefix('institutions')->group(function () {
@@ -156,7 +163,7 @@ Route::prefix('v1')->group(function () {
             Route::get('{institution}/breadcrumbs', [InstitutionController::class, 'breadcrumbs'])->middleware('permission:institution.view');
             Route::post('{institution}/transfer', [InstitutionController::class, 'transfer'])->middleware('permission:institution.transfer');
             Route::get('{institution}/history', [InstitutionController::class, 'history'])->middleware('permission:institution.view');
-            
+
             // Dashboard e estatísticas consolidadas
             Route::get('{institution}/dashboard/summary', [InstitutionController::class, 'dashboardSummary'])->middleware('permission:institution.consolidated.view');
             Route::get('{institution}/dashboard/drilldown', [InstitutionController::class, 'dashboardDrilldown'])->middleware('permission:institution.consolidated.view');
@@ -178,6 +185,12 @@ Route::prefix('v1')->group(function () {
             Route::get('coletas/{coleta}/comprovante', [ColetaController::class, 'comprovante'])->middleware('permission:dizimos.coleta.operar');
             Route::post('coletas/{coleta}/reimprimir', [ColetaController::class, 'reimprimir'])->middleware('permission:dizimos.coleta.operar');
             Route::post('coletas/{coleta}/impressoes', [ColetaController::class, 'registrarImpressao'])->middleware('permission:dizimos.coleta.operar');
+
+            // Lotes registrados durante contingência: nunca fecham a coleta automaticamente.
+            Route::get('offline-syncs', [OfflineColetaSyncController::class, 'index'])->middleware('permission:dizimos.offline_sync.view');
+            Route::post('offline-syncs', [OfflineColetaSyncController::class, 'store'])->middleware('permission:dizimos.coleta.operar');
+            Route::post('offline-syncs/{offlineSync}/approve', [OfflineColetaSyncController::class, 'approve'])->middleware('permission:dizimos.coleta.approve');
+            Route::post('offline-syncs/{offlineSync}/reject', [OfflineColetaSyncController::class, 'reject'])->middleware('permission:dizimos.coleta.approve');
 
             // Pastoral & Alertas & Ficha Individual
             Route::get('pastoral/dashboard', [PastoralController::class, 'dashboard'])->middleware('permission:dizimos.alertas.manage');
@@ -249,18 +262,18 @@ Route::prefix('v1')->group(function () {
 
         // ---- 🏛️ 1. Secretaria & Conselho da Igreja (Canônico IPB) ----
         Route::prefix('secretaria')->group(function () {
-            Route::get('membros', [SecretariaController::class, 'membros']);
-            Route::get('membros/{person}', [SecretariaController::class, 'showMembro']);
-            Route::put('membros/{person}', [SecretariaController::class, 'updateMembro']);
-            Route::get('estatistica-presbiterio', [SecretariaController::class, 'estatisticaPresbiterio']);
-            Route::get('cartas', [SecretariaController::class, 'cartas']);
-            Route::post('cartas', [SecretariaController::class, 'storeCarta']);
-            Route::get('cartas/{carta}', [SecretariaController::class, 'showCarta']);
-            Route::get('atas', [SecretariaController::class, 'atas']);
-            Route::post('atas', [SecretariaController::class, 'storeAta']);
-            Route::get('atas/{ata}', [SecretariaController::class, 'showAta']);
-            Route::put('atas/{ata}', [SecretariaController::class, 'updateAta']);
-            Route::patch('atas/{ata}/aprovar', [SecretariaController::class, 'aprovarAta']);
+            Route::get('membros', [SecretariaController::class, 'membros'])->middleware('permission:secretaria.rol.view');
+            Route::get('membros/{person}', [SecretariaController::class, 'showMembro'])->middleware('permission:secretaria.rol.view');
+            Route::put('membros/{person}', [SecretariaController::class, 'updateMembro'])->middleware('permission:secretaria.rol.manage');
+            Route::get('estatistica-presbiterio', [SecretariaController::class, 'estatisticaPresbiterio'])->middleware('permission:presbiterio.consolidated.view');
+            Route::get('cartas', [SecretariaController::class, 'cartas'])->middleware('permission:secretaria.rol.view');
+            Route::post('cartas', [SecretariaController::class, 'storeCarta'])->middleware('permission:secretaria.rol.manage');
+            Route::get('cartas/{carta}', [SecretariaController::class, 'showCarta'])->middleware('permission:secretaria.rol.view');
+            Route::get('atas', [SecretariaController::class, 'atas'])->middleware('permission.any:secretaria.atas.view,conselho.approve');
+            Route::post('atas', [SecretariaController::class, 'storeAta'])->middleware('permission:secretaria.atas.manage');
+            Route::get('atas/{ata}', [SecretariaController::class, 'showAta'])->middleware('permission.any:secretaria.atas.view,conselho.approve');
+            Route::put('atas/{ata}', [SecretariaController::class, 'updateAta'])->middleware('permission:secretaria.atas.manage');
+            Route::patch('atas/{ata}/aprovar', [SecretariaController::class, 'aprovarAta'])->middleware('permission:conselho.approve');
         });
 
         // ---- 👥 2. Sociedades Internas & Ministérios (SAF, UPH, UMP, UPA, UCP) ----
@@ -360,4 +373,3 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
-

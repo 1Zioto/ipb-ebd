@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureAnyPermission;
+use App\Http\Middleware\EnsurePermission;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,11 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'permission' => \App\Http\Middleware\EnsurePermission::class,
+            'permission' => EnsurePermission::class,
+            'permission.any' => EnsureAnyPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->report(function (\Throwable $exception): void {
+        $exceptions->report(function (Throwable $exception): void {
             error_log('EBD_ERROR: '.$exception->getMessage());
         });
 

@@ -13,7 +13,8 @@ int asInt(dynamic value, [int defaultValue = 0]) {
   if (value is num) return value.toInt();
   if (value is String) {
     final trimmed = value.trim();
-    return int.tryParse(trimmed) ?? (double.tryParse(trimmed)?.toInt() ?? defaultValue);
+    return int.tryParse(trimmed) ??
+        (double.tryParse(trimmed)?.toInt() ?? defaultValue);
   }
   return defaultValue;
 }
@@ -23,6 +24,7 @@ class UserModel {
   final String name;
   final String? email;
   final String role;
+  final int? institutionId;
   final bool isOffline;
 
   const UserModel({
@@ -30,26 +32,36 @@ class UserModel {
     required this.name,
     this.email,
     this.role = 'Membro / Oficial',
+    this.institutionId,
     this.isOffline = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString() ?? 'Usuário IPB',
       email: json['email']?.toString(),
-      role: json['role']?.toString() ?? json['roles']?.toString() ?? 'Oficial / Membro',
+      role:
+          json['role']?.toString() ??
+          json['roles']?.toString() ??
+          'Oficial / Membro',
+      institutionId: json['institution_id'] is int
+          ? json['institution_id']
+          : int.tryParse(json['institution_id']?.toString() ?? ''),
       isOffline: false,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'role': role,
-        'is_offline': isOffline,
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'role': role,
+    'institution_id': institutionId,
+    'is_offline': isOffline,
+  };
 }
 
 class MemberModel {
@@ -65,7 +77,9 @@ class MemberModel {
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
     return MemberModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
       envelopeNumber: json['envelope_number']?.toString(),
     );
@@ -75,7 +89,8 @@ class MemberModel {
       ? '$fullName (#$envelopeNumber)'
       : fullName;
 
-  String get qrCodePayload => envelopeNumber != null && envelopeNumber!.isNotEmpty
+  String get qrCodePayload =>
+      envelopeNumber != null && envelopeNumber!.isNotEmpty
       ? 'IPB:$envelopeNumber'
       : 'IPB:ID$id';
 }
@@ -134,7 +149,10 @@ class ColetaModel {
 
   factory ColetaModel.fromJson(Map<String, dynamic> json) {
     final rawId = asInt(json['id']);
-    final totalDiz = asDouble(json['total_dizimos'], asDouble(json['total_amount']));
+    final totalDiz = asDouble(
+      json['total_dizimos'],
+      asDouble(json['total_amount']),
+    );
     final ofDin = asDouble(json['oferta_dinheiro']);
     final ofPix = asDouble(json['oferta_pix']);
     final ofTransf = asDouble(json['oferta_transferencia']);
@@ -143,13 +161,19 @@ class ColetaModel {
 
     return ColetaModel(
       id: rawId,
-      code: json['code']?.toString() ?? 'CONF-${rawId.toString().padLeft(6, '0')}',
+      code:
+          json['code']?.toString() ??
+          'CONF-${rawId.toString().padLeft(6, '0')}',
       date: json['date']?.toString().split('T')[0] ?? '',
       serviceMeeting: json['service_meeting']?.toString() ?? 'Culto de Domingo',
       description: json['description']?.toString(),
       status: json['status']?.toString() ?? 'Aberta',
-      creatorName: json['creator'] is Map ? json['creator']['name']?.toString() : json['creator_name']?.toString(),
-      closerName: json['closer'] is Map ? json['closer']['name']?.toString() : json['closer_name']?.toString(),
+      creatorName: json['creator'] is Map
+          ? json['creator']['name']?.toString()
+          : json['creator_name']?.toString(),
+      closerName: json['closer'] is Map
+          ? json['closer']['name']?.toString()
+          : json['closer_name']?.toString(),
       openedAt: json['opened_at']?.toString(),
       closedAt: json['closed_at']?.toString(),
       entryCount: asInt(json['entry_count']),
@@ -165,26 +189,26 @@ class ColetaModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'code': code,
-        'date': date,
-        'service_meeting': serviceMeeting,
-        'description': description,
-        'status': status,
-        'creator_name': creatorName,
-        'closer_name': closerName,
-        'opened_at': openedAt,
-        'closed_at': closedAt,
-        'entry_count': entryCount,
-        'total_amount': totalAmount,
-        'total_dizimos': totalDizimos,
-        'oferta_dinheiro': ofertaDinheiro,
-        'oferta_pix': ofertaPix,
-        'oferta_transferencia': ofertaTransferencia,
-        'total_ofertas': totalOfertas,
-        'total_geral': totalGeral,
-        'notes': notes,
-      };
+    'id': id,
+    'code': code,
+    'date': date,
+    'service_meeting': serviceMeeting,
+    'description': description,
+    'status': status,
+    'creator_name': creatorName,
+    'closer_name': closerName,
+    'opened_at': openedAt,
+    'closed_at': closedAt,
+    'entry_count': entryCount,
+    'total_amount': totalAmount,
+    'total_dizimos': totalDizimos,
+    'oferta_dinheiro': ofertaDinheiro,
+    'oferta_pix': ofertaPix,
+    'oferta_transferencia': ofertaTransferencia,
+    'total_ofertas': totalOfertas,
+    'total_geral': totalGeral,
+    'notes': notes,
+  };
 }
 
 class EnvelopeEntry {
@@ -194,7 +218,7 @@ class EnvelopeEntry {
   final String? envelopeNumber;
   final double valor;
   final String destinacao; // 'dizimo' | 'oferta' | 'missoes' | 'construcao'
-  final String forma;      // 'dinheiro' | 'pix' | 'transferencia' | 'cartao'
+  final String forma; // 'dinheiro' | 'pix' | 'transferencia' | 'cartao'
   final String timestamp;
 
   const EnvelopeEntry({
@@ -210,27 +234,151 @@ class EnvelopeEntry {
 
   factory EnvelopeEntry.fromJson(Map<String, dynamic> json) {
     return EnvelopeEntry(
-      id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          json['id']?.toString() ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       personId: json['person_id'] != null ? asInt(json['person_id']) : null,
-      membro: json['membro']?.toString() ?? json['contribuinte']?.toString() ?? json['person']?['full_name']?.toString() ?? json['contribuinte_nome']?.toString() ?? 'Oferta',
-      envelopeNumber: json['envelope_number']?.toString() ?? json['envelope']?.toString() ?? json['person']?['envelope_number']?.toString(),
+      membro:
+          json['membro']?.toString() ??
+          json['contribuinte']?.toString() ??
+          json['person']?['full_name']?.toString() ??
+          json['contribuinte_nome']?.toString() ??
+          'Oferta',
+      envelopeNumber:
+          json['envelope_number']?.toString() ??
+          json['envelope']?.toString() ??
+          json['person']?['envelope_number']?.toString(),
       valor: asDouble(json['valor'], asDouble(json['amount'])),
-      destinacao: json['destinacao']?.toString() ?? json['contribution_type']?.toString() ?? 'dizimo',
-      forma: json['forma']?.toString() ?? json['payment_method']?.toString() ?? 'dinheiro',
-      timestamp: json['timestamp']?.toString() ?? json['hora']?.toString() ?? json['created_at']?.toString() ?? '',
+      destinacao:
+          json['destinacao']?.toString() ??
+          json['contribution_type']?.toString() ??
+          'dizimo',
+      forma:
+          json['forma']?.toString() ??
+          json['payment_method']?.toString() ??
+          'dinheiro',
+      timestamp:
+          json['timestamp']?.toString() ??
+          json['hora']?.toString() ??
+          json['created_at']?.toString() ??
+          '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'person_id': personId,
-        'membro': membro,
-        'envelope_number': envelopeNumber,
-        'valor': valor,
-        'destinacao': destinacao,
-        'forma': forma,
-        'timestamp': timestamp,
-      };
+    'id': id,
+    'person_id': personId,
+    'membro': membro,
+    'envelope_number': envelopeNumber,
+    'valor': valor,
+    'destinacao': destinacao,
+    'forma': forma,
+    'timestamp': timestamp,
+  };
+}
+
+/// A local, append-only representation of a conference recorded without a
+/// connection. Its payload is never edited after creation; only its delivery
+/// and review state may change.
+class OfflineColetaQueueItem {
+  final String operationId;
+  final String deviceId;
+  final String capturedAt;
+  final Map<String, dynamic> coleta;
+  final List<EnvelopeEntry> entries;
+  final String status;
+  final int? serverId;
+  final String? reviewNotes;
+  final int attempts;
+
+  const OfflineColetaQueueItem({
+    required this.operationId,
+    required this.deviceId,
+    required this.capturedAt,
+    required this.coleta,
+    required this.entries,
+    required this.status,
+    this.serverId,
+    this.reviewNotes,
+    this.attempts = 0,
+  });
+
+  bool get awaitsUpload => status == 'pending_upload';
+  bool get awaitsReview => status == 'pending_review';
+  bool get isResolved => status == 'approved' || status == 'rejected';
+
+  factory OfflineColetaQueueItem.fromJson(Map<String, dynamic> json) {
+    final rawEntries = json['entries'] is List
+        ? json['entries'] as List
+        : const [];
+    return OfflineColetaQueueItem(
+      operationId: json['operation_id']?.toString() ?? '',
+      deviceId: json['device_id']?.toString() ?? '',
+      capturedAt: json['captured_at']?.toString() ?? '',
+      coleta: Map<String, dynamic>.from(json['coleta'] as Map? ?? const {}),
+      entries: rawEntries
+          .whereType<Map>()
+          .map(
+            (entry) => EnvelopeEntry.fromJson(Map<String, dynamic>.from(entry)),
+          )
+          .toList(),
+      status: json['status']?.toString() ?? 'pending_upload',
+      serverId: json['server_id'] == null ? null : asInt(json['server_id']),
+      reviewNotes: json['review_notes']?.toString(),
+      attempts: asInt(json['attempts']),
+    );
+  }
+
+  OfflineColetaQueueItem copyWith({
+    String? status,
+    int? serverId,
+    String? reviewNotes,
+    int? attempts,
+  }) => OfflineColetaQueueItem(
+    operationId: operationId,
+    deviceId: deviceId,
+    capturedAt: capturedAt,
+    coleta: coleta,
+    entries: entries,
+    status: status ?? this.status,
+    serverId: serverId ?? this.serverId,
+    reviewNotes: reviewNotes ?? this.reviewNotes,
+    attempts: attempts ?? this.attempts,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'operation_id': operationId,
+    'device_id': deviceId,
+    'captured_at': capturedAt,
+    'coleta': coleta,
+    'entries': entries.map((entry) => entry.toJson()).toList(),
+    'status': status,
+    'server_id': serverId,
+    'review_notes': reviewNotes,
+    'attempts': attempts,
+  };
+
+  Map<String, dynamic> toServerPayload() => {
+    'client_operation_id': operationId,
+    'device_id': deviceId,
+    'captured_at': capturedAt,
+    'coleta': coleta,
+    'entries': entries
+        .map(
+          (entry) => {
+            'person_id': entry.personId,
+            'amount': entry.valor,
+            'contribution_type': entry.destinacao.isEmpty
+                ? 'dizimo'
+                : entry.destinacao,
+            'payment_method': entry.forma == 'cartao' ? 'outros' : entry.forma,
+            'envelope_number': entry.envelopeNumber,
+            'contribuinte_nome': entry.membro,
+            'is_unidentified': entry.personId == null,
+          },
+        )
+        .toList(),
+  };
 }
 
 class DenominationItem {

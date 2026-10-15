@@ -13,6 +13,7 @@ import {
   MemberFinancialHistory,
   TithesSettings,
   AuditLog,
+  OfflineColetaSync,
   Paginated,
 } from './models';
 
@@ -22,6 +23,21 @@ export class DizimosService {
   private baseUrl = `${environment.apiUrl}/dizimos`;
 
   // --- Coletas & Conferências ---
+  getOfflineSyncs(params?: { status?: string; page?: number }): Observable<Paginated<OfflineColetaSync>> {
+    let p = new HttpParams();
+    if (params?.status) p = p.set('status', params.status);
+    if (params?.page) p = p.set('page', params.page.toString());
+    return this.http.get<Paginated<OfflineColetaSync>>(`${this.baseUrl}/offline-syncs`, { params: p });
+  }
+
+  approveOfflineSync(id: number, reviewNotes?: string): Observable<{ data: OfflineColetaSync; message: string }> {
+    return this.http.post<{ data: OfflineColetaSync; message: string }>(`${this.baseUrl}/offline-syncs/${id}/approve`, { review_notes: reviewNotes });
+  }
+
+  rejectOfflineSync(id: number, reviewNotes: string): Observable<{ data: OfflineColetaSync; message: string }> {
+    return this.http.post<{ data: OfflineColetaSync; message: string }>(`${this.baseUrl}/offline-syncs/${id}/reject`, { review_notes: reviewNotes });
+  }
+
   getColetas(params?: { status?: string; date_from?: string; date_to?: string; search?: string; page?: number }): Observable<Paginated<ColetaDizimo>> {
     let p = new HttpParams();
     if (params?.status) p = p.set('status', params.status);

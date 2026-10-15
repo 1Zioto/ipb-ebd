@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\InstitutionService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -69,6 +70,31 @@ class User extends Authenticatable
         return $this->hasRole('programador');
     }
 
+    /** Kept server-side so clients never decide who is a system administrator. */
+    public function isMasterUser(): bool
+    {
+        return $this->isProgrammer() && ! $this->institution_id;
+    }
+
+    /** A teacher without management duties is limited to assigned classes. */
+    public function isRestrictedTeacher(): bool
+    {
+        return $this->hasRole('professor')
+            && ! $this->isProgrammer()
+            && ! $this->hasPermission('class.manage')
+            && ! $this->hasPermission('event.manage');
+    }
+
+    public function canAccessClass(ClassRoom $class): bool
+    {
+        if ($class->institution_id && ! $this->canAccessInstitution((int) $class->institution_id)) {
+            return false;
+        }
+
+        return ! $this->isRestrictedTeacher()
+            || in_array($class->id, $this->teachingClassIds(), true);
+    }
+
     /** Programador sem instituição é o único perfil com escopo institucional global. */
     public function hasGlobalInstitutionAccess(): bool
     {
@@ -86,6 +112,7 @@ class User extends Authenticatable
         if ($this->isProgrammer()) {
             return true;
         }
+
         return in_array($slug, $this->permissionSlugs(), true);
     }
 
@@ -102,8 +129,8 @@ class User extends Authenticatable
             return true;
         }
 
-        /** @var \App\Services\InstitutionService $service */
-        $service = app(\App\Services\InstitutionService::class);
+        /** @var InstitutionService $service */
+        $service = app(InstitutionService::class);
         $allowedIds = $service->getDescendantIds($this->institution_id, true);
 
         return in_array($targetInstitutionId, $allowedIds, true);
@@ -115,6 +142,7 @@ class User extends Authenticatable
         if (! $this->person_id) {
             return [];
         }
+
         return ClassTeacher::query()
             ->where('person_id', $this->person_id)
             ->where('is_active', true)

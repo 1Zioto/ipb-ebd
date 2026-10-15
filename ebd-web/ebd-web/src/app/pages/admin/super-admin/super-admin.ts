@@ -51,6 +51,9 @@ export class SuperAdminPage implements OnInit {
   // Aba ativa: 'screens' | 'churches'
   activeTab = signal<'screens' | 'churches'>('screens');
 
+  // Modo de visualização das telas: 'list' (padrão solicitado) | 'cards'
+  viewMode = signal<'list' | 'cards'>('list');
+
   // Filtros de telas
   screenSearch = signal('');
   selectedGroup = signal('Todos');
@@ -188,11 +191,11 @@ export class SuperAdminPage implements OnInit {
 
   enableAllScreens(): void {
     if (this.applyGlobal()) {
-      SYSTEM_SCREENS.forEach((s) => this.screenConfig.applyToAllChurches(s.key, true));
+      this.screenConfig.setAllScreensGlobally(true);
       this.messageService.add({
         severity: 'success',
-        summary: 'Todas as Telas Liberadas',
-        detail: 'Todas as telas foram ativadas para todas as igrejas.',
+        summary: 'Todas as Telas Liberadas Globalmente',
+        detail: 'Todos os módulos foram ativados para todas as igrejas.',
       });
     } else {
       this.screenConfig.setAllScreens(true);
@@ -206,11 +209,11 @@ export class SuperAdminPage implements OnInit {
 
   disableAllScreens(): void {
     if (this.applyGlobal()) {
-      SYSTEM_SCREENS.forEach((s) => this.screenConfig.applyToAllChurches(s.key, false));
+      this.screenConfig.setAllScreensGlobally(false);
       this.messageService.add({
         severity: 'warn',
         summary: 'Telas Desativadas Globalmente',
-        detail: 'Todos os módulos foram ocultados.',
+        detail: 'Todos os módulos foram ocultados para TODAS as igrejas.',
       });
     } else {
       this.screenConfig.setAllScreens(false);

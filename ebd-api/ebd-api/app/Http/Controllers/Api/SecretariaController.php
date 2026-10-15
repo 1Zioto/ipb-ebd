@@ -7,6 +7,7 @@ use App\Models\AtaConselho;
 use App\Models\CartaTransferencia;
 use App\Models\Institution;
 use App\Models\Person;
+use App\Services\InstitutionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,7 @@ class SecretariaController extends Controller
     public function membros(Request $request): JsonResponse
     {
         $query = Person::query()->with('families:id,name');
+        $this->restrictToCurrentInstitution($query, $request);
 
         if ($request->filled('status')) {
             $query->where('canonical_status', $request->query('status'));
@@ -25,21 +27,22 @@ class SecretariaController extends Controller
             $s = $request->query('search');
             $query->where(function ($q) use ($s) {
                 $q->where('full_name', 'ilike', "%{$s}%")
-                  ->orWhere('roll_number', 'ilike', "%{$s}%")
-                  ->orWhere('cpf', 'ilike', "%{$s}%");
+                    ->orWhere('roll_number', 'ilike', "%{$s}%")
+                    ->orWhere('cpf', 'ilike', "%{$s}%");
             });
         }
 
         $perPage = (int) $request->query('per_page', 20);
         $membros = $query->orderBy('full_name')->paginate($perPage);
 
+        $statsBase = $this->peopleForCurrentInstitution($request);
         $stats = [
-            'total' => Person::count(),
-            'comungantes' => Person::where('canonical_status', 'comungante')->count(),
-            'nao_comungantes' => Person::where('canonical_status', 'nao_comungante')->count(),
-            'sob_disciplina' => Person::where('canonical_status', 'sob_disciplina')->count(),
-            'jurisdicao_especial' => Person::where('canonical_status', 'jurisdicao_especial')->count(),
-            'falecidos' => Person::where('canonical_status', 'falecido')->count(),
+            'total' => (clone $statsBase)->count(),
+            'comungantes' => (clone $statsBase)->where('canonical_status', 'comungante')->count(),
+            'nao_comungantes' => (clone $statsBase)->where('canonical_status', 'nao_comungante')->count(),
+            'sob_disciplina' => (clone $statsBase)->where('canonical_status', 'sob_disciplina')->count(),
+            'jurisdicao_especial' => (clone $statsBase)->where('canonical_status', 'jurisdicao_especial')->count(),
+            'falecidos' => (clone $statsBase)->where('canonical_status', 'falecido')->count(),
         ];
 
         return response()->json([
@@ -49,14 +52,17 @@ class SecretariaController extends Controller
     }
 
     /** Exibir detalhes do membro */
-    public function showMembro(Person $person): JsonResponse
+    public function showMembro(Request $request, Person $person): JsonResponse
     {
+        $this->ensureCurrentInstitution($request, $person->institution_id);
+
         return response()->json($person->load('families'));
     }
 
     /** Atualizar dados canônicos do membro */
     public function updateMembro(Request $request, Person $person): JsonResponse
     {
+        $this->ensureCurrentInstitution($request, $person->institution_id);
         $validated = $request->validate([
             'canonical_status' => 'required|string|in:comungante,nao_comungante,sob_disciplina,jurisdicao_especial,falecido',
             'roll_number' => 'nullable|string|max:50',
@@ -85,32 +91,34 @@ class SecretariaController extends Controller
     {
         $ano = (int) $request->query('ano', now()->year);
 
-        $totalComungantes = Person::where('canonical_status', 'comungante')->count();
-        $totalNaoComungantes = Person::where('canonical_status', 'nao_comungante')->count();
-        $totalSobDisciplina = Person::where('canonical_status', 'sob_disciplina')->count();
-        $totalFalecidosAno = Person::where('canonical_status', 'falecido')
+        $people = $this->peopleForConsolidatedInstitutions($request);
+        $totalComungantes = (clone $people)->where('canonical_status', 'comungante')->count();
+        $totalNaoComungantes = (clone $people)->where('canonical_status', 'nao_comungante')->count();
+        $totalSobDisciplina = (clone $people)->where('canonical_status', 'sob_disciplina')->count();
+        $totalFalecidosAno = (clone $people)->where('canonical_status', 'falecido')
             ->whereYear('exit_date', $ano)
             ->count();
 
-        $recebidosProfissaoBatismo = Person::where('reception_type', 'profissao_fe_batismo')
+        $recebidosProfissaoBatismo = (clone $people)->where('reception_type', 'profissao_fe_batismo')
             ->whereYear('reception_date', $ano)
             ->count();
-        $recebidosProfissao = Person::where('reception_type', 'profissao_fe')
+        $recebidosProfissao = (clone $people)->where('reception_type', 'profissao_fe')
             ->whereYear('reception_date', $ano)
             ->count();
-        $recebidosTransferencia = CartaTransferencia::where('tipo', 'Recebida')
+        $cartas = $this->cartasForConsolidatedInstitutions($request);
+        $recebidosTransferencia = (clone $cartas)->where('tipo', 'Recebida')
             ->whereYear('data_emissao', $ano)
             ->count();
 
-        $saidasTransferencia = CartaTransferencia::where('tipo', 'Emitida')
+        $saidasTransferencia = (clone $cartas)->where('tipo', 'Emitida')
             ->whereYear('data_emissao', $ano)
             ->count();
 
-        $casamentosRealizados = Person::whereNotNull('marriage_date')
+        $casamentosRealizados = (clone $people)->whereNotNull('marriage_date')
             ->whereYear('marriage_date', $ano)
             ->count();
 
-        $batismosInfantis = Person::where('canonical_status', 'nao_comungante')
+        $batismosInfantis = (clone $people)->where('canonical_status', 'nao_comungante')
             ->whereNotNull('baptism_date')
             ->whereYear('baptism_date', $ano)
             ->count();
@@ -121,9 +129,9 @@ class SecretariaController extends Controller
         $presb = $institution?->parent?->name;
         $sinodo = $institution?->parent?->parent?->name;
         $jurisdicaoPartes = array_filter([$presb, $sinodo]);
-        $jurisdicao = !empty($jurisdicaoPartes)
+        $jurisdicao = ! empty($jurisdicaoPartes)
             ? implode(' • ', $jurisdicaoPartes)
-            : ($institution?->city && $institution?->state ? ($institution->city . ' / ' . $institution->state) : 'Presbitério Sudeste Espírito Santo (PSES) • Sínodo Central Espíritossantense (SCE)');
+            : ($institution?->city && $institution?->state ? ($institution->city.' / '.$institution->state) : 'Presbitério Sudeste Espírito Santo (PSES) • Sínodo Central Espíritossantense (SCE)');
 
         return response()->json([
             'ano' => $ano,
@@ -149,6 +157,7 @@ class SecretariaController extends Controller
     public function cartas(Request $request): JsonResponse
     {
         $query = CartaTransferencia::query()->with('person:id,full_name,roll_number');
+        $this->restrictToCurrentInstitution($query, $request);
 
         if ($request->filled('tipo')) {
             $query->where('tipo', $request->query('tipo'));
@@ -158,6 +167,7 @@ class SecretariaController extends Controller
         }
 
         $cartas = $query->orderBy('data_emissao', 'desc')->paginate(15);
+
         return response()->json($cartas);
     }
 
@@ -176,15 +186,21 @@ class SecretariaController extends Controller
             'status' => 'nullable|string|in:Ativa,Concluída,Expirada,Cancelada',
         ]);
 
+        $person = Person::findOrFail($validated['person_id']);
+        $this->ensureCurrentInstitution($request, $person->institution_id);
+
         $validated['institution_id'] = $request->user()->institution_id ?? 5;
         $validated['status'] = $validated['status'] ?? 'Ativa';
 
         $carta = CartaTransferencia::create($validated);
+
         return response()->json($carta->load('person'), 201);
     }
 
-    public function showCarta(CartaTransferencia $carta): JsonResponse
+    public function showCarta(Request $request, CartaTransferencia $carta): JsonResponse
     {
+        $this->ensureCurrentInstitution($request, $carta->institution_id);
+
         return response()->json($carta->load('person'));
     }
 
@@ -192,6 +208,7 @@ class SecretariaController extends Controller
     public function atas(Request $request): JsonResponse
     {
         $query = AtaConselho::query();
+        $this->restrictToCurrentInstitution($query, $request);
 
         if ($request->filled('tipo')) {
             $query->where('tipo', $request->query('tipo'));
@@ -200,13 +217,14 @@ class SecretariaController extends Controller
             $s = $request->query('search');
             $query->where(function ($q) use ($s) {
                 $q->where('numero_ata', 'ilike', "%{$s}%")
-                  ->orWhere('pauta', 'ilike', "%{$s}%")
-                  ->orWhere('deliberacoes', 'ilike', "%{$s}%")
-                  ->orWhere('ata_original', 'ilike', "%{$s}%");
+                    ->orWhere('pauta', 'ilike', "%{$s}%")
+                    ->orWhere('deliberacoes', 'ilike', "%{$s}%")
+                    ->orWhere('ata_original', 'ilike', "%{$s}%");
             });
         }
 
         $atas = $query->orderBy('data_reuniao', 'desc')->paginate(15);
+
         return response()->json($atas);
     }
 
@@ -232,16 +250,20 @@ class SecretariaController extends Controller
         $validated['status'] = $validated['status'] ?? 'Aprovada';
 
         $ata = AtaConselho::create($validated);
+
         return response()->json($ata, 201);
     }
 
-    public function showAta(AtaConselho $ata): JsonResponse
+    public function showAta(Request $request, AtaConselho $ata): JsonResponse
     {
+        $this->ensureCurrentInstitution($request, $ata->institution_id);
+
         return response()->json($ata);
     }
 
     public function updateAta(Request $request, AtaConselho $ata): JsonResponse
     {
+        $this->ensureCurrentInstitution($request, $ata->institution_id);
         $validated = $request->validate([
             'numero_ata' => 'required|string|max:50',
             'tipo' => 'required|string|in:Ordinária,Extraordinária',
@@ -259,15 +281,79 @@ class SecretariaController extends Controller
         ]);
 
         $ata->update($validated);
+
         return response()->json($ata);
     }
 
-    public function aprovarAta(AtaConselho $ata): JsonResponse
+    public function aprovarAta(Request $request, AtaConselho $ata): JsonResponse
     {
+        $this->ensureCurrentInstitution($request, $ata->institution_id);
         $ata->update(['status' => 'Aprovada']);
+
         return response()->json([
             'message' => 'Ata aprovada com sucesso!',
             'ata' => $ata,
         ]);
+    }
+
+    /** Restricts rolls, letters and minutes to the secretary's own church. */
+    private function restrictToCurrentInstitution($query, Request $request): void
+    {
+        if ($request->user()->hasGlobalInstitutionAccess()) {
+            return;
+        }
+
+        $query->where('institution_id', $request->user()->institution_id ?: 0);
+    }
+
+    private function ensureCurrentInstitution(Request $request, ?int $institutionId): void
+    {
+        if ($request->user()->hasGlobalInstitutionAccess()) {
+            return;
+        }
+
+        abort_unless((int) $request->user()->institution_id === (int) $institutionId, 403);
+    }
+
+    /** Presbytery receives only aggregation across its authorized descendants. */
+    private function peopleForConsolidatedInstitutions(Request $request)
+    {
+        $query = Person::query();
+        $this->restrictToConsolidatedInstitutions($query, $request);
+
+        return $query;
+    }
+
+    private function cartasForConsolidatedInstitutions(Request $request)
+    {
+        $query = CartaTransferencia::query();
+        $this->restrictToConsolidatedInstitutions($query, $request);
+
+        return $query;
+    }
+
+    private function peopleForCurrentInstitution(Request $request)
+    {
+        $query = Person::query();
+        $this->restrictToCurrentInstitution($query, $request);
+
+        return $query;
+    }
+
+    private function restrictToConsolidatedInstitutions($query, Request $request): void
+    {
+        if ($request->user()->hasGlobalInstitutionAccess()) {
+            return;
+        }
+
+        $institutionId = $request->user()->institution_id;
+        if (! $institutionId) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $ids = app(InstitutionService::class)->getDescendantIds($institutionId, true);
+        $query->whereIn('institution_id', $ids ?: [0]);
     }
 }

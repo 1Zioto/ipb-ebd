@@ -1,5 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface ChurchInfo {
   id: number;
@@ -439,11 +441,47 @@ export class ScreenConfigService {
       this.togglesState.set(initial);
       this.persistToggles(initial);
     }
+    // Sincroniza imediatamente com a nuvem (PostgreSQL) para carregar telas de todas as igrejas
+    this.loadFromApi();
+  }
+
+  async loadFromApi(): Promise<void> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<{ toggles: Record<string, Record<string, boolean>>; churches: ChurchInfo[] }>(
+          `${environment.apiUrl}/screen-configs`
+        )
+      );
+      if (res?.toggles && Object.keys(res.toggles).length > 0) {
+        this.togglesState.set(res.toggles);
+        localStorage.setItem('ipb_screen_toggles_by_church', JSON.stringify(res.toggles));
+      }
+      if (res?.churches && Array.isArray(res.churches) && res.churches.length > 0) {
+        this.churches.set(res.churches);
+        localStorage.setItem('ipb_super_admin_churches_v2', JSON.stringify(res.churches));
+      }
+      this.version.update((v) => v + 1);
+    } catch (e) {
+      console.warn('Não foi possível carregar screen-configs da API, usando cache local:', e);
+    }
+  }
+
+  resolveEffectiveChurchId(): number {
+    const rawUser = localStorage.getItem('ebd_user');
+    if (rawUser) {
+      try {
+        const u = JSON.parse(rawUser);
+        if (u?.institution_id) {
+          return Number(u.institution_id);
+        }
+      } catch {}
+    }
+    return this.activeChurchId();
   }
 
   // --- LEITURA DE PERMISSÃO DE TELA ---
   isScreenEnabled(screenKey: string, churchId?: number): boolean {
-    const targetId = churchId ?? this.activeChurchId();
+    const targetId = churchId ?? this.resolveEffectiveChurchId();
     const churchToggles = this.togglesState()[String(targetId)];
     if (!churchToggles) {
       // Se não há configuração específica, busca padrão
@@ -588,7 +626,23 @@ export class ScreenConfigService {
     };
   }
 
-  // --- PERSISTÊNCIA LOCAL ---
+  // Ativar ou desativar todas as telas de TODAS as igrejas cadastradas de uma só vez
+  setAllScreensGlobally(enabled: boolean): void {
+    const current = { ...this.togglesState() };
+    this.churches().forEach((c) => {
+      const churchMap: Record<string, boolean> = {};
+      SYSTEM_SCREENS.forEach((s) => {
+        churchMap[s.key] = enabled;
+      });
+      current[String(c.id)] = churchMap;
+    });
+
+    this.togglesState.set(current);
+    this.persistToggles(current);
+    this.version.update((v) => v + 1);
+  }
+
+  // --- PERSISTÊNCIA LOCAL & REMOTA ---
   private loadStoredChurches(): ChurchInfo[] {
     const raw = localStorage.getItem('ipb_super_admin_churches_v2');
     if (raw) {
@@ -623,5 +677,13 @@ export class ScreenConfigService {
 
   private persistToggles(data: Record<string, Record<string, boolean>>): void {
     localStorage.setItem('ipb_screen_toggles_by_church', JSON.stringify(data));
+    // Sincroniza em tempo real com o backend da API para persistir no banco e distribuir para todas as igrejas e computadores
+    this.http.post(`${environment.apiUrl}/screen-configs`, {
+      toggles: data,
+      churches: this.churches()
+    }).subscribe({
+      next: () => {},
+      error: (err) => console.warn('Aviso: falha na sincronização de telas com a API na nuvem:', err)
+    });
   }
 }

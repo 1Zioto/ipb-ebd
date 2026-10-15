@@ -310,6 +310,26 @@ export interface ConferenciaImpressao {
   created_at: string;
 }
 
+export interface OfflineColetaSync {
+  id: number;
+  client_operation_id: string;
+  institution_id: number;
+  submitted_by: number;
+  device_id: string;
+  captured_at: string;
+  payload: {
+    coleta: { date: string; service_meeting: string; description?: string | null };
+    entries: Array<{ amount: number; contribuinte_nome?: string | null; envelope_number?: string | null }>;
+  };
+  payload_hash: string;
+  status: 'pending_review' | 'approved' | 'rejected';
+  review_notes?: string | null;
+  reviewed_at?: string | null;
+  submitter?: { id: number; name: string };
+  reviewer?: { id: number; name: string };
+  coleta?: Pick<ColetaDizimo, 'id' | 'code' | 'status'> | null;
+}
+
 export interface ComprovanteConferencia {
   conferencia: {
     id: number;

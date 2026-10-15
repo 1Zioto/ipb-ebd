@@ -32,6 +32,14 @@ class Permissions
         'family.view' => 'Ver famílias',
         'family.manage' => 'Gerir famílias',
 
+        // Secretaria, Conselho e concílios
+        'secretaria.rol.view' => 'Ver rol canônico e cartas de transferência',
+        'secretaria.rol.manage' => 'Gerir rol canônico e cartas de transferência',
+        'secretaria.atas.view' => 'Ver atas do Conselho',
+        'secretaria.atas.manage' => 'Lavrar e editar atas do Conselho',
+        'conselho.approve' => 'Aprovar deliberações e lotes de conferência',
+        'presbiterio.consolidated.view' => 'Ver dados consolidados autorizados do Presbitério',
+
         // Módulo de Dízimos
         'dizimos.coleta.operar' => 'Operar coletas de dízimos',
         'dizimos.coleta.fechar' => 'Fechar coleta de dízimos',
@@ -43,6 +51,8 @@ class Permissions
         'dizimos.config.manage' => 'Gerir configurações de dízimos',
         'dizimos.relatorios.view' => 'Ver relatórios agregados de dízimos',
         'dizimos.relatorios.export' => 'Exportar relatórios de dízimos',
+        'dizimos.offline_sync.view' => 'Ver fila de conferências offline',
+        'dizimos.coleta.approve' => 'Aprovar conferências offline antes do fechamento',
 
         // Módulo de Instituições & Estrutura Hierárquica
         'institution.view' => 'Ver instituições',
@@ -82,6 +92,8 @@ class Permissions
             'financial.view', 'financial.manage', 'financial.accounts.manage',
             'financial.categories.manage', 'financial.accounting.view', 'financial.accounting.close',
             'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
+            'secretaria.rol.view', 'secretaria.rol.manage', 'secretaria.atas.view', 'secretaria.atas.manage', 'conselho.approve',
+            'presbiterio.consolidated.view', 'dizimos.offline_sync.view', 'dizimos.coleta.approve',
         ],
         'superintendencia' => [
             'person.view', 'person.manage', 'family.view', 'family.manage', 'class.view', 'class.manage', 'enrollment.manage',
@@ -94,11 +106,14 @@ class Permissions
             'institution.subordinate.view', 'institution.consolidated.view', 'institution.transfer',
             'financial.view', 'financial.manage', 'financial.accounting.view',
             'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
+            'secretaria.rol.view', 'secretaria.rol.manage', 'secretaria.atas.view', 'secretaria.atas.manage', 'conselho.approve',
+            'dizimos.offline_sync.view', 'dizimos.coleta.approve',
         ],
         'diacono' => [
             'person.view', 'family.view',
             'dizimos.coleta.operar', 'dizimos.coleta.fechar', 'dizimos.coleta.conferir',
             'dizimos.diaconato.atender', 'dizimos.relatorios.view',
+            'dizimos.offline_sync.view',
             'institution.view', 'institution.tree.view',
             'financial.view',
             'sociedade.view',
@@ -109,6 +124,18 @@ class Permissions
             'schedule.view', 'report.view',
             'institution.view',
             'sociedade.view',
+        ],
+        'secretario' => [
+            'person.view', 'family.view', 'secretaria.rol.view', 'secretaria.rol.manage',
+            'secretaria.atas.view', 'secretaria.atas.manage', 'institution.view', 'sociedade.view',
+        ],
+        'conselho' => [
+            'secretaria.rol.view', 'secretaria.atas.view', 'conselho.approve',
+            'dizimos.offline_sync.view', 'dizimos.coleta.approve', 'report.view', 'audit.view',
+        ],
+        'presbiterio' => [
+            'institution.view', 'institution.tree.view', 'institution.subordinate.view',
+            'institution.consolidated.view', 'presbiterio.consolidated.view', 'report.view',
         ],
         'lideranca_saf' => [
             'person.view', 'sociedade.view', 'sociedade.membros.manage', 'sociedade.atas.manage', 'sociedade.diretoria.manage', 'sociedade.atividades.manage',
@@ -133,6 +160,9 @@ class Permissions
         'superintendencia' => ['Superintendência', 'Operação total da EBD'],
         'diacono' => ['Diácono / Operador', 'Operação de coletas e atendimento diaconal'],
         'professor' => ['Professor', 'Acesso restrito às classes vinculadas'],
+        'secretario' => ['Secretário', 'Rol canônico, cartas e atas em rascunho'],
+        'conselho' => ['Conselho', 'Aprovação de atas e conferências offline'],
+        'presbiterio' => ['Presbitério', 'Consulta de consolidados autorizados'],
         'lideranca_saf' => ['Liderança SAF', 'Diretoria da Sociedade Auxiliadora Feminina'],
         'lideranca_uph' => ['Liderança UPH', 'Diretoria da União Presbiteriana de Homens'],
         'lideranca_ump' => ['Liderança UMP', 'Diretoria da União de Mocidade Presbiteriana'],

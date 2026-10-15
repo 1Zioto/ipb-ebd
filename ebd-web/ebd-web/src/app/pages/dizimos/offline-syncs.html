@@ -1,0 +1,48 @@
+<div class="space-y-5">
+  <div class="bg-surface-card border border-surface rounded-2xl p-6 shadow-sm flex flex-wrap gap-4 items-center justify-between">
+    <div>
+      <p class="m-0 text-xs font-bold uppercase tracking-widest text-primary">Conselho & Diaconato</p>
+      <h1 class="m-0 mt-1 text-2xl font-black text-surface-900">Lotes offline auditáveis</h1>
+      <p class="mb-0 text-sm text-muted-color">Um lote não cria nem fecha coleta até receber a revisão autorizada.</p>
+    </div>
+    <p-button icon="pi pi-refresh" label="Atualizar" [loading]="loading()" (onClick)="load()" />
+  </div>
+
+  @if (loading() && lots().length === 0) {
+    <div class="p-6 text-center text-muted-color">Carregando lotes…</div>
+  } @else if (lots().length === 0) {
+    <div class="p-6 text-center text-muted-color bg-surface-card rounded-xl border border-surface">Nenhum lote offline disponível.</div>
+  } @else {
+    <div class="grid gap-4">
+      @for (lot of lots(); track lot.id) {
+        <article class="bg-surface-card border border-surface rounded-xl p-5 shadow-sm">
+          <div class="flex flex-wrap justify-between gap-3">
+            <div>
+              <div class="flex gap-2 items-center">
+                <h2 class="m-0 text-lg font-bold">{{ lot.payload.coleta.service_meeting }}</h2>
+                <p-tag [value]="lot.status === 'pending_review' ? 'Aguardando revisão' : lot.status === 'approved' ? 'Aprovado' : 'Recusado'"
+                  [severity]="lot.status === 'approved' ? 'success' : lot.status === 'rejected' ? 'danger' : 'warn'" />
+              </div>
+              <p class="mb-0 text-sm text-muted-color">{{ lot.payload.coleta.date }} · {{ lot.payload.entries.length }} lançamentos · {{ total(lot) | currency:'BRL' }}</p>
+            </div>
+            <div class="text-right text-xs text-muted-color">
+              <div>Enviado por {{ lot.submitter?.name ?? 'Usuário' }}</div>
+              <div>{{ lot.captured_at | date:'dd/MM/yyyy HH:mm' }} · dispositivo {{ lot.device_id | slice:0:8 }}</div>
+            </div>
+          </div>
+
+          @if (lot.review_notes) {
+            <p class="mt-4 mb-0 p-3 bg-surface-ground rounded-lg text-sm"><strong>Revisão:</strong> {{ lot.review_notes }}</p>
+          }
+
+          @if (lot.status === 'pending_review' && canReview()) {
+            <div class="mt-4 flex gap-2 justify-end">
+              <p-button label="Recusar com divergência" icon="pi pi-times" severity="danger" [outlined]="true" [loading]="processingId() === lot.id" (onClick)="reject(lot)" />
+              <p-button label="Aprovar e abrir coleta" icon="pi pi-check" severity="success" [loading]="processingId() === lot.id" (onClick)="approve(lot)" />
+            </div>
+          }
+        </article>
+      }
+    </div>
+  }
+</div>

@@ -129,12 +129,12 @@ export class AppMenu implements OnInit {
                 items: [
                     { label: 'Pessoas Cadastradas', icon: 'pi pi-fw pi-users', routerLink: ['/pessoas'], visible: this.isScreenVisible('pessoas', 'person.view') },
                     { label: 'Famílias', icon: 'pi pi-fw pi-users', routerLink: ['/familias'], visible: this.isScreenVisible('familias', 'family.view') },
-                    { label: 'Rol de Membros', icon: 'pi pi-fw pi-address-book', routerLink: ['/secretaria/membros'], visible: this.isScreenVisible('membros', 'person.view') },
+                    { label: 'Rol de Membros', icon: 'pi pi-fw pi-address-book', routerLink: ['/secretaria/membros'], visible: this.isScreenVisible('membros', 'secretaria.rol.view') },
                     { label: 'Oficiais & Secretarias', icon: 'pi pi-fw pi-shield', routerLink: ['/secretaria/oficiais-lideranca'], visible: this.isScreenVisible('oficiais', 'person.view') },
                     { label: 'Código de Disciplina', icon: 'pi pi-fw pi-shield', routerLink: ['/secretaria/disciplina'], visible: this.isScreenVisible('disciplina', 'person.view') },
-                    { label: 'Estatística do Presbitério', icon: 'pi pi-fw pi-percentage', routerLink: ['/secretaria/estatistica-presbiterio'], visible: this.isScreenVisible('estatistica_presbiterio', 'person.view') },
-                    { label: 'Cartas de Transferência', icon: 'pi pi-fw pi-envelope', routerLink: ['/secretaria/cartas'], visible: this.isScreenVisible('cartas', 'person.view') },
-                    { label: 'Livro de Atas do Conselho', icon: 'pi pi-fw pi-book', routerLink: ['/secretaria/atas'], visible: this.isScreenVisible('atas', 'person.view') },
+                    { label: 'Estatística do Presbitério', icon: 'pi pi-fw pi-percentage', routerLink: ['/secretaria/estatistica-presbiterio'], visible: this.isScreenVisible('estatistica_presbiterio', 'presbiterio.consolidated.view') },
+                    { label: 'Cartas de Transferência', icon: 'pi pi-fw pi-envelope', routerLink: ['/secretaria/cartas'], visible: this.isScreenVisible('cartas', 'secretaria.rol.view') },
+                    { label: 'Livro de Atas do Conselho', icon: 'pi pi-fw pi-book', routerLink: ['/secretaria/atas'], visible: this.isScreenVisibleAny('atas', 'secretaria.atas.view', 'conselho.approve') },
                     { label: 'Boletim Informativo Semanal', icon: 'pi pi-fw pi-file-edit', routerLink: ['/secretaria/boletim'], visible: this.isScreenVisible('boletim', 'person.view') },
                 ],
             },
@@ -149,6 +149,7 @@ export class AppMenu implements OnInit {
                     { label: 'Contas & Caixas', icon: 'pi pi-fw pi-building-columns', routerLink: ['/financeiro/contas'], visible: this.isScreenVisible('contas_bancarias', 'financial.view') },
                     { label: 'Plano de Contas & Custos', icon: 'pi pi-fw pi-tags', routerLink: ['/financeiro/categorias-custos'], visible: this.isScreenVisible('plano_contas', 'financial.view') },
                     { label: 'Coletas & Dízimos', icon: 'pi pi-fw pi-inbox', routerLink: ['/dizimos/coletas'], visible: this.isScreenVisible('dizimos', 'dizimos.coleta.operar') },
+                    { label: 'Lotes Offline para Revisão', icon: 'pi pi-fw pi-check-square', routerLink: ['/dizimos/aprovacoes-offline'], visible: this.isScreenVisible('dizimos', 'dizimos.offline_sync.view') },
                     { label: 'Acompanhamento Pastoral', icon: 'pi pi-fw pi-heart', routerLink: ['/dizimos/alertas'], visible: this.isScreenVisible('alertas_pastorais', 'dizimos.alertas.manage') },
                     { label: 'Patrimônio & Livro Tombo', icon: 'pi pi-fw pi-box', routerLink: ['/diaconia/patrimonio'], visible: this.isScreenVisible('patrimonio', 'person.view') },
                     { label: 'Assistência Diaconal', icon: 'pi pi-fw pi-hand-heart', routerLink: ['/dizimos/diaconato'], visible: this.isScreenVisible('diaconato', 'dizimos.diaconato.atender') },
@@ -223,6 +224,10 @@ export class AppMenu implements OnInit {
             return false;
         }
         return this.can(perm);
+    }
+
+    private isScreenVisibleAny(screenKey: string, ...permissions: string[]): boolean {
+        return this.screenConfig.isScreenEnabled(screenKey) && permissions.some((permission) => this.can(permission));
     }
 
     private visibleGroups(groups: MenuItem[]): MenuItem[] {

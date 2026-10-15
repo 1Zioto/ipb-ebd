@@ -52,8 +52,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // Se recebemos uma conferência online, buscar os lançamentos do servidor
     if (_currentColeta != null && !ApiService.instance.isOffline) {
       try {
-        final details = await ApiService.instance.getConferenciaDetails(_currentColeta!.id);
-        if (details['entries'] != null && details['entries'] is List<EnvelopeEntry>) {
+        final details = await ApiService.instance.getConferenciaDetails(
+          _currentColeta!.id,
+        );
+        if (details['entries'] != null &&
+            details['entries'] is List<EnvelopeEntry>) {
           setState(() {
             _entries = details['entries'] as List<EnvelopeEntry>;
             if (details['coleta'] != null) {
@@ -135,11 +138,19 @@ class _HomeScreenState extends State<HomeScreen> {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text('Envelope Já Lançado'),
-                content: Text('Este envelope já foi lançado nesta conferência. Deseja adicionar mesmo assim?'),
+                content: Text(
+                  'Este envelope já foi lançado nesta conferência. Deseja adicionar mesmo assim?',
+                ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: const Text('Cancelar'),
+                  ),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF047857), foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF047857),
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: () => Navigator.of(ctx).pop(true),
                     child: const Text('Lançar Mesmo Assim'),
                   ),
@@ -147,16 +158,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
             if (force == true) {
-              final forcedEntry = await ApiService.instance.addEnvelopeLancamento(
-                _currentColeta!.id,
-                personId: entry.personId,
-                amount: entry.valor,
-                forma: entry.forma,
-                envelopeNumber: entry.envelopeNumber,
-                membro: entry.membro,
-                destinacao: entry.destinacao,
-                force: true,
-              );
+              final forcedEntry = await ApiService.instance
+                  .addEnvelopeLancamento(
+                    _currentColeta!.id,
+                    personId: entry.personId,
+                    amount: entry.valor,
+                    forma: entry.forma,
+                    envelopeNumber: entry.envelopeNumber,
+                    membro: entry.membro,
+                    destinacao: entry.destinacao,
+                    force: true,
+                  );
               setState(() {
                 _entries.insert(0, forcedEntry);
               });
@@ -180,20 +192,30 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Remover entrada?'),
-        content: const Text('Deseja realmente remover este envelope da conferência?'),
+        content: const Text(
+          'Deseja realmente remover este envelope da conferência?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               Navigator.of(ctx).pop();
               final intId = int.tryParse(id);
-              if (_currentColeta != null && intId != null && !ApiService.instance.isOffline) {
+              if (_currentColeta != null &&
+                  intId != null &&
+                  !ApiService.instance.isOffline) {
                 try {
-                  await ApiService.instance.deleteEnvelopeLancamento(_currentColeta!.id, intId);
+                  await ApiService.instance.deleteEnvelopeLancamento(
+                    _currentColeta!.id,
+                    intId,
+                  );
                 } catch (_) {}
               }
               setState(() {
@@ -213,28 +235,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-
   void _handleResetSession() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Iniciar nova sessão?'),
-        content: const Text('Todos os lançamentos e contagens serão limpos para uma nova conferência.'),
+        content: const Text(
+          'Todos os lançamentos e contagens serão limpos para uma nova conferência.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Navigator.of(ctx).pop();
-              setState(() {
-                _entries.clear();
-                _cashCounts.forEach((k, _) => _cashCounts[k] = 0);
-              });
-              _saveState();
+              _clearSession();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Nova sessão iniciada.')),
               );
@@ -246,7 +267,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
+  void _clearSession() {
+    setState(() {
+      _entries.clear();
+      _cashCounts.forEach((k, _) => _cashCounts[k] = 0);
+    });
+    _saveState();
+  }
 
   double get totalGeral => _entries.fold(0.0, (sum, e) => sum + e.valor);
 
@@ -273,7 +300,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 28,
                 height: 28,
                 fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(Icons.church, color: Color(0xFF047857), size: 24),
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.church,
+                  color: Color(0xFF047857),
+                  size: 24,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -282,11 +313,19 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Text(
                   'IPB • Conferência',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF065F46)),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF065F46),
+                  ),
                 ),
                 Text(
                   userName,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ],
             ),
@@ -303,7 +342,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.qr_code_2, color: Color(0xFF047857), size: 26),
+            icon: const Icon(
+              Icons.qr_code_2,
+              color: Color(0xFF047857),
+              size: 26,
+            ),
           ),
         ],
       ),
@@ -323,7 +366,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Text(
                         'TOTAL APURADO',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                       Text(
                         'R\$ ${totalGeral.toStringAsFixed(2).replaceAll('.', ',')}',
@@ -365,6 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   entries: _entries,
                   cashCounts: const {},
                   onResetSession: _handleResetSession,
+                  onClearSession: _clearSession,
                   coleta: _currentColeta,
                   onColetaUpdated: (updated) {
                     setState(() => _currentColeta = updated);
@@ -415,11 +463,19 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             value,
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: color ?? const Color(0xFF0F172A)),
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+              color: color ?? const Color(0xFF0F172A),
+            ),
           ),
           Text(
             label,
-            style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+            style: const TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF64748B),
+            ),
           ),
         ],
       ),

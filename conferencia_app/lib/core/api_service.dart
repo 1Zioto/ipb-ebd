@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
@@ -12,13 +13,61 @@ class ApiService {
   static const _tokenKey = 'ipb_auth_token';
   static const _userKey = 'ipb_current_user';
   static const _membersCacheKey = 'ipb_members_cache';
+  static const _offlineQueueKey = 'ipb_offline_coleta_queue_v1';
+  static const _deviceIdKey = 'ipb_offline_device_id_v1';
 
   String? _token;
   UserModel? _currentUser;
+  Map<String, bool> _screenToggles = {};
 
   UserModel? get currentUser => _currentUser;
   bool get isAuthenticated => _token != null;
   bool get isOffline => _currentUser?.isOffline ?? false;
+  Map<String, bool> get screenToggles => _screenToggles;
+
+  bool isScreenEnabled(String screenKey) {
+    return _screenToggles[screenKey] ?? true;
+  }
+
+  Future<void> fetchScreenConfigs() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/screen-configs'),
+        headers: {
+          'Accept': 'application/json',
+          if (_token != null) 'Authorization': 'Bearer $_token',
+        },
+      ).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        final togglesRaw = data['toggles'];
+        if (togglesRaw is Map) {
+          final instId = _currentUser?.institutionId ?? 5;
+          dynamic churchToggles = togglesRaw[instId.toString()] ?? togglesRaw[instId] ?? togglesRaw['5'];
+          if (churchToggles == null && togglesRaw.isNotEmpty) {
+            churchToggles = togglesRaw.values.first;
+          }
+          if (churchToggles is Map) {
+            _screenToggles = churchToggles.map(
+              (k, v) => MapEntry(k.toString(), v == true),
+            );
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('ipb_screen_toggles_cache', jsonEncode(_screenToggles));
+          }
+        }
+      }
+    } catch (_) {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('ipb_screen_toggles_cache');
+      if (cached != null) {
+        try {
+          final decoded = jsonDecode(cached) as Map<String, dynamic>;
+          _screenToggles = decoded.map((k, v) => MapEntry(k, v == true));
+        } catch (_) {}
+      }
+    }
+  }
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -29,6 +78,15 @@ class ApiService {
         _currentUser = UserModel.fromJson(jsonDecode(userJson));
       } catch (_) {}
     }
+    final cachedToggles = prefs.getString('ipb_screen_toggles_cache');
+    if (cachedToggles != null) {
+      try {
+        final decoded = jsonDecode(cachedToggles) as Map<String, dynamic>;
+        _screenToggles = decoded.map((k, v) => MapEntry(k, v == true));
+      } catch (_) {}
+    }
+    // Sincroniza em background
+    fetchScreenConfigs();
   }
 
   Future<UserModel> login(String username, String password) async {
@@ -39,26 +97,33 @@ class ApiService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: jsonEncode({
-          'username': username.trim(),
-          'password': password,
-        }),
+        body: jsonEncode({'username': username.trim(), 'password': password}),
       );
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         _token = data['token'] ?? data['access_token'];
-        final userData = data['user'] ?? {'name': username, 'role': 'Oficial / Membro'};
+        final userData =
+            data['user'] ?? {'name': username, 'role': 'Oficial / Membro'};
         _currentUser = UserModel.fromJson(userData);
 
         final prefs = await SharedPreferences.getInstance();
         if (_token != null) await prefs.setString(_tokenKey, _token!);
         await prefs.setString(_userKey, jsonEncode(_currentUser!.toJson()));
 
+        // A successful online login is a safe opportunity to retry immutable
+        // mobile lots. Retries are idempotent on the API by operation id.
+        try {
+          await submitPendingOfflineColetas();
+          await refreshOfflineColetaStatuses();
+        } catch (_) {}
+
         return _currentUser!;
       } else {
-        throw ApiException(data['message']?.toString() ?? 'Credenciais inválidas.');
+        throw ApiException(
+          data['message']?.toString() ?? 'Credenciais inválidas.',
+        );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -103,14 +168,28 @@ class ApiService {
 
         if (res.statusCode == 200) {
           final body = jsonDecode(res.body);
-          final listData = body['data'] is List ? body['data'] : (body is List ? body : []);
+          final listData = body['data'] is List
+              ? body['data']
+              : (body is List ? body : []);
           final members = (listData as List)
               .map((item) => MemberModel.fromJson(item))
               .toList();
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(
-              _membersCacheKey, jsonEncode(members.map((m) => {'id': m.id, 'full_name': m.fullName, 'envelope_number': m.envelopeNumber}).toList()));
+            _membersCacheKey,
+            jsonEncode(
+              members
+                  .map(
+                    (m) => {
+                      'id': m.id,
+                      'full_name': m.fullName,
+                      'envelope_number': m.envelopeNumber,
+                    },
+                  )
+                  .toList(),
+            ),
+          );
 
           return members;
         }
@@ -129,18 +208,37 @@ class ApiService {
 
     // Fallback padrão se não tiver nada
     return const [
-      MemberModel(id: 1, fullName: 'Carlos Eduardo Silva', envelopeNumber: '101'),
-      MemberModel(id: 2, fullName: 'Marcos Vinícius Barbosa', envelopeNumber: '102'),
-      MemberModel(id: 3, fullName: 'Roberto Santos Lima', envelopeNumber: '103'),
+      MemberModel(
+        id: 1,
+        fullName: 'Carlos Eduardo Silva',
+        envelopeNumber: '101',
+      ),
+      MemberModel(
+        id: 2,
+        fullName: 'Marcos Vinícius Barbosa',
+        envelopeNumber: '102',
+      ),
+      MemberModel(
+        id: 3,
+        fullName: 'Roberto Santos Lima',
+        envelopeNumber: '103',
+      ),
       MemberModel(id: 4, fullName: 'Ana Beatriz Rocha', envelopeNumber: '104'),
-      MemberModel(id: 5, fullName: 'Lucas Ferreira Costa', envelopeNumber: '105'),
+      MemberModel(
+        id: 5,
+        fullName: 'Lucas Ferreira Costa',
+        envelopeNumber: '105',
+      ),
       MemberModel(id: 6, fullName: 'Pr. Marcos Antônio', envelopeNumber: '001'),
     ];
   }
 
   // --- MÓDULO DE CONFERÊNCIAS DE DÍZIMOS E OFERTAS ---
 
-  Future<List<ColetaModel>> getConferencias({String? status, String? search}) async {
+  Future<List<ColetaModel>> getConferencias({
+    String? status,
+    String? search,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     const cacheKey = 'ipb_conferencias_list_cache';
 
@@ -161,7 +259,9 @@ class ApiService {
           queryParams['search'] = search.trim();
         }
 
-        final uri = Uri.parse('$baseUrl/dizimos/coletas').replace(queryParameters: queryParams);
+        final uri = Uri.parse(
+          '$baseUrl/dizimos/coletas',
+        ).replace(queryParameters: queryParams);
         final res = await http.get(
           uri,
           headers: {
@@ -172,8 +272,12 @@ class ApiService {
 
         if (res.statusCode == 200) {
           final body = jsonDecode(res.body);
-          final listData = body['data'] is List ? body['data'] : (body is List ? body : []);
-          final list = (listData as List).map((j) => ColetaModel.fromJson(j)).toList();
+          final listData = body['data'] is List
+              ? body['data']
+              : (body is List ? body : []);
+          final list = (listData as List)
+              .map((j) => ColetaModel.fromJson(j))
+              .toList();
 
           await prefs.setString(cacheKey, jsonEncode(listData));
           return list;
@@ -229,7 +333,9 @@ class ApiService {
         return ColetaModel.fromJson(data);
       } else {
         final err = jsonDecode(res.body);
-        throw ApiException(err['message']?.toString() ?? 'Falha ao criar conferência.');
+        throw ApiException(
+          err['message']?.toString() ?? 'Falha ao criar conferência.',
+        );
       }
     }
 
@@ -268,7 +374,9 @@ class ApiService {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
         final coleta = ColetaModel.fromJson(data);
-        final rawLanc = data['lancamentos'] is List ? data['lancamentos'] as List : [];
+        final rawLanc = data['lancamentos'] is List
+            ? data['lancamentos'] as List
+            : [];
         var entries = rawLanc.map((l) => EnvelopeEntry.fromJson(l)).toList();
 
         if (entries.isEmpty) {
@@ -276,18 +384,19 @@ class ApiService {
             final comp = await getComprovante(coletaId);
             if (comp['dizimos'] is Map && comp['dizimos']['itens'] is List) {
               final compItens = comp['dizimos']['itens'] as List;
-              entries = compItens.map((l) => EnvelopeEntry.fromJson(l)).toList();
+              entries = compItens
+                  .map((l) => EnvelopeEntry.fromJson(l))
+                  .toList();
             } else if (comp['lancamentos'] is List) {
               final compItens = comp['lancamentos'] as List;
-              entries = compItens.map((l) => EnvelopeEntry.fromJson(l)).toList();
+              entries = compItens
+                  .map((l) => EnvelopeEntry.fromJson(l))
+                  .toList();
             }
           } catch (_) {}
         }
 
-        return {
-          'coleta': coleta,
-          'entries': entries,
-        };
+        return {'coleta': coleta, 'entries': entries};
       }
     }
     return {};
@@ -325,9 +434,13 @@ class ApiService {
 
       final data = jsonDecode(res.body);
       if (res.statusCode == 409) {
-        throw DuplicateEntryException(data['message']?.toString() ?? 'Envelope já registrado.');
+        throw DuplicateEntryException(
+          data['message']?.toString() ?? 'Envelope já registrado.',
+        );
       } else if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw ApiException(data['message']?.toString() ?? 'Erro ao adicionar envelope.');
+        throw ApiException(
+          data['message']?.toString() ?? 'Erro ao adicionar envelope.',
+        );
       }
 
       return EnvelopeEntry.fromJson(data['lancamento']);
@@ -346,10 +459,16 @@ class ApiService {
     );
   }
 
-  Future<void> deleteEnvelopeLancamento(int coletaId, int lancamentoId, {String? reason}) async {
+  Future<void> deleteEnvelopeLancamento(
+    int coletaId,
+    int lancamentoId, {
+    String? reason,
+  }) async {
     if (_token != null && !isOffline) {
       final res = await http.delete(
-        Uri.parse('$baseUrl/dizimos/coletas/$coletaId/lancamentos/$lancamentoId'),
+        Uri.parse(
+          '$baseUrl/dizimos/coletas/$coletaId/lancamentos/$lancamentoId',
+        ),
         headers: {
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
@@ -360,7 +479,9 @@ class ApiService {
 
       if (res.statusCode >= 300) {
         final err = jsonDecode(res.body);
-        throw ApiException(err['message']?.toString() ?? 'Falha ao excluir lançamento.');
+        throw ApiException(
+          err['message']?.toString() ?? 'Falha ao excluir lançamento.',
+        );
       }
     }
   }
@@ -388,7 +509,9 @@ class ApiService {
 
       if (res.statusCode >= 300) {
         final err = jsonDecode(res.body);
-        throw ApiException(err['message']?.toString() ?? 'Falha ao salvar ofertas avulsas.');
+        throw ApiException(
+          err['message']?.toString() ?? 'Falha ao salvar ofertas avulsas.',
+        );
       }
     }
   }
@@ -416,26 +539,230 @@ class ApiService {
 
       final data = jsonDecode(res.body);
       if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw ApiException(data['message']?.toString() ?? 'Falha ao encerrar conferência.');
+        throw ApiException(
+          data['message']?.toString() ?? 'Falha ao encerrar conferência.',
+        );
       }
 
       return data;
     }
 
-    return {
-      'message': 'Conferência encerrada localmente (modo offline).',
-    };
+    throw const ApiException(
+      'Uma conferência offline não pode ser encerrada no dispositivo. Envie o lote para análise e aguarde aprovação.',
+    );
   }
 
-  Future<Map<String, dynamic>> getComprovante(int coletaId, {bool reimprimir = false}) async {
+  Future<String> deviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_deviceIdKey);
+    if (existing != null && existing.isNotEmpty) return existing;
+
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    final id =
+        '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+    await prefs.setString(_deviceIdKey, id);
+    return id;
+  }
+
+  Future<List<OfflineColetaQueueItem>> getOfflineColetaQueue() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_offlineQueueKey);
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final items = jsonDecode(raw) as List;
+      return items
+          .whereType<Map>()
+          .map(
+            (item) => OfflineColetaQueueItem.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList();
+    } catch (_) {
+      // Do not discard an unreadable audit queue automatically. A later
+      // version or support process can still recover the preferences value.
+      return const [];
+    }
+  }
+
+  Future<void> _saveOfflineColetaQueue(
+    List<OfflineColetaQueueItem> queue,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _offlineQueueKey,
+      jsonEncode(queue.map((item) => item.toJson()).toList()),
+    );
+  }
+
+  Future<OfflineColetaQueueItem> enqueueOfflineColeta({
+    required List<EnvelopeEntry> entries,
+    required String date,
+    required String serviceMeeting,
+    String? description,
+    String? notes,
+    double ofertaDinheiro = 0,
+    double ofertaPix = 0,
+    double ofertaTransferencia = 0,
+  }) async {
+    if (entries.isEmpty) {
+      throw const ApiException(
+        'Inclua ao menos um lançamento antes de enviar a conferência para análise.',
+      );
+    }
+
+    final capturedAt = DateTime.now().toUtc().toIso8601String();
+    final item = OfflineColetaQueueItem(
+      operationId: await _newUuid(),
+      deviceId: await deviceId(),
+      capturedAt: capturedAt,
+      coleta: {
+        'date': date,
+        'service_meeting': serviceMeeting,
+        'description': description,
+        'notes': notes,
+        'oferta_dinheiro': ofertaDinheiro,
+        'oferta_pix': ofertaPix,
+        'oferta_transferencia': ofertaTransferencia,
+      },
+      // Copy the list immediately so subsequent screen changes cannot alter
+      // the auditable batch that was captured at this point in time.
+      entries: List<EnvelopeEntry>.unmodifiable(entries),
+      status: 'pending_upload',
+    );
+
+    final queue = await getOfflineColetaQueue();
+    await _saveOfflineColetaQueue([...queue, item]);
+    return item;
+  }
+
+  Future<List<OfflineColetaQueueItem>> submitPendingOfflineColetas() async {
+    if (_token == null || isOffline) return getOfflineColetaQueue();
+
+    var queue = await getOfflineColetaQueue();
+    var changed = false;
+    for (var index = 0; index < queue.length; index++) {
+      final item = queue[index];
+      if (!item.awaitsUpload) continue;
+
+      try {
+        final response = await http.post(
+          Uri.parse('$baseUrl/dizimos/offline-syncs'),
+          headers: {
+            'Authorization': 'Bearer $_token',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode(item.toServerPayload()),
+        );
+        final body = response.body.isEmpty
+            ? <String, dynamic>{}
+            : jsonDecode(response.body) as Map<String, dynamic>;
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          queue[index] = item.copyWith(attempts: item.attempts + 1);
+          changed = true;
+          continue;
+        }
+
+        final server = Map<String, dynamic>.from(
+          body['data'] as Map? ?? const {},
+        );
+        queue[index] = item.copyWith(
+          status: server['status']?.toString() ?? 'pending_review',
+          serverId: server['id'] == null ? null : asInt(server['id']),
+          reviewNotes: server['review_notes']?.toString(),
+          attempts: item.attempts + 1,
+        );
+        changed = true;
+      } catch (_) {
+        queue[index] = item.copyWith(attempts: item.attempts + 1);
+        changed = true;
+      }
+    }
+    if (changed) await _saveOfflineColetaQueue(queue);
+    return queue;
+  }
+
+  Future<List<OfflineColetaQueueItem>> refreshOfflineColetaStatuses() async {
+    if (_token == null || isOffline) return getOfflineColetaQueue();
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/dizimos/offline-syncs?per_page=100'),
+      headers: {
+        'Authorization': 'Bearer $_token',
+        'Accept': 'application/json',
+      },
+    );
+    if (response.statusCode != 200) return getOfflineColetaQueue();
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final raw = body['data'] is List ? body['data'] as List : const [];
+    final serverByOperation = <String, Map<String, dynamic>>{};
+    for (final value in raw.whereType<Map>()) {
+      final server = Map<String, dynamic>.from(value);
+      final operationId = server['client_operation_id']?.toString();
+      if (operationId != null) serverByOperation[operationId] = server;
+    }
+
+    final queue = await getOfflineColetaQueue();
+    var changed = false;
+    final refreshed = queue.map((item) {
+      final server = serverByOperation[item.operationId];
+      if (server == null) return item;
+      changed = true;
+      return item.copyWith(
+        status: server['status']?.toString() ?? item.status,
+        serverId: server['id'] == null ? item.serverId : asInt(server['id']),
+        reviewNotes: server['review_notes']?.toString(),
+      );
+    }).toList();
+    if (changed) await _saveOfflineColetaQueue(refreshed);
+    return refreshed;
+  }
+
+  Future<String> _newUuid() async {
+    // UUID v4 generated locally so the same operation id survives all retry
+    // attempts, even when the first HTTP response was lost.
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+  }
+
+  Future<Map<String, dynamic>> getComprovante(
+    int coletaId, {
+    bool reimprimir = false,
+  }) async {
     if (_token != null && !isOffline) {
       final endpoint = reimprimir
           ? '$baseUrl/dizimos/coletas/$coletaId/reimprimir'
           : '$baseUrl/dizimos/coletas/$coletaId/comprovante';
 
       final res = reimprimir
-          ? await http.post(Uri.parse(endpoint), headers: {'Authorization': 'Bearer $_token', 'Accept': 'application/json'})
-          : await http.get(Uri.parse(endpoint), headers: {'Authorization': 'Bearer $_token', 'Accept': 'application/json'});
+          ? await http.post(
+              Uri.parse(endpoint),
+              headers: {
+                'Authorization': 'Bearer $_token',
+                'Accept': 'application/json',
+              },
+            )
+          : await http.get(
+              Uri.parse(endpoint),
+              headers: {
+                'Authorization': 'Bearer $_token',
+                'Accept': 'application/json',
+              },
+            );
 
       if (res.statusCode == 200) {
         return jsonDecode(res.body) as Map<String, dynamic>;
@@ -452,71 +779,21 @@ class ApiService {
     required String conferente2,
     required String culto,
   }) async {
-    if (_token == null || isOffline) {
-      throw ApiException('Conecte-se com sua conta online para enviar à API.');
-    }
-
     final today = DateTime.now().toIso8601String().split('T')[0];
-
-    // 1. Criar coleta
-    final resColeta = await http.post(
-      Uri.parse('$baseUrl/dizimos/coletas'),
-      headers: {
-        'Authorization': 'Bearer $_token',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
-        'date': today,
-        'service_meeting': culto,
-        'description': 'Conferência Móvel IPB ($conferente1 e $conferente2)',
-        'notes': 'Batimento: Físico R\$ ${totalFisico.toStringAsFixed(2)} | Oferta Solta R\$ ${diferencaDinheiro.toStringAsFixed(2)}',
-      }),
+    final queued = await enqueueOfflineColeta(
+      entries: entries,
+      date: today,
+      serviceMeeting: culto,
+      description: 'Conferência Móvel IPB ($conferente1 e $conferente2)',
+      notes:
+          'Batimento: Físico R\$ ${totalFisico.toStringAsFixed(2)} | Oferta Solta R\$ ${diferencaDinheiro.toStringAsFixed(2)}',
+      ofertaDinheiro: diferencaDinheiro > 0 ? diferencaDinheiro : 0,
     );
-
-    if (resColeta.statusCode < 200 || resColeta.statusCode >= 300) {
-      throw ApiException('Falha ao abrir coleta na API: ${resColeta.body}');
-    }
-
-    final dataColeta = jsonDecode(resColeta.body);
-    final int coletaId = dataColeta['id'];
-
-    // 2. Lançar envelopes
-    for (final e in entries) {
-      await http.post(
-        Uri.parse('$baseUrl/dizimos/coletas/$coletaId/lancamentos'),
-        headers: {
-          'Authorization': 'Bearer $_token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'person_id': e.personId,
-          'amount': e.valor,
-          'contribution_type': e.destinacao,
-          'payment_method': e.forma,
-          'envelope_number': e.envelopeNumber,
-          'contribuinte_nome': e.membro,
-          'is_unidentified': e.personId == null,
-          'notes': '${e.membro} (${e.forma})',
-        }),
-      );
-    }
-
-    // 3. Fechar coleta
-    await http.post(
-      Uri.parse('$baseUrl/dizimos/coletas/$coletaId/fechar'),
-      headers: {
-        'Authorization': 'Bearer $_token',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
-        'oferta_dinheiro': diferencaDinheiro > 0 ? diferencaDinheiro : 0,
-      }),
-    );
-
-    return coletaId;
+    final queue = await submitPendingOfflineColetas();
+    final synced = queue
+        .where((item) => item.operationId == queued.operationId)
+        .first;
+    return synced.serverId ?? -1;
   }
 }
 
@@ -535,4 +812,3 @@ class ApiException implements Exception {
   @override
   String toString() => message;
 }
-

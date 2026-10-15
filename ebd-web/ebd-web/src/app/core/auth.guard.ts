@@ -19,6 +19,15 @@ export const permissionGuard = (permission: string): CanActivateFn => () => {
   return false;
 };
 
+/** Grants a shared area when the current user has at least one listed role capability. */
+export const permissionAnyGuard = (...permissions: string[]): CanActivateFn => () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (permissions.some((permission) => auth.can(permission))) return true;
+  router.navigate(['/acesso-negado']);
+  return false;
+};
+
 /**
  * Guarda de rota que verifica se uma tela/módulo está habilitado pelo Super Admin
  * para a igreja ativa. Super Admins têm permissão de auditoria direta.

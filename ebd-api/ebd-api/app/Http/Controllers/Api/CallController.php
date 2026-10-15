@@ -19,17 +19,14 @@ class CallController extends Controller
     /** Professor só acessa chamadas de classes às quais está vinculado. */
     private function authorizeClass(Request $request, AttendanceSession $session, string $perm): void
     {
-        if (! $request->user()->hasPermission($perm)) abort(403);
+        if (! $request->user()->hasPermission($perm)) {
+            abort(403);
+        }
 
         $u = $request->user();
-        if ($u->isProgrammer() || $u->hasPermission('call.edit') && $u->hasRole('superintendencia')) {
-            return;
-        }
-        if ($u->hasRole('professor') && ! $u->hasPermission('event.manage')) {
-            $ids = $u->teachingClassIds();
-            if (! in_array($session->class_id, $ids, true)) {
-                abort(403, 'Você não está vinculado a esta classe.');
-            }
+        $session->loadMissing('classRoom');
+        if (! $session->classRoom || ! $u->canAccessClass($session->classRoom)) {
+            abort(403, 'Você não está vinculado a esta classe.');
         }
     }
 
@@ -75,6 +72,7 @@ class CallController extends Controller
 
         Audit::log('call.opened', 'attendance_session', $session->id);
         $session->refresh();
+
         return $this->records($request, $session);
     }
 
@@ -109,6 +107,7 @@ class CallController extends Controller
         });
 
         Audit::log('call.attendance_saved', 'attendance_session', $session->id, null, ['count' => count($data['records'])]);
+
         return $this->records($request, $session);
     }
 
@@ -133,6 +132,7 @@ class CallController extends Controller
             'updated_by' => $request->user()->id,
         ]);
         Audit::log('call.teacher_set', 'attendance_session', $session->id, $old, $session->only(['teacher_person_id', 'teacher_name_snapshot']));
+
         return new SessionResource($session);
     }
 
@@ -157,6 +157,7 @@ class CallController extends Controller
         }
         $session->update($update);
         Audit::log('call.materials_set', 'attendance_session', $session->id, null, $update);
+
         return new SessionResource($session);
     }
 
@@ -185,6 +186,7 @@ class CallController extends Controller
         $session->save();
 
         Audit::log('call.finalized', 'attendance_session', $session->id, null, $this->summary($session));
+
         return response()->json([
             'session' => new SessionResource($session),
             'summary' => $this->summary($session),
@@ -194,12 +196,15 @@ class CallController extends Controller
     /** Reabre chamada finalizada (RN-15) — exige call.reopen. */
     public function reopen(Request $request, AttendanceSession $session)
     {
-        if (! $request->user()->hasPermission('call.reopen')) abort(403);
+        if (! $request->user()->hasPermission('call.reopen')) {
+            abort(403);
+        }
         if ($session->status !== 'finalizada') {
             return response()->json(['message' => 'A chamada não está finalizada.'], 422);
         }
         $session->update(['status' => 'em_andamento', 'updated_by' => $request->user()->id]);
         Audit::log('call.reopened', 'attendance_session', $session->id);
+
         return new SessionResource($session);
     }
 
@@ -207,6 +212,7 @@ class CallController extends Controller
     {
         $present = AttendanceRecord::where('attendance_session_id', $session->id)->where('present', true)->count();
         $total = AttendanceRecord::where('attendance_session_id', $session->id)->count();
+
         return [
             'present' => $present,
             'absent' => $total - $present,

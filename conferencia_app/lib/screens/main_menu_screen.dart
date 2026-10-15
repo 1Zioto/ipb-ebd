@@ -32,6 +32,13 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   void initState() {
     super.initState();
     _loadMembers();
+    _syncScreens();
+  }
+
+  Future<void> _syncScreens() async {
+    await ApiService.instance.fetchScreenConfigs();
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> _loadMembers() async {
@@ -189,7 +196,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: ListView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.wait([
+            _loadMembers(),
+            _syncScreens(),
+          ]);
+        },
+        child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         children: [
           // 1. CARD DE SAUDAÇÃO & PERFIL (Material You Style)
@@ -366,60 +380,68 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
               children: [
-                _buildKpiCard(
-                  label: 'ÚLTIMO CULTO',
-                  value: 'R\$ 6.040',
-                  subtext: '100% Conciliado • 38 env.',
-                  icon: Icons.payments_rounded,
-                  color: const Color(0xFF047857),
-                  lightColor: const Color(0xFFECFDF5),
-                  onTap: () => _openConferencia(initialTab: 2),
-                ),
-                const SizedBox(width: 10),
-                _buildKpiCard(
-                  label: 'EBD DOMINGO',
-                  value: '142',
-                  valueExtra: '(88%)',
-                  subtext: '8 classes • 12 novos',
-                  icon: Icons.menu_book_rounded,
-                  color: const Color(0xFF2563EB),
-                  lightColor: const Color(0xFFEFF6FF),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(width: 10),
-                _buildKpiCard(
-                  label: 'ROL MEMBROS',
-                  value: '${_members.isNotEmpty ? _members.length : 342}',
-                  valueExtra: 'ativos',
-                  subtext: 'Rol de Membros Atualizado',
-                  icon: Icons.people_alt_rounded,
-                  color: const Color(0xFF7C3AED),
-                  lightColor: const Color(0xFFF5F3FF),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PessoasScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(width: 10),
-                _buildKpiCard(
-                  label: 'META DO MÊS',
-                  value: '88%',
-                  valueExtra: 'R\$ 24,8k',
-                  subtext: 'Meta: R\$ 28.000 / mês',
-                  icon: Icons.trending_up_rounded,
-                  color: const Color(0xFFD97706),
-                  lightColor: const Color(0xFFFFFBEB),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
-                    );
-                  },
-                ),
+                if (ApiService.instance.isScreenEnabled('dizimos')) ...[
+                  _buildKpiCard(
+                    label: 'ÚLTIMO CULTO',
+                    value: 'R\$ 6.040',
+                    subtext: '100% Conciliado • 38 env.',
+                    icon: Icons.payments_rounded,
+                    color: const Color(0xFF047857),
+                    lightColor: const Color(0xFFECFDF5),
+                    onTap: () => _openConferencia(initialTab: 2),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                if (ApiService.instance.isScreenEnabled('classes') || ApiService.instance.isScreenEnabled('relatorios_ebd')) ...[
+                  _buildKpiCard(
+                    label: 'EBD DOMINGO',
+                    value: '142',
+                    valueExtra: '(88%)',
+                    subtext: '8 classes • 12 novos',
+                    icon: Icons.menu_book_rounded,
+                    color: const Color(0xFF2563EB),
+                    lightColor: const Color(0xFFEFF6FF),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                if (ApiService.instance.isScreenEnabled('pessoas') || ApiService.instance.isScreenEnabled('membros')) ...[
+                  _buildKpiCard(
+                    label: 'ROL MEMBROS',
+                    value: '${_members.isNotEmpty ? _members.length : 342}',
+                    valueExtra: 'ativos',
+                    subtext: 'Rol de Membros Atualizado',
+                    icon: Icons.people_alt_rounded,
+                    color: const Color(0xFF7C3AED),
+                    lightColor: const Color(0xFFF5F3FF),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PessoasScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                if (ApiService.instance.isScreenEnabled('financeiro')) ...[
+                  _buildKpiCard(
+                    label: 'META DO MÊS',
+                    value: '88%',
+                    valueExtra: 'R\$ 24,8k',
+                    subtext: 'Meta: R\$ 28.000 / mês',
+                    icon: Icons.trending_up_rounded,
+                    color: const Color(0xFFD97706),
+                    lightColor: const Color(0xFFFFFBEB),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
           ),
@@ -432,58 +454,612 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
               children: [
-                _buildQuickActionPill(
-                  label: '+ Envelope',
-                  icon: Icons.add_circle_outline_rounded,
-                  iconColor: const Color(0xFF047857),
+                if (ApiService.instance.isScreenEnabled('dizimos')) ...[
+                  _buildQuickActionPill(
+                    label: '+ Envelope',
+                    icon: Icons.add_circle_outline_rounded,
+                    iconColor: const Color(0xFF047857),
+                    onTap: () => _openConferencia(initialTab: 0),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildQuickActionPill(
+                    label: 'Contar Cédulas',
+                    icon: Icons.pin_outlined,
+                    iconColor: const Color(0xFF047857),
+                    onTap: () => _openConferencia(initialTab: 1),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (ApiService.instance.isScreenEnabled('classes')) ...[
+                  _buildQuickActionPill(
+                    label: 'Chamada EBD',
+                    icon: Icons.assignment_turned_in_outlined,
+                    iconColor: const Color(0xFF2563EB),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ClassesListScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (ApiService.instance.isScreenEnabled('membros') || ApiService.instance.isScreenEnabled('pessoas')) ...[
+                  _buildQuickActionPill(
+                    label: 'Etiquetas QR',
+                    icon: Icons.qr_code_2_rounded,
+                    iconColor: const Color(0xFF047857),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EtiquetasMembrosScreen(members: _members),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (ApiService.instance.isScreenEnabled('boletim')) ...[
+                  _buildQuickActionPill(
+                    label: 'Boletim',
+                    icon: Icons.newspaper_rounded,
+                    iconColor: const Color(0xFF2563EB),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const BoletimScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (ApiService.instance.isScreenEnabled('pessoas') || ApiService.instance.isScreenEnabled('membros')) ...[
+                  _buildQuickActionPill(
+                    label: 'Buscar Membro',
+                    icon: Icons.search_rounded,
+                    iconColor: const Color(0xFF7C3AED),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PessoasScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 5. HERO CARD EM DESTAQUE: CONFERÊNCIA DO CULTO
+          if (ApiService.instance.isScreenEnabled('dizimos')) ...[
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF047857), Color(0xFF065F46), Color(0xFF022C22)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF047857).withValues(alpha: 0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.stars_rounded, color: Color(0xFFFDE68A), size: 14),
+                            SizedBox(width: 5),
+                            Text(
+                              'CULTO & DIACONIA',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Conferência de Dízimos & Ofertas',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Lançamento ágil de envelopes lacrados, contagem por cédulas e fechamento com impressão de comprovante.',
+                    style: TextStyle(
+                      color: Color(0xFFD1FAE5),
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF047857),
+                            elevation: 2,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () => _openConferencia(initialTab: 0),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                          label: const Text(
+                            'Abrir Conferência',
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white54),
+                          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () => _openConferencia(initialTab: 1),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.calculate_outlined, size: 18),
+                            SizedBox(width: 6),
+                            Text('Cédulas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // 6. CARD DE ARRECADAÇÃO & DISTRIBUIÇÃO DO MÊS
+          if (ApiService.instance.isScreenEnabled('financeiro') || ApiService.instance.isScreenEnabled('dizimos')) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.pie_chart_rounded, size: 16, color: Color(0xFF047857)),
+                          SizedBox(width: 6),
+                          Text(
+                            'ARRECADAÇÃO DO MÊS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF047857),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Ver Livro Caixa',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+                              SizedBox(width: 2),
+                              Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF2563EB)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        'R\$ 24.850,00',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'acumulado (88% da meta)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Barra segmentada de progresso
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: SizedBox(
+                      height: 8,
+                      child: Row(
+                        children: [
+                          Expanded(flex: 75, child: Container(color: const Color(0xFF047857))),
+                          const SizedBox(width: 2),
+                          Expanded(flex: 18, child: Container(color: const Color(0xFF2563EB))),
+                          const SizedBox(width: 2),
+                          Expanded(flex: 7, child: Container(color: const Color(0xFF7C3AED))),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Legenda da distribuição
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildFinanceLegend(
+                        color: const Color(0xFF047857),
+                        label: 'Dízimos (75%)',
+                        value: 'R\$ 18.630',
+                      ),
+                      _buildFinanceLegend(
+                        color: const Color(0xFF2563EB),
+                        label: 'Ofertas (18%)',
+                        value: 'R\$ 4.480',
+                      ),
+                      _buildFinanceLegend(
+                        color: const Color(0xFF7C3AED),
+                        label: 'Missões (7%)',
+                        value: 'R\$ 1.740',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // 7. CARD DE AGENDA & DIACONIA DE PLANTÃO
+          if (ApiService.instance.isScreenEnabled('calendario') || ApiService.instance.isScreenEnabled('escalas')) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF2563EB)),
+                                SizedBox(width: 6),
+                                Text(
+                                  'PRÓXIMO CULTO & ESCALA',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF2563EB),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
+                                );
+                              },
+                              child: const Row(
+                                children: [
+                                  Text(
+                                    'Ver Escalas',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                  ),
+                                  SizedBox(width: 2),
+                                  Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF2563EB)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                              ),
+                              child: const Column(
+                                children: [
+                                  Text(
+                                    'DOM',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF1D4ED8),
+                                    ),
+                                  ),
+                                  Text(
+                                    '19:00',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF1E40AF),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Culto Solene de Adoração',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Plantão Diaconal: Carlos Eduardo & Marcos Paulo',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.cake_rounded, size: 14, color: Color(0xFFD97706)),
+                            const SizedBox(width: 6),
+                            const Expanded(
+                              child: Text(
+                                'Aniversariantes da semana: Alice Costa (Hoje! 🎉) • Roberto Silva (Sex)',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF475569),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+          ],
+
+          // 3. CATEGORIA: DIACONIA & OPERAÇÃO
+          ...() {
+            final diaconiaCards = [
+              if (ApiService.instance.isScreenEnabled('dizimos'))
+                _MenuCardItem(
+                  title: 'Lançamento Envelopes',
+                  subtitle: 'Entrada por QR Code ou Membro',
+                  icon: Icons.mark_email_read_rounded,
+                  iconColor: const Color(0xFF059669),
+                  badge: 'Principal',
                   onTap: () => _openConferencia(initialTab: 0),
                 ),
-                const SizedBox(width: 8),
-                _buildQuickActionPill(
-                  label: 'Contar Cédulas',
-                  icon: Icons.pin_outlined,
-                  iconColor: const Color(0xFF047857),
+              if (ApiService.instance.isScreenEnabled('dizimos'))
+                _MenuCardItem(
+                  title: 'Contagem de Cédulas',
+                  subtitle: 'Totalizador de notas e moedas',
+                  icon: Icons.payments_rounded,
+                  iconColor: const Color(0xFF0D9488),
                   onTap: () => _openConferencia(initialTab: 1),
                 ),
-                const SizedBox(width: 8),
-                _buildQuickActionPill(
-                  label: 'Chamada EBD',
-                  icon: Icons.assignment_turned_in_outlined,
+              if (ApiService.instance.isScreenEnabled('dizimos'))
+                _MenuCardItem(
+                  title: 'Fechamento do Culto',
+                  subtitle: 'Batimento, conciliação e recibo',
+                  icon: Icons.verified_rounded,
+                  iconColor: const Color(0xFF10B981),
+                  onTap: () => _openConferencia(initialTab: 2),
+                ),
+              if (ApiService.instance.isScreenEnabled('membros') || ApiService.instance.isScreenEnabled('pessoas'))
+                _MenuCardItem(
+                  title: 'Etiquetas & QR Codes',
+                  subtitle: 'Gerar etiquetas dos dizimistas',
+                  icon: Icons.qr_code_2_rounded,
+                  iconColor: const Color(0xFF047857),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => EtiquetasMembrosScreen(members: _members)),
+                    );
+                  },
+                ),
+            ];
+
+            if (diaconiaCards.isEmpty) return <Widget>[];
+
+            return <Widget>[
+              _buildCategoryHeader('DIACONIA & CULTO', Icons.volunteer_activism_rounded, const Color(0xFF047857)),
+              const SizedBox(height: 10),
+              _buildCardsGrid(diaconiaCards),
+              const SizedBox(height: 22),
+            ];
+          }(),
+
+          // 4. CATEGORIA: EDUCAÇÃO CRISTÃ (EBD)
+          ...() {
+            final ebdCards = [
+              if (ApiService.instance.isScreenEnabled('classes') || ApiService.instance.isScreenEnabled('relatorios_ebd'))
+                _MenuCardItem(
+                  title: 'Painel da EBD',
+                  subtitle: 'Visão de presenças e métricas',
+                  icon: Icons.dashboard_customize_rounded,
                   iconColor: const Color(0xFF2563EB),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('classes'))
+                _MenuCardItem(
+                  title: 'Classes & Chamada',
+                  subtitle: 'Diário de classe e frequência',
+                  icon: Icons.fact_check_rounded,
+                  iconColor: const Color(0xFF3B82F6),
+                  badge: 'Dominical',
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const ClassesListScreen()),
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _buildQuickActionPill(
-                  label: 'Etiquetas QR',
-                  icon: Icons.qr_code_2_rounded,
-                  iconColor: const Color(0xFF047857),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => EtiquetasMembrosScreen(members: _members),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                _buildQuickActionPill(
-                  label: 'Boletim',
+              if (ApiService.instance.isScreenEnabled('boletim'))
+                _MenuCardItem(
+                  title: 'Boletim Semanal',
+                  subtitle: 'Leitura e escala do domingo',
                   icon: Icons.newspaper_rounded,
-                  iconColor: const Color(0xFF2563EB),
+                  iconColor: const Color(0xFF60A5FA),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const BoletimScreen()),
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _buildQuickActionPill(
-                  label: 'Buscar Membro',
-                  icon: Icons.search_rounded,
+              if (ApiService.instance.isScreenEnabled('calendario') || ApiService.instance.isScreenEnabled('escalas'))
+                _MenuCardItem(
+                  title: 'Calendário & Escalas',
+                  subtitle: 'Professores, plantões e cultos',
+                  icon: Icons.calendar_month_rounded,
+                  iconColor: const Color(0xFF1D4ED8),
+                  badge: 'Escalas',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
+                    );
+                  },
+                ),
+            ];
+
+            if (ebdCards.isEmpty) return <Widget>[];
+
+            return <Widget>[
+              _buildCategoryHeader('ESCOLA BÍBLICA DOMINICAL (EBD)', Icons.school_rounded, const Color(0xFF2563EB)),
+              const SizedBox(height: 10),
+              _buildCardsGrid(ebdCards),
+              const SizedBox(height: 22),
+            ];
+          }(),
+
+          // 5. CATEGORIA: SECRETARIA & MEMBRESIA
+          ...() {
+            final secretariaCards = [
+              if (ApiService.instance.isScreenEnabled('pessoas'))
+                _MenuCardItem(
+                  title: 'Cadastro de Membros',
+                  subtitle: 'Ficha completa e consulta rápida',
+                  icon: Icons.people_alt_rounded,
                   iconColor: const Color(0xFF7C3AED),
                   onTap: () {
                     Navigator.of(context).push(
@@ -491,597 +1067,103 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     );
                   },
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
+              if (ApiService.instance.isScreenEnabled('membros'))
+                _MenuCardItem(
+                  title: 'Rol de Membros',
+                  subtitle: 'Comungantes e não-comungantes',
+                  icon: Icons.menu_book_rounded,
+                  iconColor: const Color(0xFF8B5CF6),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const RolCanonicoScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('instituicoes'))
+                _MenuCardItem(
+                  title: 'Estrutura & Igreja',
+                  subtitle: 'Presbitério, sínodo e congregações',
+                  icon: Icons.account_tree_rounded,
+                  iconColor: const Color(0xFFA78BFA),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const InstituicoesScreen()),
+                    );
+                  },
+                ),
+            ];
 
-          // 5. HERO CARD EM DESTAQUE: CONFERÊNCIA DO CULTO
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF047857), Color(0xFF065F46), Color(0xFF022C22)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF047857).withValues(alpha: 0.35),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.stars_rounded, color: Color(0xFFFDE68A), size: 14),
-                          SizedBox(width: 5),
-                          Text(
-                            'CULTO & DIACONIA',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Conferência de Dízimos & Ofertas',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Lançamento ágil de envelopes lacrados, contagem por cédulas e fechamento com impressão de comprovante.',
-                  style: TextStyle(
-                    color: Color(0xFFD1FAE5),
-                    fontSize: 12.5,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF047857),
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        onPressed: () => _openConferencia(initialTab: 0),
-                        icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                        label: const Text(
-                          'Abrir Conferência',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white54),
-                        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () => _openConferencia(initialTab: 1),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.calculate_outlined, size: 18),
-                          SizedBox(width: 6),
-                          Text('Cédulas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
+            if (secretariaCards.isEmpty) return <Widget>[];
 
-          // 6. CARD DE ARRECADAÇÃO & DISTRIBUIÇÃO DO MÊS
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.pie_chart_rounded, size: 16, color: Color(0xFF047857)),
-                        SizedBox(width: 6),
-                        Text(
-                          'ARRECADAÇÃO DO MÊS',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF047857),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Ver Livro Caixa',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF2563EB),
-                              ),
-                            ),
-                            SizedBox(width: 2),
-                            Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF2563EB)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      'R\$ 24.850,00',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'acumulado (88% da meta)',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // Barra segmentada de progresso
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: SizedBox(
-                    height: 8,
-                    child: Row(
-                      children: [
-                        Expanded(flex: 75, child: Container(color: const Color(0xFF047857))),
-                        const SizedBox(width: 2),
-                        Expanded(flex: 18, child: Container(color: const Color(0xFF2563EB))),
-                        const SizedBox(width: 2),
-                        Expanded(flex: 7, child: Container(color: const Color(0xFF7C3AED))),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Legenda da distribuição
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildFinanceLegend(
-                      color: const Color(0xFF047857),
-                      label: 'Dízimos (75%)',
-                      value: 'R\$ 18.630',
-                    ),
-                    _buildFinanceLegend(
-                      color: const Color(0xFF2563EB),
-                      label: 'Ofertas (18%)',
-                      value: 'R\$ 4.480',
-                    ),
-                    _buildFinanceLegend(
-                      color: const Color(0xFF7C3AED),
-                      label: 'Missões (7%)',
-                      value: 'R\$ 1.740',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 7. CARD DE AGENDA & DIACONIA DE PLANTÃO
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Row(
-                            children: [
-                              Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF2563EB)),
-                              SizedBox(width: 6),
-                              Text(
-                                'PRÓXIMO CULTO & ESCALA',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF2563EB),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
-                              );
-                            },
-                            child: const Row(
-                              children: [
-                                Text(
-                                  'Ver Escalas',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                ),
-                                SizedBox(width: 2),
-                                Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF2563EB)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFBFDBFE)),
-                            ),
-                            child: const Column(
-                              children: [
-                                Text(
-                                  'DOM',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFF1D4ED8),
-                                  ),
-                                ),
-                                Text(
-                                  '19:00',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFF1E40AF),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Culto Solene de Adoração',
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Plantão Diaconal: Carlos Eduardo & Marcos Paulo',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          const Icon(Icons.cake_rounded, size: 14, color: Color(0xFFD97706)),
-                          const SizedBox(width: 6),
-                          const Expanded(
-                            child: Text(
-                              'Aniversariantes da semana: Alice Costa (Hoje! 🎉) • Roberto Silva (Sex)',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF475569),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 22),
-
-          // 3. CATEGORIA: DIACONIA & OPERAÇÃO
-          _buildCategoryHeader('DIACONIA & CULTO', Icons.volunteer_activism_rounded, const Color(0xFF047857)),
-          const SizedBox(height: 10),
-          _buildCardsGrid([
-            _MenuCardItem(
-              title: 'Lançamento Envelopes',
-              subtitle: 'Entrada por QR Code ou Membro',
-              icon: Icons.mark_email_read_rounded,
-              iconColor: const Color(0xFF059669),
-              badge: 'Principal',
-              onTap: () => _openConferencia(initialTab: 0),
-            ),
-            _MenuCardItem(
-              title: 'Contagem de Cédulas',
-              subtitle: 'Totalizador de notas e moedas',
-              icon: Icons.payments_rounded,
-              iconColor: const Color(0xFF0D9488),
-              onTap: () => _openConferencia(initialTab: 1),
-            ),
-            _MenuCardItem(
-              title: 'Fechamento do Culto',
-              subtitle: 'Batimento, conciliação e recibo',
-              icon: Icons.verified_rounded,
-              iconColor: const Color(0xFF10B981),
-              onTap: () => _openConferencia(initialTab: 2),
-            ),
-            _MenuCardItem(
-              title: 'Etiquetas & QR Codes',
-              subtitle: 'Gerar etiquetas dos dizimistas',
-              icon: Icons.qr_code_2_rounded,
-              iconColor: const Color(0xFF047857),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => EtiquetasMembrosScreen(members: _members)),
-                );
-              },
-            ),
-          ]),
-          const SizedBox(height: 22),
-
-          // 4. CATEGORIA: EDUCAÇÃO CRISTÃ (EBD)
-          _buildCategoryHeader('ESCOLA BÍBLICA DOMINICAL (EBD)', Icons.school_rounded, const Color(0xFF2563EB)),
-          const SizedBox(height: 10),
-          _buildCardsGrid([
-            _MenuCardItem(
-              title: 'Painel da EBD',
-              subtitle: 'Visão de presenças e métricas',
-              icon: Icons.dashboard_customize_rounded,
-              iconColor: const Color(0xFF2563EB),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Classes & Chamada',
-              subtitle: 'Diário de classe e frequência',
-              icon: Icons.fact_check_rounded,
-              iconColor: const Color(0xFF3B82F6),
-              badge: 'Dominical',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ClassesListScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Boletim Semanal',
-              subtitle: 'Leitura e escala do domingo',
-              icon: Icons.newspaper_rounded,
-              iconColor: const Color(0xFF60A5FA),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const BoletimScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Calendário & Escalas',
-              subtitle: 'Professores, plantões e cultos',
-              icon: Icons.calendar_month_rounded,
-              iconColor: const Color(0xFF1D4ED8),
-              badge: 'Escalas',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
-                );
-              },
-            ),
-          ]),
-          const SizedBox(height: 22),
-
-          // 5. CATEGORIA: SECRETARIA & MEMBRESIA
-          _buildCategoryHeader('SECRETARIA ECLESIÁSTICA', Icons.folder_shared_rounded, const Color(0xFF7C3AED)),
-          const SizedBox(height: 10),
-          _buildCardsGrid([
-            _MenuCardItem(
-              title: 'Cadastro de Membros',
-              subtitle: 'Ficha completa e consulta rápida',
-              icon: Icons.people_alt_rounded,
-              iconColor: const Color(0xFF7C3AED),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const PessoasScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Rol de Membros',
-              subtitle: 'Comungantes e não-comungantes',
-              icon: Icons.menu_book_rounded,
-              iconColor: const Color(0xFF8B5CF6),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RolCanonicoScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Estrutura & Igreja',
-              subtitle: 'Presbitério, sínodo e congregações',
-              icon: Icons.account_tree_rounded,
-              iconColor: const Color(0xFFA78BFA),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const InstituicoesScreen()),
-                );
-              },
-            ),
-          ]),
-          const SizedBox(height: 22),
+            return <Widget>[
+              _buildCategoryHeader('SECRETARIA ECLESIÁSTICA', Icons.folder_shared_rounded, const Color(0xFF7C3AED)),
+              const SizedBox(height: 10),
+              _buildCardsGrid(secretariaCards),
+              const SizedBox(height: 22),
+            ];
+          }(),
 
           // 6. CATEGORIA: FINANCEIRO & ADMINISTRAÇÃO
-          _buildCategoryHeader('FINANCEIRO & AUDITORIA', Icons.account_balance_wallet_rounded, const Color(0xFFD97706)),
-          const SizedBox(height: 10),
-          _buildCardsGrid([
-            _MenuCardItem(
-              title: 'Livro Caixa',
-              subtitle: 'Entradas, saídas e conciliação',
-              icon: Icons.receipt_long_rounded,
-              iconColor: const Color(0xFFD97706),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Gestão de Usuários',
-              subtitle: 'Papéis RBAC e credenciais',
-              icon: Icons.manage_accounts_rounded,
-              iconColor: const Color(0xFF2563EB),
-              badge: 'Segurança',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const UsuariosScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Trilha de Auditoria',
-              subtitle: 'Logs e conformidade RN-18',
-              icon: Icons.history_edu_rounded,
-              iconColor: const Color(0xFFD97706),
-              badge: 'Auditoria',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AuditoriaScreen()),
-                );
-              },
-            ),
-            _MenuCardItem(
-              title: 'Impressora POS',
-              subtitle: 'Configurações de bobina e Bluetooth',
-              icon: Icons.print_rounded,
-              iconColor: const Color(0xFF10B981),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ConfiguracoesImpressoraScreen()),
-                );
-              },
-            ),
-          ]),
-          const SizedBox(height: 26),
+          ...() {
+            final financeiroCards = [
+              if (ApiService.instance.isScreenEnabled('financeiro'))
+                _MenuCardItem(
+                  title: 'Livro Caixa',
+                  subtitle: 'Entradas, saídas e conciliação',
+                  icon: Icons.receipt_long_rounded,
+                  iconColor: const Color(0xFFD97706),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('usuarios'))
+                _MenuCardItem(
+                  title: 'Gestão de Usuários',
+                  subtitle: 'Papéis RBAC e credenciais',
+                  icon: Icons.manage_accounts_rounded,
+                  iconColor: const Color(0xFF2563EB),
+                  badge: 'Segurança',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const UsuariosScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('auditoria'))
+                _MenuCardItem(
+                  title: 'Trilha de Auditoria',
+                  subtitle: 'Logs e conformidade RN-18',
+                  icon: Icons.history_edu_rounded,
+                  iconColor: const Color(0xFFD97706),
+                  badge: 'Auditoria',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AuditoriaScreen()),
+                    );
+                  },
+                ),
+              _MenuCardItem(
+                title: 'Impressora POS',
+                subtitle: 'Configurações de bobina e Bluetooth',
+                icon: Icons.print_rounded,
+                iconColor: const Color(0xFF10B981),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ConfiguracoesImpressoraScreen()),
+                  );
+                },
+              ),
+            ];
+
+            return <Widget>[
+              _buildCategoryHeader('FINANCEIRO & AUDITORIA', Icons.account_balance_wallet_rounded, const Color(0xFFD97706)),
+              const SizedBox(height: 10),
+              _buildCardsGrid(financeiroCards),
+              const SizedBox(height: 26),
+            ];
+          }(),
 
           // RODAPÉ DISCRETO
           Center(
@@ -1109,58 +1191,77 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           const SizedBox(height: 14),
         ],
       ),
-
-      // 7. BARRA INFERIOR DE NAVEGAÇÃO ANDROID (Material 3 NavigationBar)
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _navIndex,
-        elevation: 3,
-        backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFFD1FAE5),
-        onDestinationSelected: (idx) {
-          setState(() => _navIndex = idx);
-          if (idx == 1) {
-            _openConferencia();
-            setState(() => _navIndex = 0);
-          } else if (idx == 2) {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
-            ).then((_) => setState(() => _navIndex = 0));
-          } else if (idx == 3) {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const PessoasScreen()),
-            ).then((_) => setState(() => _navIndex = 0));
-          } else if (idx == 4) {
-            _handleLogout();
-            setState(() => _navIndex = 0);
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard_rounded, color: Color(0xFF047857)),
-            label: 'Início',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.payments_outlined),
-            selectedIcon: Icon(Icons.payments_rounded, color: Color(0xFF047857)),
-            label: 'Conferência',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.school_outlined),
-            selectedIcon: Icon(Icons.school_rounded, color: Color(0xFF047857)),
-            label: 'EBD',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline_rounded),
-            selectedIcon: Icon(Icons.people_rounded, color: Color(0xFF047857)),
-            label: 'Membros',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.logout_rounded),
-            label: 'Sair',
-          ),
-        ],
       ),
+
+      // 7. BARRA INFERIOR DE NAVEGAÇÃO ANDROID (Material 3 NavigationBar Dinâmica)
+      bottomNavigationBar: () {
+        final navDestinations = <_NavDestinationItem>[
+          _NavDestinationItem(
+            destination: const NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined),
+              selectedIcon: Icon(Icons.dashboard_rounded, color: Color(0xFF047857)),
+              label: 'Início',
+            ),
+            onTap: () {},
+          ),
+          if (ApiService.instance.isScreenEnabled('dizimos'))
+            _NavDestinationItem(
+              destination: const NavigationDestination(
+                icon: Icon(Icons.payments_outlined),
+                selectedIcon: Icon(Icons.payments_rounded, color: Color(0xFF047857)),
+                label: 'Conferência',
+              ),
+              onTap: () => _openConferencia(),
+            ),
+          if (ApiService.instance.isScreenEnabled('classes'))
+            _NavDestinationItem(
+              destination: const NavigationDestination(
+                icon: Icon(Icons.school_outlined),
+                selectedIcon: Icon(Icons.school_rounded, color: Color(0xFF047857)),
+                label: 'EBD',
+              ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
+              ),
+            ),
+          if (ApiService.instance.isScreenEnabled('pessoas') || ApiService.instance.isScreenEnabled('membros'))
+            _NavDestinationItem(
+              destination: const NavigationDestination(
+                icon: Icon(Icons.people_outline_rounded),
+                selectedIcon: Icon(Icons.people_rounded, color: Color(0xFF047857)),
+                label: 'Membros',
+              ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PessoasScreen()),
+              ),
+            ),
+          _NavDestinationItem(
+            destination: const NavigationDestination(
+              icon: Icon(Icons.logout_rounded),
+              label: 'Sair',
+            ),
+            onTap: _handleLogout,
+          ),
+        ];
+
+        final safeIndex = _navIndex.clamp(0, navDestinations.length - 1);
+
+        return NavigationBar(
+          selectedIndex: safeIndex,
+          elevation: 3,
+          backgroundColor: Colors.white,
+          indicatorColor: const Color(0xFFD1FAE5),
+          onDestinationSelected: (idx) {
+            if (idx != 0) {
+              navDestinations[idx].onTap();
+              setState(() => _navIndex = 0);
+            } else {
+              setState(() => _navIndex = 0);
+            }
+          },
+          destinations: navDestinations.map((e) => e.destination).toList(),
+        );
+      }(),
     );
   }
 
@@ -1493,6 +1594,16 @@ class _MenuCardItem {
     required this.icon,
     required this.iconColor,
     this.badge,
+    required this.onTap,
+  });
+}
+
+class _NavDestinationItem {
+  final NavigationDestination destination;
+  final VoidCallback onTap;
+
+  const _NavDestinationItem({
+    required this.destination,
     required this.onTap,
   });
 }

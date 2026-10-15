@@ -142,74 +142,11 @@
   <!-- ABA 1: LIBERAR & OCULTAR TELAS (MÓDULOS DO SISTEMA)     -->
   <!-- ======================================================== -->
   @if (activeTab() === 'screens') {
-    <div class="flex flex-col gap-5">
-      <!-- CARD DE DESTAQUE: EXEMPLO SOLICITADO PELO USUÁRIO (SOCIEDADES INTERNAS) -->
-      <div class="relative overflow-hidden rounded-2xl p-5 sm:p-6 border-2 transition-all shadow-md"
-        [ngClass]="isScreenActive('sociedades')
-          ? 'bg-emerald-500/5 border-emerald-500/30 dark:bg-emerald-950/20'
-          : 'bg-rose-500/5 border-rose-500/30 dark:bg-rose-950/20'"
-      >
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-sm"
-              [ngClass]="isScreenActive('sociedades')
-                ? 'bg-emerald-500 text-white'
-                : 'bg-rose-500 text-white'"
-            >
-              <i class="pi pi-id-card"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap mb-1">
-                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider"
-                  [ngClass]="isScreenActive('sociedades')
-                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                    : 'bg-rose-500/15 text-rose-700 dark:text-rose-300'"
-                >
-                  Exemplo de Configuração Rápida
-                </span>
-                <span class="text-xs font-bold text-muted-color">Rota: /sociedades</span>
-              </div>
-              <h2 class="text-lg font-black text-surface-900 dark:text-surface-0 m-0">
-                Sociedades Internas (SAF, UPH, UMP, UPA, UCP)
-              </h2>
-              <p class="text-xs sm:text-sm text-surface-600 dark:text-surface-400 mt-1 m-0">
-                {{ isScreenActive('sociedades')
-                  ? 'A tela está ATIVA e visível normalmente no menu lateral. Para ocultá-la desta igreja, basta clicar no botão ao lado.'
-                  : 'A tela está DESATIVADA. O módulo de Sociedades Internas sumiu do menu lateral para os usuários desta igreja.' }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Botão Interruptor em Destaque -->
-          <div class="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              (click)="toggleScreen({ key: 'sociedades', label: 'Sociedades Internas', icon: 'pi pi-id-card', group: 'Educação & Ministérios', description: '', route: '/sociedades', defaultEnabled: true })"
-              class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer border"
-              [ngClass]="isScreenActive('sociedades')
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
-                : 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600'"
-            >
-              <i class="pi" [ngClass]="isScreenActive('sociedades') ? 'pi-check-circle text-base' : 'pi-ban text-base'"></i>
-              <span>{{ isScreenActive('sociedades') ? 'Tela Liberada (Clique p/ Desativar)' : 'Tela Desativada (Clique p/ Liberar)' }}</span>
-            </button>
-
-            <a
-              routerLink="/sociedades"
-              target="_blank"
-              class="p-3 rounded-xl bg-surface-ground hover:bg-surface-hover text-surface-700 dark:text-surface-200 border border-surface transition-colors flex items-center justify-center text-xs"
-              title="Abrir tela de Sociedades Internas para conferir"
-            >
-              <i class="pi pi-external-link"></i>
-            </a>
-          </div>
-        </div>
-      </div>
-
+    <div class="flex flex-col gap-4">
       <!-- BARRA DE FILTROS & AÇÕES EM LOTE -->
-      <div class="card p-4 sm:p-5 bg-surface-card border border-surface rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="card p-4 bg-surface-card border border-surface rounded-2xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <!-- Campo de Busca -->
-        <div class="w-full md:w-80">
+        <div class="w-full lg:w-72">
           <p-iconfield styleClass="w-full">
             <p-inputicon styleClass="pi pi-search text-muted-color text-xs" />
             <input
@@ -217,7 +154,7 @@
               type="text"
               [ngModel]="screenSearch()"
               (ngModelChange)="screenSearch.set($event)"
-              placeholder="Buscar tela ou rota..."
+              placeholder="Buscar tela, rota ou módulo..."
               class="w-full !py-2 !text-xs rounded-xl"
             />
           </p-iconfield>
@@ -229,7 +166,7 @@
             <button
               type="button"
               (click)="selectedGroup.set(grp)"
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer"
               [ngClass]="selectedGroup() === grp ? 'bg-primary text-primary-contrast shadow-sm' : 'bg-surface-ground text-muted-color hover:text-surface-900 dark:hover:text-surface-0'"
             >
               {{ grp }}
@@ -237,13 +174,13 @@
           }
         </div>
 
-        <!-- Ações em Massa -->
-        <div class="flex items-center gap-2 shrink-0">
+        <!-- Ações em Massa & Alternador de Visualização -->
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
             (click)="enableAllScreens()"
             class="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Liberar todas as telas do sistema para esta igreja"
+            title="Liberar todas as telas do sistema"
           >
             <i class="pi pi-check"></i>
             <span>Liberar Todas</span>
@@ -253,7 +190,7 @@
             type="button"
             (click)="disableAllScreens()"
             class="px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Desativar todas as telas do sistema para esta igreja"
+            title="Bloquear todas as telas do sistema"
           >
             <i class="pi pi-ban"></i>
             <span>Bloquear Todas</span>
@@ -262,101 +199,259 @@
           <button
             type="button"
             (click)="resetDefaults()"
-            class="px-3 py-2 rounded-xl text-xs font-bold bg-surface-ground hover:bg-surface-hover text-muted-color border border-surface flex items-center gap-1.5 transition-colors cursor-pointer"
+            class="px-2.5 py-2 rounded-xl text-xs font-bold bg-surface-ground hover:bg-surface-hover text-muted-color border border-surface flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Restaurar padrão IPB de fábrica"
           >
             <i class="pi pi-refresh"></i>
-            <span>Padrão IPB</span>
+            <span>Padrão</span>
           </button>
+
+          <!-- Alternador Lista / Cards -->
+          <div class="flex items-center bg-surface-ground border border-surface rounded-xl p-0.5 ml-1">
+            <button
+              type="button"
+              (click)="viewMode.set('list')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              [ngClass]="viewMode() === 'list' ? 'bg-surface-card text-surface-900 dark:text-surface-0 shadow-sm border border-surface' : 'text-muted-color hover:text-surface-900 border-transparent'"
+              title="Exibir em Lista"
+            >
+              <i class="pi pi-list text-xs"></i>
+              <span>Lista</span>
+            </button>
+            <button
+              type="button"
+              (click)="viewMode.set('cards')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              [ngClass]="viewMode() === 'cards' ? 'bg-surface-card text-surface-900 dark:text-surface-0 shadow-sm border border-surface' : 'text-muted-color hover:text-surface-900 border-transparent'"
+              title="Exibir em Cards"
+            >
+              <i class="pi pi-th-large text-xs"></i>
+              <span>Cards</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- GRID COM TODAS AS TELAS DO SISTEMA -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        @for (screen of filteredScreens(); track screen.key) {
-          <div
-            class="card p-5 bg-surface-card border rounded-2xl shadow-sm transition-all flex flex-col justify-between hover:shadow-md"
-            [ngClass]="isScreenActive(screen.key)
-              ? 'border-surface'
-              : 'border-rose-500/30 bg-rose-500/[0.02] dark:bg-rose-950/10'"
-          >
-            <!-- Topo do Card -->
-            <div>
-              <div class="flex items-start justify-between gap-3 mb-3">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow-sm shrink-0"
-                    [ngClass]="isScreenActive(screen.key)
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'"
+      <!-- MODO 1: VISUALIZAÇÃO EM LISTA (TABELA COM BOTÕES LIBERAR E BLOQUEAR) -->
+      @if (viewMode() === 'list') {
+        <div class="card p-0 bg-surface-card border border-surface rounded-2xl shadow-sm overflow-hidden">
+          <div class="overflow-x-auto w-full">
+            <table class="w-full border-collapse text-left text-xs">
+              <thead>
+                <tr class="border-b border-surface bg-surface-ground/80 text-muted-color uppercase font-bold text-[10px] tracking-wider">
+                  <th class="py-3 px-4 w-12 text-center">#</th>
+                  <th class="py-3 px-4">Módulo / Tela</th>
+                  <th class="py-3 px-4 hidden sm:table-cell">Grupo</th>
+                  <th class="py-3 px-4 hidden lg:table-cell">Descrição</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-center min-w-[210px]">Liberar / Bloquear</th>
+                  <th class="py-3 px-4 w-14 text-center">Testar</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface">
+                @for (screen of filteredScreens(); track screen.key; let idx = $index) {
+                  <tr
+                    class="transition-colors hover:bg-surface-hover/60"
+                    [ngClass]="isScreenActive(screen.key) ? '' : 'bg-rose-500/[0.04] dark:bg-rose-950/15'"
                   >
-                    <i [class]="screen.icon"></i>
+                    <!-- Número -->
+                    <td class="py-3 px-4 text-center text-muted-color font-semibold text-[11px]">
+                      {{ idx + 1 }}
+                    </td>
+
+                    <!-- Módulo / Tela -->
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow-sm shrink-0"
+                          [ngClass]="isScreenActive(screen.key)
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-rose-500/10 text-rose-500'"
+                        >
+                          <i [class]="screen.icon"></i>
+                        </div>
+                        <div>
+                          <div class="font-extrabold text-surface-900 dark:text-surface-0 text-xs">
+                            {{ screen.label }}
+                          </div>
+                          <div class="flex items-center gap-2 mt-0.5">
+                            <span class="font-mono text-[10px] text-muted-color">
+                              {{ screen.route }}
+                            </span>
+                            <span class="sm:hidden text-[9px] font-bold px-1.5 py-0.2 rounded bg-surface-ground text-muted-color border border-surface">
+                              {{ screen.group }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Grupo -->
+                    <td class="py-3 px-4 hidden sm:table-cell">
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-surface-ground text-surface-700 dark:text-surface-300 border border-surface whitespace-nowrap">
+                        {{ screen.group }}
+                      </span>
+                    </td>
+
+                    <!-- Descrição -->
+                    <td class="py-3 px-4 hidden lg:table-cell text-muted-color max-w-xs truncate" [title]="screen.description">
+                      {{ screen.description }}
+                    </td>
+
+                    <!-- Status Atual -->
+                    <td class="py-3 px-4 text-center">
+                      <span
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap"
+                        [ngClass]="isScreenActive(screen.key)
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'"
+                      >
+                        <i class="pi text-[8px]" [ngClass]="isScreenActive(screen.key) ? 'pi-check-circle' : 'pi-ban'"></i>
+                        <span>{{ isScreenActive(screen.key) ? 'Liberada' : 'Bloqueada' }}</span>
+                      </span>
+                    </td>
+
+                    <!-- Ação: Botões Liberar e Bloquear Lado a Lado -->
+                    <td class="py-3 px-4 text-center">
+                      <div class="inline-flex items-center rounded-xl border border-surface p-1 bg-surface-ground shadow-inner">
+                        <!-- Botão Liberar -->
+                        <button
+                          type="button"
+                          (click)="!isScreenActive(screen.key) && toggleScreen(screen)"
+                          class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
+                          [ngClass]="isScreenActive(screen.key)
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-muted-color hover:text-emerald-600 hover:bg-emerald-500/10'"
+                          title="Liberar tela para os usuários"
+                        >
+                          <i class="pi pi-check text-[10px]"></i>
+                          <span>Liberar</span>
+                        </button>
+
+                        <!-- Botão Bloquear -->
+                        <button
+                          type="button"
+                          (click)="isScreenActive(screen.key) && toggleScreen(screen)"
+                          class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
+                          [ngClass]="!isScreenActive(screen.key)
+                            ? 'bg-rose-600 text-white shadow-sm'
+                            : 'text-muted-color hover:text-rose-600 hover:bg-rose-500/10'"
+                          title="Bloquear e ocultar tela dos usuários"
+                        >
+                          <i class="pi pi-ban text-[10px]"></i>
+                          <span>Bloquear</span>
+                        </button>
+                      </div>
+                    </td>
+
+                    <!-- Testar Tela -->
+                    <td class="py-3 px-4 text-center">
+                      <a
+                        [routerLink]="screen.route"
+                        target="_blank"
+                        class="p-2 rounded-lg bg-surface-ground hover:bg-surface-hover text-surface-700 dark:text-surface-300 border border-surface text-xs inline-flex items-center justify-center transition-colors"
+                        title="Abrir tela em nova aba"
+                      >
+                        <i class="pi pi-external-link"></i>
+                      </a>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="py-12 text-center text-muted-color">
+                      <i class="pi pi-search text-3xl block mb-2 opacity-40"></i>
+                      <p class="font-bold text-xs m-0">Nenhuma tela encontrada para o filtro "{{ screenSearch() }}"</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- MODO 2: VISUALIZAÇÃO EM CARDS (SECUNDÁRIO) -->
+      @if (viewMode() === 'cards') {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (screen of filteredScreens(); track screen.key) {
+            <div
+              class="card p-5 bg-surface-card border rounded-2xl shadow-sm transition-all flex flex-col justify-between hover:shadow-md"
+              [ngClass]="isScreenActive(screen.key)
+                ? 'border-surface'
+                : 'border-rose-500/30 bg-rose-500/[0.02] dark:bg-rose-950/10'"
+            >
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow-sm shrink-0"
+                      [ngClass]="isScreenActive(screen.key)
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'"
+                    >
+                      <i [class]="screen.icon"></i>
+                    </div>
+                    <div>
+                      <span class="text-[10px] font-extrabold uppercase tracking-wider text-muted-color block">
+                        {{ screen.group }}
+                      </span>
+                      <h3 class="text-sm font-extrabold text-surface-900 dark:text-surface-0 m-0 leading-tight">
+                        {{ screen.label }}
+                      </h3>
+                    </div>
                   </div>
-                  <div>
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-muted-color block">
-                      {{ screen.group }}
-                    </span>
-                    <h3 class="text-sm font-extrabold text-surface-900 dark:text-surface-0 m-0 leading-tight">
-                      {{ screen.label }}
-                    </h3>
-                  </div>
+
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0"
+                    [ngClass]="isScreenActive(screen.key)
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'"
+                  >
+                    {{ isScreenActive(screen.key) ? 'Liberada' : 'Oculta' }}
+                  </span>
                 </div>
 
-                <!-- Badge On/Off -->
-                <span
-                  class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0"
-                  [ngClass]="isScreenActive(screen.key)
-                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'"
-                >
-                  {{ isScreenActive(screen.key) ? 'Liberada' : 'Oculta' }}
+                <p class="text-xs text-muted-color m-0 mb-4 min-h-[36px] line-clamp-2">
+                  {{ screen.description }}
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-surface flex items-center justify-between gap-2">
+                <span class="text-[11px] font-mono text-muted-color truncate max-w-[150px]">
+                  {{ screen.route }}
                 </span>
-              </div>
 
-              <!-- Descrição -->
-              <p class="text-xs text-muted-color m-0 mb-4 min-h-[36px] line-clamp-2">
-                {{ screen.description }}
-              </p>
-            </div>
+                <div class="flex items-center gap-2">
+                  <a
+                    [routerLink]="screen.route"
+                    class="p-2 rounded-lg bg-surface-ground hover:bg-surface-hover text-surface-700 dark:text-surface-300 border border-surface text-xs transition-colors"
+                    title="Testar navegação para esta tela"
+                  >
+                    <i class="pi pi-external-link"></i>
+                  </a>
 
-            <!-- Rodapé com Switch e Teste -->
-            <div class="pt-3 border-t border-surface flex items-center justify-between gap-2">
-              <span class="text-[11px] font-mono text-muted-color truncate max-w-[150px]">
-                {{ screen.route }}
-              </span>
-
-              <div class="flex items-center gap-2">
-                <!-- Botão Testar Tela -->
-                <a
-                  [routerLink]="screen.route"
-                  class="p-2 rounded-lg bg-surface-ground hover:bg-surface-hover text-surface-700 dark:text-surface-300 border border-surface text-xs transition-colors"
-                  title="Testar navegação para esta tela"
-                >
-                  <i class="pi pi-external-link"></i>
-                </a>
-
-                <!-- Switch Interativo Liga/Desliga -->
-                <button
-                  type="button"
-                  (click)="toggleScreen(screen)"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border shadow-sm active:scale-95"
-                  [ngClass]="isScreenActive(screen.key)
-                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500'
-                    : 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'"
-                >
-                  <i class="pi" [ngClass]="isScreenActive(screen.key) ? 'pi-check text-[11px]' : 'pi-times text-[11px]'"></i>
-                  <span>{{ isScreenActive(screen.key) ? 'Ativa' : 'Desativar' }}</span>
-                </button>
+                  <button
+                    type="button"
+                    (click)="toggleScreen(screen)"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border shadow-sm active:scale-95"
+                    [ngClass]="isScreenActive(screen.key)
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500'
+                      : 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'"
+                  >
+                    <i class="pi" [ngClass]="isScreenActive(screen.key) ? 'pi-check text-[11px]' : 'pi-times text-[11px]'"></i>
+                    <span>{{ isScreenActive(screen.key) ? 'Ativa' : 'Desativar' }}</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        } @empty {
-          <div class="col-span-full card p-8 text-center text-muted-color">
-            <i class="pi pi-search text-3xl block mb-2 opacity-40"></i>
-            <p class="font-bold text-sm">Nenhuma tela encontrada para o filtro "{{ screenSearch() }}"</p>
-          </div>
-        }
-      </div>
+          } @empty {
+            <div class="col-span-full card p-8 text-center text-muted-color">
+              <i class="pi pi-search text-3xl block mb-2 opacity-40"></i>
+              <p class="font-bold text-sm">Nenhuma tela encontrada para o filtro "{{ screenSearch() }}"</p>
+            </div>
+          }
+        </div>
+      }
     </div>
   }
 

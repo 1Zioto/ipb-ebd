@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClassRequest;
 use App\Http\Requests\UpdateClassRequest;
 use App\Http\Resources\ClassResource;
-use App\Models\ClassRoom;
 use App\Models\AttendanceSession;
+use App\Models\ClassRoom;
 use App\Support\Audit;
 use Illuminate\Http\Request;
 
@@ -15,18 +15,25 @@ class ClassController extends Controller
 {
     public function index(Request $request)
     {
-        if (! $request->user()->hasPermission('class.view')) abort(403);
+        if (! $request->user()->hasPermission('class.view')) {
+            abort(403);
+        }
 
         $q = ClassRoom::query()->withCount(['students' => fn ($s) => $s->where('is_active', true), 'teachers' => fn ($t) => $t->where('is_active', true)]);
 
         // Professor só enxerga suas classes vinculadas.
-        if ($request->user()->hasRole('professor') && ! $request->user()->isProgrammer()
-            && ! $request->user()->hasPermission('class.manage')) {
+        if ($request->user()->isRestrictedTeacher()) {
             $ids = $request->user()->teachingClassIds();
             $q->whereIn('id', $ids ?: [0]);
         }
 
-        if ($request->has('is_active')) $q->where('is_active', $request->boolean('is_active'));
+        if (! $request->user()->hasGlobalInstitutionAccess()) {
+            $q->where('institution_id', $request->user()->institution_id ?: 0);
+        }
+
+        if ($request->has('is_active')) {
+            $q->where('is_active', $request->boolean('is_active'));
+        }
 
         $q->orderBy('display_order')->orderBy('name');
 
@@ -35,27 +42,33 @@ class ClassController extends Controller
 
     public function store(StoreClassRequest $request)
     {
-        $class = ClassRoom::create($request->validated())->refresh();
+        $data = $request->validated();
+        $data['institution_id'] = $request->user()->institution_id;
+        $class = ClassRoom::create($data)->refresh();
         Audit::log('class.created', 'class', $class->id, null, $class->toArray());
+
         return (new ClassResource($class))->response()->setStatusCode(201);
     }
 
     public function show(Request $request, ClassRoom $class)
     {
-        if (! $request->user()->hasPermission('class.view')) abort(403);
+        if (! $request->user()->hasPermission('class.view') || ! $request->user()->canAccessClass($class)) {
+            abort(403);
+        }
         $class->loadCount(['students' => fn ($s) => $s->where('is_active', true), 'teachers' => fn ($t) => $t->where('is_active', true)]);
+
         return new ClassResource($class);
     }
 
     /** Histórico de chamadas da classe, com acesso direto à sessão. */
     public function sessions(Request $request, ClassRoom $class)
     {
-        if (! $request->user()->hasPermission('call.view')) abort(403);
+        if (! $request->user()->hasPermission('call.view')) {
+            abort(403);
+        }
 
         $user = $request->user();
-        if ($user->hasRole('professor') && ! $user->isProgrammer()
-            && ! $user->hasPermission('event.manage')
-            && ! in_array($class->id, $user->teachingClassIds(), true)) {
+        if (! $user->canAccessClass($class)) {
             abort(403, 'Você não está vinculado a esta classe.');
         }
 
@@ -91,15 +104,19 @@ class ClassController extends Controller
         $old = $class->toArray();
         $class->update($request->validated());
         Audit::log('class.updated', 'class', $class->id, $old, $class->toArray());
+
         return new ClassResource($class);
     }
 
     public function destroy(Request $request, ClassRoom $class)
     {
-        if (! $request->user()->hasPermission('class.manage')) abort(403);
+        if (! $request->user()->hasPermission('class.manage')) {
+            abort(403);
+        }
         $class->update(['is_active' => false]);
         $class->delete(); // soft delete
         Audit::log('class.deleted', 'class', $class->id);
+
         return response()->json(['message' => 'Classe inativada.']);
     }
 }

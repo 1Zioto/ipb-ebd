@@ -1,30 +1,33 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:ipb_conferencia/main.dart';
+import 'package:ipb_conferencia/models/models.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const IpbConferenciaApp());
+  test('offline queue serializes an immutable, idempotent batch payload', () {
+    const item = OfflineColetaQueueItem(
+      operationId: 'b5a59d4a-7626-4c90-9d40-2bb8af2df153',
+      deviceId: 'd4a99d55-d77f-4d62-875c-02b86a3bd558',
+      capturedAt: '2026-10-15T13:30:00.000Z',
+      coleta: {'date': '2026-10-15', 'service_meeting': 'Culto Noturno'},
+      entries: [
+        EnvelopeEntry(
+          id: 'local-1',
+          personId: 42,
+          membro: 'Membro IPB',
+          envelopeNumber: '42',
+          valor: 100,
+          destinacao: 'dizimo',
+          forma: 'cartao',
+          timestamp: '2026-10-15T13:30:00.000Z',
+        ),
+      ],
+      status: 'pending_upload',
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    final payload = item.toServerPayload();
+    expect(payload['client_operation_id'], item.operationId);
+    expect(payload['device_id'], item.deviceId);
+    expect((payload['entries'] as List).single['payment_method'], 'outros');
+    expect(item.awaitsUpload, isTrue);
+    expect(item.isResolved, isFalse);
   });
 }

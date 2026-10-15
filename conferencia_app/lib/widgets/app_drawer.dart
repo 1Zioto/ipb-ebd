@@ -114,150 +114,169 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            _buildMenuItem(
-              context,
-              icon: Icons.dashboard_outlined,
-              title: 'Dashboard EBD',
-              selected: currentRoute == 'dashboard_ebd',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              context,
-              icon: Icons.account_tree_outlined,
-              title: 'Estrutura Institucional',
-              selected: currentRoute == 'instituicoes',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const InstituicoesScreen()),
-                );
-              },
-            ),
+            if (ApiService.instance.isScreenEnabled('classes') || ApiService.instance.isScreenEnabled('relatorios_ebd'))
+              _buildMenuItem(
+                context,
+                icon: Icons.dashboard_outlined,
+                title: 'Dashboard EBD',
+                selected: currentRoute == 'dashboard_ebd',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
+                  );
+                },
+              ),
+            if (ApiService.instance.isScreenEnabled('instituicoes'))
+              _buildMenuItem(
+                context,
+                icon: Icons.account_tree_outlined,
+                title: 'Estrutura Institucional',
+                selected: currentRoute == 'instituicoes',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const InstituicoesScreen()),
+                  );
+                },
+              ),
 
             // GRUPO 2: EDUCAÇÃO & MINISTÉRIOS (EBD)
-            _buildSectionHeader('EDUCAÇÃO & MINISTÉRIOS'),
-            _buildMenuItem(
-              context,
-              icon: Icons.school_outlined,
-              title: 'Classes da EBD & Chamada',
-              selected: currentRoute == 'classes_ebd',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ClassesListScreen()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              context,
-              icon: Icons.calendar_month_outlined,
-              title: 'Calendário & Escalas EBD',
-              selected: currentRoute == 'calendario',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
-                );
-              },
-            ),
+            if (ApiService.instance.isScreenEnabled('classes') || ApiService.instance.isScreenEnabled('calendario') || ApiService.instance.isScreenEnabled('escalas')) ...[
+              _buildSectionHeader('EDUCAÇÃO & MINISTÉRIOS'),
+              if (ApiService.instance.isScreenEnabled('classes'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.school_outlined,
+                  title: 'Classes da EBD & Chamada',
+                  selected: currentRoute == 'classes_ebd',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ClassesListScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('calendario') || ApiService.instance.isScreenEnabled('escalas'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.calendar_month_outlined,
+                  title: 'Calendário & Escalas EBD',
+                  selected: currentRoute == 'calendario',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CalendarioEscalasScreen()),
+                    );
+                  },
+                ),
+            ],
 
             // GRUPO 3: SECRETARIA & MEMBRESIA
-            _buildSectionHeader('SECRETARIA & MEMBRESIA'),
-            _buildMenuItem(
-              context,
-              icon: Icons.people_outline,
-              title: 'Pessoas & Famílias',
-              selected: currentRoute == 'pessoas',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const PessoasScreen()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              context,
-              icon: Icons.menu_book_outlined,
-              title: 'Rol de Membros',
-              selected: currentRoute == 'rol_canonico',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RolCanonicoScreen()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              context,
-              icon: Icons.newspaper_outlined,
-              title: 'Boletim Informativo Semanal',
-              selected: currentRoute == 'boletim',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const BoletimScreen()),
-                );
-              },
-            ),
+            if (ApiService.instance.isScreenEnabled('pessoas') || ApiService.instance.isScreenEnabled('membros') || ApiService.instance.isScreenEnabled('boletim')) ...[
+              _buildSectionHeader('SECRETARIA & MEMBRESIA'),
+              if (ApiService.instance.isScreenEnabled('pessoas'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.people_outline,
+                  title: 'Pessoas & Famílias',
+                  selected: currentRoute == 'pessoas',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PessoasScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('membros'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.menu_book_outlined,
+                  title: 'Rol de Membros',
+                  selected: currentRoute == 'rol_canonico',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const RolCanonicoScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('boletim'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.newspaper_outlined,
+                  title: 'Boletim Informativo Semanal',
+                  selected: currentRoute == 'boletim',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const BoletimScreen()),
+                    );
+                  },
+                ),
+            ],
 
             // GRUPO 4: FINANÇAS & DIACONIA
-            _buildSectionHeader('FINANÇAS & DIACONIA'),
-            _buildMenuItem(
-              context,
-              icon: Icons.point_of_sale_outlined,
-              title: 'Conferência de Dízimos & Culto',
-              selected: currentRoute == 'conferencia',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const ConferenciasListScreen()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              context,
-              icon: Icons.account_balance_wallet_outlined,
-              title: 'Livro Caixa (Tesouraria)',
-              selected: currentRoute == 'livro_caixa',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
-                );
-              },
-            ),
+            if (ApiService.instance.isScreenEnabled('dizimos') || ApiService.instance.isScreenEnabled('financeiro')) ...[
+              _buildSectionHeader('FINANÇAS & DIACONIA'),
+              if (ApiService.instance.isScreenEnabled('dizimos'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.point_of_sale_outlined,
+                  title: 'Conferência de Dízimos & Culto',
+                  selected: currentRoute == 'conferencia',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const ConferenciasListScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('financeiro'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.account_balance_wallet_outlined,
+                  title: 'Livro Caixa (Tesouraria)',
+                  selected: currentRoute == 'livro_caixa',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LivroCaixaScreen()),
+                    );
+                  },
+                ),
+            ],
 
             // GRUPO 5: ADMINISTRAÇÃO & SISTEMA
-            _buildSectionHeader('ADMINISTRAÇÃO & SISTEMA'),
-            _buildMenuItem(
-              context,
-              icon: Icons.manage_accounts_outlined,
-              title: 'Gestão de Usuários (RBAC)',
-              selected: currentRoute == 'usuarios',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const UsuariosScreen()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              context,
-              icon: Icons.history_edu_outlined,
-              title: 'Trilha de Auditoria (RN-18)',
-              selected: currentRoute == 'auditoria',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AuditoriaScreen()),
-                );
-              },
-            ),
+            if (ApiService.instance.isScreenEnabled('usuarios') || ApiService.instance.isScreenEnabled('auditoria')) ...[
+              _buildSectionHeader('ADMINISTRAÇÃO & SISTEMA'),
+              if (ApiService.instance.isScreenEnabled('usuarios'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.manage_accounts_outlined,
+                  title: 'Gestão de Usuários (RBAC)',
+                  selected: currentRoute == 'usuarios',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const UsuariosScreen()),
+                    );
+                  },
+                ),
+              if (ApiService.instance.isScreenEnabled('auditoria'))
+                _buildMenuItem(
+                  context,
+                  icon: Icons.history_edu_outlined,
+                  title: 'Trilha de Auditoria (RN-18)',
+                  selected: currentRoute == 'auditoria',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AuditoriaScreen()),
+                    );
+                  },
+                ),
+            ],
 
             const Divider(),
 

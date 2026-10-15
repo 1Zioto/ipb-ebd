@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, permissionGuard, screenGuard, superAdminGuard } from './core/auth.guard';
+import { authGuard, permissionAnyGuard, permissionGuard, screenGuard, superAdminGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   {
@@ -107,6 +107,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dizimos/coleta-lancamento').then((m) => m.ColetaLancamentoPage),
       },
       {
+        path: 'dizimos/aprovacoes-offline',
+        canActivate: [permissionGuard('dizimos.offline_sync.view'), screenGuard('dizimos')],
+        loadComponent: () => import('./pages/dizimos/offline-syncs').then((m) => m.OfflineSyncsPage),
+      },
+      {
         path: 'dizimos/alertas',
         canActivate: [permissionGuard('dizimos.alertas.manage'), screenGuard('alertas_pastorais')],
         loadComponent: () => import('./pages/dizimos/pastoral-alerts').then((m) => m.PastoralAlertsPage),
@@ -170,7 +175,7 @@ export const routes: Routes = [
       // ---- Secretaria & Conselho (IPB) ----
       {
         path: 'secretaria/membros',
-        canActivate: [permissionGuard('person.view'), screenGuard('membros')],
+        canActivate: [permissionGuard('secretaria.rol.view'), screenGuard('membros')],
         loadComponent: () => import('./pages/secretaria/membros-canonico').then((m) => m.MembrosCanonicoPage),
       },
       {
@@ -185,17 +190,17 @@ export const routes: Routes = [
       },
       {
         path: 'secretaria/estatistica-presbiterio',
-        canActivate: [permissionGuard('person.view'), screenGuard('estatistica_presbiterio')],
+        canActivate: [permissionGuard('presbiterio.consolidated.view'), screenGuard('estatistica_presbiterio')],
         loadComponent: () => import('./pages/secretaria/estatistica-presbiterio').then((m) => m.EstatisticaPresbiterioPage),
       },
       {
         path: 'secretaria/cartas',
-        canActivate: [permissionGuard('person.view'), screenGuard('cartas')],
+        canActivate: [permissionGuard('secretaria.rol.view'), screenGuard('cartas')],
         loadComponent: () => import('./pages/secretaria/cartas-transferencia').then((m) => m.CartasTransferenciaPage),
       },
       {
         path: 'secretaria/atas',
-        canActivate: [permissionGuard('person.view'), screenGuard('atas')],
+        canActivate: [permissionAnyGuard('secretaria.atas.view', 'conselho.approve'), screenGuard('atas')],
         loadComponent: () => import('./pages/secretaria/atas-conselho').then((m) => m.AtasConselhoPage),
       },
       {
