@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_drawer.dart';
 
-class RolCanonicoScreen extends StatelessWidget {
-  const RolCanonicoScreen({super.key});
+class RolMembrosScreen extends StatelessWidget {
+  const RolMembrosScreen({super.key});
 
   final List<Map<String, dynamic>> _membros = const [
     {'rol': '001', 'nome': 'Rev. Antônio Carlos Silva', 'admissao': '02/02/2018', 'modo': 'Designação Presbiterial', 'status': 'Pastor'},
@@ -38,7 +38,7 @@ class RolCanonicoScreen extends StatelessWidget {
           ],
         ),
       ),
-      drawer: const AppDrawer(currentRoute: 'rol_canonico'),
+      drawer: const AppDrawer(currentRoute: 'rol_membros'),
       body: Column(
         children: [
           Container(

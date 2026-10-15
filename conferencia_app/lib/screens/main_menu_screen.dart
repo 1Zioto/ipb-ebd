@@ -15,7 +15,7 @@ import 'instituicoes/instituicoes_screen.dart';
 import 'login_screen.dart';
 import 'secretaria/boletim_screen.dart';
 import 'secretaria/pessoas_screen.dart';
-import 'secretaria/rol_canonico_screen.dart';
+import 'secretaria/rol_membros_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -1075,7 +1075,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   iconColor: const Color(0xFF8B5CF6),
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const RolCanonicoScreen()),
+                      MaterialPageRoute(builder: (_) => const RolMembrosScreen()),
                     );
                   },
                 ),

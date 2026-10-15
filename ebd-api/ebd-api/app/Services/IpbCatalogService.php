@@ -259,7 +259,7 @@ class IpbCatalogService
             'user_id' => $userId,
             'event_type' => 'vinculo',
             'title' => 'Vínculo Oficial com Catálogo IPB',
-            'description' => "Instituição vinculada à igreja canônica '{$item['nome']}' (ID: {$item['id']}), sob a jurisdição do {$presbNome} ({$presbSigla}) e do {$sinodoNome} ({$sinodoSigla}).",
+            'description' => "Instituição vinculada à igreja oficial '{$item['nome']}' (ID: {$item['id']}), sob a jurisdição do {$presbNome} ({$presbSigla}) e do {$sinodoNome} ({$sinodoSigla}).",
             'payload' => [
                 'catalogo_id' => $item['id'],
                 'presbiterio_id' => $presbiterio->id,

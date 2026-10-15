@@ -62,7 +62,7 @@ export class CartasTransferenciaPage implements OnInit {
     data_validade: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
   };
 
-  // Modal Visualização Canônica
+  // Modal Visualização da Carta
   viewDialog = false;
   selectedCarta: CartaTransferencia | null = null;
 
@@ -107,7 +107,7 @@ export class CartasTransferenciaPage implements OnInit {
       igreja_destino: '',
       data_emissao: new Date().toISOString().substring(0, 10),
       data_validade: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-      observacoes: 'Membro em plena comunhão e sem impedimento canônico.',
+      observacoes: 'Membro em plena comunhão e sem impedimento eclesiástico ou disciplinar.',
     };
     this.newDialog = true;
   }

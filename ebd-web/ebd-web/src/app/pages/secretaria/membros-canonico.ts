@@ -60,7 +60,7 @@ export class MembrosCanonicoPage implements OnInit {
     { label: 'Falecidos', value: 'falecido' },
   ];
 
-  // Modal Edição Canônica
+  // Modal Edição de Membro
   editDialog = false;
   selectedMembro: Partial<CanonicalMember> = {};
 
@@ -93,7 +93,7 @@ export class MembrosCanonicoPage implements OnInit {
           this.msg.add({
             severity: 'error',
             summary: 'Erro',
-            detail: 'Não foi possível carregar o rol canônico.',
+            detail: 'Não foi possível carregar o rol de membros.',
           });
         },
       });
@@ -116,7 +116,7 @@ export class MembrosCanonicoPage implements OnInit {
         this.msg.add({
           severity: 'success',
           summary: 'Sucesso',
-          detail: 'Dados canônicos atualizados com sucesso.',
+          detail: 'Dados do membro atualizados com sucesso.',
         });
         this.editDialog = false;
         this.carregarMembros();
@@ -125,7 +125,7 @@ export class MembrosCanonicoPage implements OnInit {
         this.msg.add({
           severity: 'error',
           summary: 'Erro',
-          detail: 'Falha ao salvar dados canônicos.',
+          detail: 'Falha ao salvar dados do membro.',
         });
       },
     });

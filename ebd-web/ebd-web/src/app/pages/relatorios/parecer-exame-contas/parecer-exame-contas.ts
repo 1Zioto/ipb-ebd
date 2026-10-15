@@ -100,7 +100,7 @@ export class ParecerExameContasPage implements OnInit {
       conformidade_comprovantes_fiscais: true,
       conformidade_cotas_conciliares: true,
       ressalvas_e_recomendacoes: '',
-      texto_conclusao: 'A Comissão de Exame de Contas, após minucioso exame dos livros da Tesouraria da Igreja, extratos bancários, notas fiscais e comprovantes de pagamentos, constatou que os registros encontram-se em perfeita exatidão e conformidade com as normas administrativas e canônicas da Igreja Presbiteriana do Brasil. Portanto, somos de parecer FAVORÁVEL à aprovação das contas.',
+      texto_conclusao: 'A Comissão de Exame de Contas, após minucioso exame dos livros da Tesouraria da Igreja, extratos bancários, notas fiscais e comprovantes de pagamentos, constatou que os registros encontram-se em perfeita exatidão e conformidade com as normas administrativas e eclesiásticas da Igreja Presbiteriana do Brasil. Portanto, somos de parecer FAVORÁVEL à aprovação das contas.',
       status: 'Concluído',
     };
     this.membrosTexto = 'Diác. Rodrigo Sampaio\nIrmã Vera Lúcia Magalhães\nPresb. Carlos Eduardo Prado';

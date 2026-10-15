@@ -91,7 +91,7 @@
           <tr>
             <th>Processo</th>
             <th>Membro / Rol</th>
-            <th>Falta Canônica</th>
+            <th>Infração Disciplinar</th>
             <th>Medida Disciplinar</th>
             <th>Status</th>
             <th class="text-center" style="width: 120px">Ações</th>
@@ -220,7 +220,7 @@
 
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label class="block text-sm font-semibold mb-1">Tipo da Falta Canônica *</label>
+        <label class="block text-sm font-semibold mb-1">Tipo da Infração Disciplinar *</label>
         <select [(ngModel)]="formProcesso.tipo_falta" class="w-full p-2.5 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 text-sm">
           <option value="Abandono de Comunhão">Abandono de Comunhão</option>
           <option value="Doutrinária">Doutrinária</option>
@@ -327,7 +327,7 @@
 <p-dialog [(visible)]="dialogRestaurar" header="Restaurar Membro à Plena Comunhão" [modal]="true" [style]="{ width: '500px' }">
   <div class="flex flex-col gap-4 mt-2 text-sm">
     <div class="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200">
-      Ao aprovar a restauração, o membro retornará automaticamente ao status canônico de <strong>Comungante</strong> em plena comunhão.
+      Ao aprovar a restauração, o membro retornará automaticamente ao status de <strong>Comungante</strong> em plena comunhão.
     </div>
 
     <div>

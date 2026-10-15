@@ -106,7 +106,7 @@ class RelatoriosOficiaisController extends Controller
             'entradas' => round($entradas, 2),
             'saidas' => round($saidas, 2),
             'saldo_atual' => round($saldoAtual, 2),
-            'parecer_texto' => "A Comissão de Exame de Contas da {$nomeIgreja}, reunida na forma canônica, examinou minuciosamente os livros, comprovantes, extratos bancários e documentos fiscais referentes ao mês de {$meses[$month]} de {$year}. Constatou-se a exatidão dos lançamentos, a lisura das operações financeiras e a perfeita consonância com o orçamento e as resoluções do Conselho da Igreja. Pelo exposto, esta Comissão é de parecer unânime que as presentes contas sejam APROVADAS com louvor ao Senhor.",
+            'parecer_texto' => "A Comissão de Exame de Contas da {$nomeIgreja}, reunida ordinariamente, examinou minuciosamente os livros, comprovantes, extratos bancários e documentos fiscais referentes ao mês de {$meses[$month]} de {$year}. Constatou-se a exatidão dos lançamentos, a lisura das operações financeiras e a perfeita consonância com o orçamento e as resoluções do Conselho da Igreja. Pelo exposto, esta Comissão é de parecer unânime que as presentes contas sejam APROVADAS com louvor ao Senhor.",
             'pastores' => $pastores,
             'pastor_responsavel' => [
                 'id' => $pastorEscolhido['id'] ?? null,

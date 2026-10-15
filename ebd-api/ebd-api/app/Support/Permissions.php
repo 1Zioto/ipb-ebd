@@ -33,8 +33,8 @@ class Permissions
         'family.manage' => 'Gerir famílias',
 
         // Secretaria, Conselho e concílios
-        'secretaria.rol.view' => 'Ver rol canônico e cartas de transferência',
-        'secretaria.rol.manage' => 'Gerir rol canônico e cartas de transferência',
+        'secretaria.rol.view' => 'Ver rol de membros e cartas de transferência',
+        'secretaria.rol.manage' => 'Gerir rol de membros e cartas de transferência',
         'secretaria.atas.view' => 'Ver atas do Conselho',
         'secretaria.atas.manage' => 'Lavrar e editar atas do Conselho',
         'conselho.approve' => 'Aprovar deliberações e lotes de conferência',
@@ -160,7 +160,7 @@ class Permissions
         'superintendencia' => ['Superintendência', 'Operação total da EBD'],
         'diacono' => ['Diácono / Operador', 'Operação de coletas e atendimento diaconal'],
         'professor' => ['Professor', 'Acesso restrito às classes vinculadas'],
-        'secretario' => ['Secretário', 'Rol canônico, cartas e atas em rascunho'],
+        'secretario' => ['Secretário', 'Rol de membros, cartas e atas em rascunho'],
         'conselho' => ['Conselho', 'Aprovação de atas e conferências offline'],
         'presbiterio' => ['Presbitério', 'Consulta de consolidados autorizados'],
         'lideranca_saf' => ['Liderança SAF', 'Diretoria da Sociedade Auxiliadora Feminina'],

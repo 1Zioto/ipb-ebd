@@ -5,7 +5,7 @@ import '../screens/ebd/ebd_dashboard_screen.dart';
 import '../screens/ebd/classes_list_screen.dart';
 import '../screens/ebd/calendario_escalas_screen.dart';
 import '../screens/secretaria/pessoas_screen.dart';
-import '../screens/secretaria/rol_canonico_screen.dart';
+import '../screens/secretaria/rol_membros_screen.dart';
 import '../screens/secretaria/boletim_screen.dart';
 import '../screens/financeiro/livro_caixa_screen.dart';
 import '../screens/instituicoes/instituicoes_screen.dart';
@@ -193,11 +193,11 @@ class AppDrawer extends StatelessWidget {
                   context,
                   icon: Icons.menu_book_outlined,
                   title: 'Rol de Membros',
-                  selected: currentRoute == 'rol_canonico',
+                  selected: currentRoute == 'rol_membros',
                   onTap: () {
                     Navigator.of(context).pop();
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const RolCanonicoScreen()),
+                      MaterialPageRoute(builder: (_) => const RolMembrosScreen()),
                     );
                   },
                 ),

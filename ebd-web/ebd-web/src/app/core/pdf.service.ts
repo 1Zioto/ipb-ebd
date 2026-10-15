@@ -238,7 +238,7 @@ export class PdfService {
               position: relative;
             }
 
-            /* Moldura e Estilos Canônicos Eclesiásticos da IPB */
+            /* Moldura e Estilos Eclesiásticos Oficiais da IPB */
             .ipb-moldura-solene {
               border: 2.5px solid #064e3b;
               outline: 1px solid #0f766e;
@@ -404,7 +404,7 @@ export class PdfService {
               letter-spacing: 0.08em;
             }
 
-            /* Assinaturas Canônicas */
+            /* Assinaturas Oficiais */
             .ipb-grid-assinaturas {
               display: grid;
               grid-template-columns: 1fr 1fr;
@@ -489,7 +489,7 @@ export class PdfService {
               <img src="${origin}/ipb-logo.png" alt="IPB" class="brand-logo" onerror="this.style.display='none'" />
               <div class="brand-info">
                 <h1>Igreja Presbiteriana do Brasil</h1>
-                <p>Secretaria do Conselho • Documento Canônico Oficial</p>
+                <p>Secretaria do Conselho • Documento Oficial</p>
               </div>
             </div>
 

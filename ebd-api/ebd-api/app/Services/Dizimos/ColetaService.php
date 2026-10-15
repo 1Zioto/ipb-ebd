@@ -315,7 +315,7 @@ class ColetaService
     public function reopenColeta(ColetaDizimo $coleta, User $user, string $reason): ColetaDizimo
     {
         if (blank($reason)) {
-            throw new InvalidArgumentException('É obrigatório informar o motivo canônico para reabertura da conferência.');
+            throw new InvalidArgumentException('É obrigatório informar a justificativa para reabertura da conferência.');
         }
 
         return DB::transaction(function () use ($coleta, $user, $reason) {

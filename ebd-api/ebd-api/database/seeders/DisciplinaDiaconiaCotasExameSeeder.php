@@ -308,7 +308,7 @@ class DisciplinaDiaconiaCotasExameSeeder extends Seeder
                 'conformidade_comprovantes_fiscais' => true,
                 'conformidade_cotas_conciliares' => true,
                 'ressalvas_e_recomendacoes' => 'Recomendamos manter o rigor no arquivamento de comprovantes digitais das compras parceladas do cartão corporativo.',
-                'texto_conclusao' => 'A Comissão de Exame de Contas, após minucioso exame dos livros da Tesouraria da Igreja, extratos bancários, notas fiscais e comprovantes de pagamentos do 1º Trimestre de 2026, constatou que os registros contábeis encontram-se em perfeita exatidão e conformidade com as normas administrativas e canônicas da Igreja Presbiteriana do Brasil. Portanto, somos de parecer FAVORÁVEL sem ressalvas à sua aprovação pela Assembleia Geral.',
+                'texto_conclusao' => 'A Comissão de Exame de Contas, após minucioso exame dos livros da Tesouraria da Igreja, extratos bancários, notas fiscais e comprovantes de pagamentos do 1º Trimestre de 2026, constatou que os registros contábeis encontram-se em perfeita exatidão e conformidade com as normas administrativas e eclesiásticas da Igreja Presbiteriana do Brasil. Portanto, somos de parecer FAVORÁVEL sem ressalvas à sua aprovação pela Assembleia Geral.',
                 'status' => 'Concluído',
             ]);
         }

@@ -2,10 +2,10 @@
 <div class="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
   <div>
     <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
-      ✉️ Cartas de Transferência (Canônico IPB)
+      ✉️ Cartas de Transferência — Padrão Oficial IPB
     </h1>
     <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
-      Emissão e controle canônico de cartas para envio a outras igrejas ou recebimento de membros
+      Emissão e controle de cartas de transferência para envio a outras igrejas ou recebimento de membros
     </p>
   </div>
   <div class="flex items-center gap-2">
@@ -101,7 +101,7 @@
             pButton
             icon="pi pi-file-pdf"
             class="p-button-rounded p-button-text p-button-sm p-button-primary"
-            pTooltip="Visualizar / Imprimir Carta Canônica"
+            pTooltip="Visualizar / Imprimir Carta de Transferência"
             (click)="visualizarCarta(c)"
           ></button>
         </td>
@@ -122,7 +122,7 @@
   [(visible)]="newDialog"
   [modal]="true"
   [style]="{ width: '560px' }"
-  header="Emitir Nova Carta de Transferência Canônica"
+  header="Emitir Nova Carta de Transferência"
 >
   <div class="space-y-4 pt-2">
     <div class="grid grid-cols-2 gap-3">
@@ -171,13 +171,13 @@
         <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="newCarta.data_emissao" />
       </div>
       <div>
-        <label class="block text-xs font-medium text-surface-600 mb-1">Data de Validade (Canônica)</label>
+        <label class="block text-xs font-medium text-surface-600 mb-1">Data de Validade</label>
         <input type="date" class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm" [(ngModel)]="newCarta.data_validade" />
       </div>
     </div>
 
     <div>
-      <label class="block text-xs font-medium text-surface-600 mb-1">Observações Canônicas</label>
+      <label class="block text-xs font-medium text-surface-600 mb-1">Observações do Conselho</label>
       <textarea
         class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
         rows="2"
@@ -188,16 +188,16 @@
 
   <ng-template pTemplate="footer">
     <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="newDialog = false"></p-button>
-    <p-button label="Emitir Carta Canônica" icon="pi pi-check" (onClick)="salvarNovaCarta()"></p-button>
+    <p-button label="Emitir Carta" icon="pi pi-check" (onClick)="salvarNovaCarta()"></p-button>
   </ng-template>
 </p-dialog>
 
-<!-- Visualizador Canônico Padrão IPB (Pronto para Impressão) -->
+<!-- Visualizador Padrão IPB (Pronto para Impressão) -->
 <p-dialog
   [(visible)]="viewDialog"
   [modal]="true"
   [style]="{ width: '750px', maxWidth: '95vw' }"
-  header="Carta de Transferência Canônica — Padrão Oficial IPB"
+  header="Carta de Transferência — Padrão Oficial IPB"
 >
   @if (selectedCarta) {
     <div class="p-8 border border-surface-200 dark:border-surface-700 rounded-xl bg-surface-0 dark:bg-surface-900 printable-document">
@@ -211,11 +211,11 @@
           Presbitério de Vitória • Sínodo Central
         </div>
         <div class="mt-3 inline-block px-3 py-1 bg-surface-100 dark:bg-surface-800 border border-surface-300 dark:border-surface-700 rounded font-mono font-bold text-xs uppercase tracking-wider">
-          Carta de Transferência Canônica Nº {{ selectedCarta.numero_carta }}
+          Carta de Transferência Nº {{ selectedCarta.numero_carta }}
         </div>
       </div>
 
-      <!-- Texto Canônico Formal IPB -->
+      <!-- Texto Formal IPB -->
       <div class="py-6 space-y-4 text-justify leading-relaxed text-sm text-surface-800 dark:text-surface-200">
         <p class="font-semibold">
           Ao Conselho da respeitável {{ selectedCarta.igreja_destino }},
@@ -228,7 +228,7 @@
         <p>
           Vimos por meio desta certificar que o(a) irmão(ã) <strong>{{ selectedCarta.person?.full_name }}</strong>,
           inscrito(a) no Rol de Membros desta igreja sob o nº <strong>{{ selectedCarta.person?.roll_number || 'S/N' }}</strong>,
-          acha-se em plena comunhão com esta comunidade da fé, não havendo contra sua pessoa qualquer impedimento de ordem moral, doutrinária ou canônica que desabone sua caminhada cristã.
+          acha-se em plena comunhão com esta comunidade da fé, não havendo contra sua pessoa qualquer impedimento de ordem moral, doutrinária ou disciplinar que desabone sua caminhada cristã.
         </p>
 
         <p>
@@ -250,7 +250,7 @@
         </div>
       </div>
 
-      <!-- Assinaturas Canônicas do Conselho -->
+      <!-- Assinaturas do Conselho -->
       <div class="pt-8 border-t border-surface-300 dark:border-surface-700">
         <div class="grid grid-cols-2 gap-10 text-center text-xs">
           <div>
@@ -266,7 +266,7 @@
         </div>
       </div>
 
-      <!-- Canhoto de Devolução (Conforme Praxe Canônica IPB) -->
+      <!-- Canhoto de Devolução (Padrão Oficial IPB) -->
       <div class="mt-10 pt-4 border-t-2 border-dashed border-surface-400 text-xs text-surface-600 dark:text-surface-400">
         <div class="text-center font-bold uppercase tracking-wider text-surface-500 mb-2">
           (Destacar e devolver à igreja de origem após a homologação)

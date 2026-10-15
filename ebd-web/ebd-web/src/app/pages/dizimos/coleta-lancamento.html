@@ -78,7 +78,7 @@
               severity="warn"
               [outlined]="true"
               (onClick)="showReopenModal.set(true)"
-              pTooltip="Reabrir conferência para correções canônicas autorizadas"
+              pTooltip="Reabrir conferência para correções autorizadas"
             />
           }
         }
@@ -809,7 +809,7 @@
 <!-- MODAL: MOTIVO DA REABERTURA                              -->
 <!-- ======================================================== -->
 <p-dialog
-  header="Motivo da Reabertura Canônica"
+  header="Motivo da Reabertura"
   [visible]="showReopenModal()"
   (visibleChange)="showReopenModal.set($event)"
   [modal]="true"
@@ -817,7 +817,7 @@
 >
   <div class="space-y-3 pt-2">
     <label class="block text-xs font-bold uppercase text-muted-color mb-1">Justificativa da Correção</label>
-    <textarea pTextarea class="w-full text-sm" rows="3" [(ngModel)]="reopenReason" placeholder="Descreva o motivo canônico para reabertura desta conferência..."></textarea>
+    <textarea pTextarea class="w-full text-sm" rows="3" [(ngModel)]="reopenReason" placeholder="Descreva a justificativa para reabertura desta conferência..."></textarea>
   </div>
   <ng-template pTemplate="footer">
     <div class="flex items-center justify-end gap-2 pt-2">

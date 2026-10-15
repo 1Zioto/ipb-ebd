@@ -237,7 +237,7 @@ export class SecretariaService {
   private http = inject(HttpClient);
   private api = environment.apiUrl;
 
-  // 🏛️ Secretaria & Rol Canônico
+  // 🏛️ Secretaria & Rol de Membros
   getMembros(params?: { status?: string; search?: string; page?: number }): Observable<{ membros: { data: CanonicalMember[]; current_page: number; last_page: number; total: number }; stats: CanonicalStats }> {
     let p = new HttpParams();
     if (params?.status) p = p.set('status', params.status);
