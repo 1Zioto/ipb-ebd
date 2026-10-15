@@ -45,13 +45,22 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/register-church', [AuthController::class, 'registerChurch']);
     Route::get('screen-configs', [ScreenConfigController::class, 'index']);
+    Route::post('screen-configs', [ScreenConfigController::class, 'store']);
 
     // ---- Autenticado ----
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
-        Route::post('screen-configs', [ScreenConfigController::class, 'store']);
+
+        // ---- Sincronização e Auditoria de Lotes Offline de Coletas (Dízimos & Ofertas) ----
+        Route::prefix('dizimos/conferencias')->group(function () {
+            Route::get('offline-sync', [OfflineColetaSyncController::class, 'index']);
+            Route::post('offline-sync', [OfflineColetaSyncController::class, 'store']);
+            Route::get('offline-sync/{sync}', [OfflineColetaSyncController::class, 'show']);
+            Route::post('offline-sync/{sync}/approve', [OfflineColetaSyncController::class, 'approve']);
+            Route::post('offline-sync/{sync}/reject', [OfflineColetaSyncController::class, 'reject']);
+        });
 
         Route::get('admin/users', [SystemAdminController::class, 'users'])->middleware('permission:user.manage');
         Route::post('admin/users', [SystemAdminController::class, 'storeUser'])->middleware('permission:user.manage');
