@@ -74,19 +74,6 @@ import { filter } from 'rxjs/operators';
                 @if (item().badge) {
                     <span class="layout-menuitem-badge" [ngClass]="item().badgeClass">{{ item().badge }}</span>
                 }
-
-                @if (canFavorite()) {
-                    <button
-                        type="button"
-                        class="menuitem-favorite-btn"
-                        [class.is-favorite]="isFavorite()"
-                        (click)="toggleFavorite($event)"
-                        [title]="isFavorite() ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
-                        [attr.aria-label]="isFavorite() ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
-                    >
-                        <i class="pi" [ngClass]="isFavorite() ? 'pi-star-fill text-amber-500' : 'pi-star'"></i>
-                    </button>
-                }
             </a>
         }
         @if (hasChildren() && isVisible() && (root() || isExpanded())) {
@@ -111,11 +98,11 @@ import { filter } from 'rxjs/operators';
     styles: [
         `
             .p-submenu-enter {
-                animation: p-animate-submenu-expand 300ms cubic-bezier(0.86, 0, 0.07, 1) forwards;
+                animation: p-animate-submenu-expand 250ms cubic-bezier(0.86, 0, 0.07, 1) forwards;
             }
 
             .p-submenu-leave {
-                animation: p-animate-submenu-collapse 250ms cubic-bezier(0.86, 0, 0.07, 1) forwards;
+                animation: p-animate-submenu-collapse 200ms cubic-bezier(0.86, 0, 0.07, 1) forwards;
             }
 
             @keyframes p-animate-submenu-expand {
@@ -187,15 +174,6 @@ export class AppMenuitem {
         return false;
     });
 
-    canFavorite = computed(() => {
-        return !!this.item()?.routerLink && !this.hasChildren() && !this.root();
-    });
-
-    isFavorite = computed(() => {
-        const route = this.item()?.routerLink?.[0];
-        return route ? this.menuPrefs.isFavorite(route) : false;
-    });
-
     initialized = signal<boolean>(false);
 
     constructor() {
@@ -230,7 +208,7 @@ export class AppMenuitem {
         });
 
         if (isRouteActive) {
-            // Garante que o grupo/categoria pai que contém este item permaneça expandido
+            // Garante que a categoria pai que contém este item permaneça expandida
             const catId = this.categoryId();
             if (catId) {
                 this.menuPrefs.expandCategory(catId);
@@ -262,15 +240,6 @@ export class AppMenuitem {
                 mobileMenuActive: false,
                 menuHoverActive: false
             }));
-        }
-    }
-
-    toggleFavorite(event: MouseEvent) {
-        event.stopPropagation();
-        event.preventDefault();
-        const route = this.item()?.routerLink?.[0];
-        if (route) {
-            this.menuPrefs.toggleFavorite(route);
         }
     }
 }

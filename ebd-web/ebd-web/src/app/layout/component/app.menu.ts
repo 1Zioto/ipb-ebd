@@ -46,7 +46,7 @@ export interface AppMenuItemConfig extends MenuItem {
     ],
     template: `
         @if (!layoutService.layoutState().sidebarCollapsed) {
-            <!-- BARRA DE BUSCA INTELIGENTE COM ATALHO CTRL+K -->
+            <!-- BARRA DE BUSCA INTELIGENTE -->
             <div class="menu-search-wrapper">
                 <p-iconfield styleClass="w-full relative">
                     <p-inputicon styleClass="pi pi-search text-muted-color text-xs" />
@@ -57,26 +57,20 @@ export interface AppMenuItemConfig extends MenuItem {
                         [(ngModel)]="searchQuery"
                         (keydown.enter)="onSearchEnter()"
                         (keydown.escape)="clearSearch()"
-                        placeholder="Buscar páginas... (Ctrl + K)"
-                        class="w-full text-xs py-2 pl-8 pr-16 rounded-xl bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface focus:border-primary transition-all outline-none"
+                        placeholder="Buscar no menu..."
+                        class="w-full text-xs py-2 pl-8 pr-7 rounded-xl bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface focus:border-primary transition-all outline-none"
                     />
-                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        @if (searchQuery) {
-                            <button
-                                type="button"
-                                (click)="clearSearch()"
-                                class="bg-transparent border-none p-1 text-muted-color hover:text-surface-900 dark:hover:text-surface-0 cursor-pointer flex items-center justify-center transition-colors"
-                                title="Limpar busca"
-                                aria-label="Limpar busca"
-                            >
-                                <i class="pi pi-times text-xs"></i>
-                            </button>
-                        } @else {
-                            <kbd class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-200 dark:bg-surface-800 text-muted-color border border-surface-border">
-                                ⌘K
-                            </kbd>
-                        }
-                    </div>
+                    @if (searchQuery) {
+                        <button
+                            type="button"
+                            (click)="clearSearch()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none p-1 text-muted-color hover:text-surface-900 dark:hover:text-surface-0 cursor-pointer flex items-center justify-center transition-colors"
+                            title="Limpar busca"
+                            aria-label="Limpar busca"
+                        >
+                            <i class="pi pi-times text-xs"></i>
+                        </button>
+                    }
                 </p-iconfield>
             </div>
         }
@@ -114,31 +108,10 @@ export interface AppMenuItemConfig extends MenuItem {
                 </ul>
             </div>
         } @else {
-            <!-- NAVEGAÇÃO PRINCIPAL HIERÁRQUICA DO SAKAI -->
+            <!-- NAVEGAÇÃO PRINCIPAL HIERÁRQUICA E LIMPA (SEM CABEÇALHOS REDUNDANTES) -->
             <ul class="layout-menu">
-                <!-- SEÇÃO COMPACTA DE FAVORITOS (SE HOUVER ITENS FAVORITADOS) -->
-                @if (favoriteItems.length > 0) {
-                    <li class="layout-root-menuitem favorites-root-item">
-                        <div class="layout-menuitem-root-text flex items-center gap-1.5">
-                            <i class="pi pi-star-fill text-amber-500 text-xs"></i>
-                            <span>Favoritos</span>
-                        </div>
-                        <ul class="layout-root-submenulist">
-                            @for (fav of favoriteItems; track fav.routerLink?.[0]) {
-                                <li app-menuitem [item]="fav" [root]="false"></li>
-                            }
-                        </ul>
-                    </li>
-                    <li class="menu-separator"></li>
-                }
-
-                <!-- GRUPOS PRINCIPAIS HIERÁRQUICOS -->
-                @for (group of model; track group.label) {
-                    @if (!group.separator) {
-                        <li app-menuitem [item]="group" [root]="true"></li>
-                    } @else {
-                        <li class="menu-separator"></li>
-                    }
+                @for (item of model; track item.label) {
+                    <li app-menuitem [item]="item" [root]="false"></li>
                 }
             </ul>
         }
@@ -165,7 +138,7 @@ export class AppMenu implements OnInit {
             this.rebuildMenu();
         });
 
-        // Atualiza indicadores ao inicializar
+        // Atualiza indicadores de pendências
         effect(() => {
             this.pendingIndicators.indicators();
             this.rebuildMenu();
@@ -194,25 +167,16 @@ export class AppMenu implements OnInit {
         const pendingOS = this.pendingIndicators.getPendingOS();
 
         const rawStructure: AppMenuItemConfig[] = [
-            // ==========================================
-            // 1. PAINEL PRINCIPAL
-            // ==========================================
+            // 1. Dashboard (Item direto na raiz, sem cabeçalho duplicado)
             {
-                label: 'Painel Principal',
-                items: [
-                    {
-                        label: 'Dashboard',
-                        icon: 'pi pi-fw pi-home',
-                        routerLink: ['/dashboard'],
-                        visible: this.can('person.view'),
-                        keywords: ['inicio', 'home', 'painel', 'resumo', 'indicadores', 'metricas', 'live', 'ebd'],
-                    },
-                ],
+                label: 'Dashboard',
+                icon: 'pi pi-fw pi-home',
+                routerLink: ['/dashboard'],
+                visible: this.can('person.view'),
+                keywords: ['inicio', 'home', 'painel', 'resumo', 'indicadores', 'metricas', 'live', 'ebd'],
             },
 
-            // ==========================================
-            // 2. EDUCAÇÃO CRISTÃ (EBD)
-            // ==========================================
+            // 2. Educação Cristã (Categoria sanfona / accordion)
             {
                 label: 'Educação Cristã',
                 id: 'educacao',
@@ -227,49 +191,47 @@ export class AppMenu implements OnInit {
                         visible: this.isScreenVisible('classes', 'class.view'),
                         badge: pendingCalls > 0 ? `${pendingCalls} pendentes` : undefined,
                         badgeClass: 'badge-warn',
-                        keywords: ['ebd', 'classes', 'turmas', 'chamada', 'chamadas', 'frequencia', 'alunos', 'professores', 'revista', 'biblia'],
+                        keywords: ['ebd', 'classes', 'turmas', 'chamada', 'chamadas', 'frequencia', 'alunos', 'professores'],
                     },
                     {
                         label: 'Calendário da EBD',
                         icon: 'pi pi-fw pi-calendar',
                         routerLink: ['/calendario'],
                         visible: this.isScreenVisible('calendario', 'event.view'),
-                        keywords: ['calendario', 'aulas', 'eventos', 'domingos', 'datas', 'trimestre', 'licoes'],
+                        keywords: ['calendario', 'aulas', 'eventos', 'domingos', 'datas', 'trimestre'],
                     },
                     {
                         label: 'Escalas de Serviço',
                         icon: 'pi pi-fw pi-list-check',
                         routerLink: ['/escalas'],
                         visible: this.isScreenVisible('escalas', 'schedule.view'),
-                        keywords: ['professores', 'escalas', 'servico', 'plantao', 'equipe', 'escala de professores'],
+                        keywords: ['professores', 'escalas', 'servico', 'plantao', 'equipe'],
                     },
                     {
                         label: 'Relatórios da EBD',
                         icon: 'pi pi-fw pi-chart-bar',
                         routerLink: ['/relatorios'],
                         visible: this.isScreenVisible('relatorios_ebd', 'report.view'),
-                        keywords: ['relatorios', 'frequencia', 'graficos', 'estatisticas', 'presenca', 'faltas', 'desempenho'],
+                        keywords: ['relatorios', 'frequencia', 'graficos', 'estatisticas', 'presenca'],
                     },
                     {
                         label: 'Relatório Anual IPB',
                         icon: 'pi pi-fw pi-chart-pie',
                         routerLink: ['/relatorios/anual'],
                         visible: this.isScreenVisible('relatorio_anual', 'report.view'),
-                        keywords: ['relatorio anual', 'sinodal', 'estatistica', 'ipb', 'consolidado', 'censo anual'],
+                        keywords: ['relatorio anual', 'sinodal', 'estatistica', 'ipb', 'consolidado'],
                     },
                     {
                         label: 'Catecúmenos & Biblioteca',
                         icon: 'pi pi-fw pi-bookmark',
                         routerLink: ['/discipulado-biblioteca'],
                         visible: this.isScreenVisible('discipulado_biblioteca', 'person.view'),
-                        keywords: ['catecumenos', 'discipulado', 'biblioteca', 'livros', 'leitura', 'acervo', 'emprestimos'],
+                        keywords: ['catecumenos', 'discipulado', 'biblioteca', 'livros', 'leitura'],
                     },
                 ],
             },
 
-            // ==========================================
-            // 3. SECRETARIA E MEMBRESIA
-            // ==========================================
+            // 3. Secretaria e Membresia (Categoria sanfona / accordion)
             {
                 label: 'Secretaria & Membresia',
                 id: 'secretaria',
@@ -280,49 +242,47 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-users',
                         routerLink: ['/pessoas'],
                         visible: this.isScreenVisible('pessoas', 'person.view'),
-                        keywords: ['membros', 'pessoas', 'contatos', 'cadastro', 'telefones', 'enderecos', 'aniversariantes'],
+                        keywords: ['membros', 'pessoas', 'contatos', 'cadastro', 'telefones', 'enderecos'],
                     },
                     {
                         label: 'Famílias',
                         icon: 'pi pi-fw pi-heart',
                         routerLink: ['/familias'],
                         visible: this.isScreenVisible('familias', 'family.view'),
-                        keywords: ['familias', 'lares', 'casais', 'filhos', 'parentesco', 'nucleo familiar'],
+                        keywords: ['familias', 'lares', 'casais', 'filhos', 'parentesco'],
                     },
                     {
                         label: 'Rol de Membros',
                         icon: 'pi pi-fw pi-id-card',
                         routerLink: ['/secretaria/membros'],
                         visible: this.isScreenVisible('membros', 'secretaria.rol.view'),
-                        keywords: ['rol', 'membros', 'comungantes', 'nao comungantes', 'canonica', 'certidao', 'filiacao'],
+                        keywords: ['rol', 'membros', 'comungantes', 'nao comungantes', 'canonica', 'certidao'],
                     },
                     {
                         label: 'Cartas de Transferência',
                         icon: 'pi pi-fw pi-envelope',
                         routerLink: ['/secretaria/cartas'],
                         visible: this.isScreenVisible('cartas', 'secretaria.rol.view'),
-                        keywords: ['cartas', 'transferencia', 'recepcao', 'demissao', 'oficio', 'mudanca de membros'],
+                        keywords: ['cartas', 'transferencia', 'recepcao', 'demissao', 'oficio'],
                     },
                     {
                         label: 'Estatística do Presbitério',
                         icon: 'pi pi-fw pi-percentage',
                         routerLink: ['/secretaria/estatistica-presbiterio'],
                         visible: this.isScreenVisible('estatistica_presbiterio', 'presbiterio.consolidated.view'),
-                        keywords: ['presbiterio', 'estatistica', 'censo', 'sinodo', 'igreja presbiteriana', 'quadro geral'],
+                        keywords: ['presbiterio', 'estatistica', 'censo', 'sinodo', 'igreja presbiteriana'],
                     },
                     {
                         label: 'Boletim Informativo Semanal',
                         icon: 'pi pi-fw pi-file-edit',
                         routerLink: ['/secretaria/boletim'],
                         visible: this.isScreenVisible('boletim', 'person.view'),
-                        keywords: ['boletim', 'informativo', 'liturgia', 'avisos', 'publicacao', 'culto', 'edicao'],
+                        keywords: ['boletim', 'informativo', 'liturgia', 'avisos', 'publicacao', 'culto'],
                     },
                 ],
             },
 
-            // ==========================================
-            // 4. CONSELHO E ADMINISTRAÇÃO
-            // ==========================================
+            // 4. Conselho e Administração (Categoria sanfona / accordion)
             {
                 label: 'Conselho & Administração',
                 id: 'conselho',
@@ -333,35 +293,35 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-users',
                         routerLink: ['/secretaria/oficiais-lideranca'],
                         visible: this.isScreenVisible('oficiais', 'person.view'),
-                        keywords: ['oficiais', 'presbiteros', 'diaconos', 'pastor', 'secretarios', 'lideranca', 'mandatos'],
+                        keywords: ['oficiais', 'presbiteros', 'diaconos', 'pastor', 'secretarios', 'lideranca'],
                     },
                     {
                         label: 'Livro de Atas do Conselho',
                         icon: 'pi pi-fw pi-book',
                         routerLink: ['/secretaria/atas'],
                         visible: this.isScreenVisibleAny('atas', 'secretaria.atas.view', 'conselho.approve'),
-                        keywords: ['atas', 'reuniao', 'resolucoes', 'conselho', 'livro de atas', 'deliberacoes'],
+                        keywords: ['atas', 'reuniao', 'resolucoes', 'conselho', 'livro de atas'],
                     },
                     {
                         label: 'Código de Disciplina',
                         icon: 'pi pi-fw pi-file-check',
                         routerLink: ['/secretaria/disciplina'],
                         visible: this.isScreenVisible('disciplina', 'person.view'),
-                        keywords: ['disciplina', 'jurisdicao pastoral', 'processo canonico', 'restauracao', 'tribunal'],
+                        keywords: ['disciplina', 'jurisdicao pastoral', 'processo canonico', 'restauracao'],
                     },
                     {
                         label: 'Sociedades Internas',
                         icon: 'pi pi-fw pi-sitemap',
                         routerLink: ['/sociedades'],
                         visible: this.isScreenVisible('sociedades', 'person.view'),
-                        keywords: ['sociedades internas', 'saf', 'ump', 'upa', 'uph', 'departamentos', 'diretorias'],
+                        keywords: ['sociedades internas', 'saf', 'ump', 'upa', 'uph', 'departamentos'],
                     },
                     {
                         label: 'Estrutura Institucional',
                         icon: 'pi pi-fw pi-sitemap',
                         routerLink: ['/instituicoes/arvore'],
                         visible: this.can('institution.tree.view'),
-                        keywords: ['estrutura institucional', 'arvore hierarquica', 'sinodo', 'presbiterio', 'jurisdicao'],
+                        keywords: ['estrutura institucional', 'arvore hierarquica', 'sinodo', 'presbiterio'],
                     },
                     {
                         label: 'Instituições',
@@ -373,9 +333,7 @@ export class AppMenu implements OnInit {
                 ],
             },
 
-            // ==========================================
-            // 5. TESOURARIA E FINANÇAS
-            // ==========================================
+            // 5. Tesouraria e Finanças (Categoria sanfona / accordion)
             {
                 label: 'Tesouraria & Finanças',
                 id: 'tesouraria',
@@ -386,7 +344,7 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-wallet',
                         routerLink: ['/financeiro/transacoes'],
                         visible: this.isScreenVisible('financeiro', 'financial.view'),
-                        keywords: ['caixa', 'livro caixa', 'entradas', 'saidas', 'despesas', 'receitas', 'recibos', 'tesouraria'],
+                        keywords: ['caixa', 'livro caixa', 'entradas', 'saidas', 'despesas', 'receitas', 'tesouraria'],
                     },
                     {
                         label: 'Contabilidade & Balancete',
@@ -400,7 +358,7 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-inbox',
                         routerLink: ['/dizimos/coletas'],
                         visible: this.isScreenVisible('dizimos', 'dizimos.coleta.operar'),
-                        keywords: ['dizimos', 'ofertas', 'coletas', 'conferencia', 'envelopes', 'culto', 'dizimistas'],
+                        keywords: ['dizimos', 'ofertas', 'coletas', 'conferencia', 'envelopes', 'culto'],
                     },
                     {
                         label: 'Lotes Offline para Revisão',
@@ -414,14 +372,14 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-building-columns',
                         routerLink: ['/financeiro/contas'],
                         visible: this.isScreenVisible('contas_bancarias', 'financial.view'),
-                        keywords: ['contas bancarias', 'bancos', 'contas correntes', 'aplicacoes', 'saldo', 'caixas'],
+                        keywords: ['contas bancarias', 'bancos', 'contas correntes', 'aplicacoes', 'saldo'],
                     },
                     {
                         label: 'Cotas & Orçamento Anual',
                         icon: 'pi pi-fw pi-chart-line',
                         routerLink: ['/financeiro/cotas-orcamento'],
                         visible: this.isScreenVisible('cotas_orcamento', 'financial.view'),
-                        keywords: ['cotas', 'orcamento', 'presbiterio', 'sinodo', 'supremo concilio', 'orcamento anual'],
+                        keywords: ['cotas', 'orcamento', 'presbiterio', 'sinodo', 'supremo concilio'],
                     },
                     {
                         label: 'Plano de Contas & Custos',
@@ -454,9 +412,7 @@ export class AppMenu implements OnInit {
                 ],
             },
 
-            // ==========================================
-            // 6. DIACONIA E PATRIMÔNIO
-            // ==========================================
+            // 6. Diaconia & Patrimônio (Categoria sanfona / accordion)
             {
                 label: 'Diaconia & Patrimônio',
                 id: 'diaconia',
@@ -471,14 +427,14 @@ export class AppMenu implements OnInit {
                         visible: this.isScreenVisible('diaconato', 'dizimos.diaconato.atender'),
                         badge: pendingDiaconato > 0 ? `${pendingDiaconato} pendentes` : undefined,
                         badgeClass: 'badge-warn',
-                        keywords: ['diaconato', 'assistencia diaconal', 'socorro', 'cesta basica', 'ajuda', 'solicitacoes'],
+                        keywords: ['diaconato', 'assistencia diaconal', 'socorro', 'cesta basica', 'ajuda'],
                     },
                     {
                         label: 'Acompanhamento Pastoral',
                         icon: 'pi pi-fw pi-heart',
                         routerLink: ['/dizimos/alertas'],
                         visible: this.isScreenVisible('alertas_pastorais', 'dizimos.alertas.manage'),
-                        keywords: ['pastoral', 'acompanhamento pastoral', 'visitas', 'alertas', 'cuidado', 'membros afastados'],
+                        keywords: ['pastoral', 'acompanhamento pastoral', 'visitas', 'alertas', 'cuidado'],
                     },
                     {
                         label: 'Patrimônio & Livro Tombo',
@@ -487,14 +443,12 @@ export class AppMenu implements OnInit {
                         visible: this.isScreenVisible('patrimonio', 'person.view'),
                         badge: pendingOS > 0 ? `${pendingOS} OS pendentes` : undefined,
                         badgeClass: 'badge-warn',
-                        keywords: ['patrimonio', 'livro tombo', 'bens', 'inventario', 'ordens de servico', 'manutencoes'],
+                        keywords: ['patrimonio', 'livro tombo', 'bens', 'inventario', 'ordens de servico'],
                     },
                 ],
             },
 
-            // ==========================================
-            // 7. GESTÃO DO SISTEMA
-            // ==========================================
+            // 7. Gestão do Sistema (Categoria sanfona / accordion)
             {
                 label: 'Gestão do Sistema',
                 id: 'admin',
@@ -505,21 +459,21 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-sliders-h',
                         routerLink: ['/admin/super-admin'],
                         visible: this.auth.isSuperAdmin(),
-                        keywords: ['super admin', 'master', 'telas', 'modulos', 'igrejas ativas', 'liberacao de telas'],
+                        keywords: ['super admin', 'master', 'telas', 'modulos', 'igrejas ativas'],
                     },
                     {
                         label: 'Gestão de Usuários',
                         icon: 'pi pi-fw pi-user-edit',
                         routerLink: ['/admin/usuarios'],
                         visible: this.isScreenVisible('usuarios', 'user.manage'),
-                        keywords: ['usuarios', 'senhas', 'permissoes', 'acessos', 'perfis', 'troca de senha'],
+                        keywords: ['usuarios', 'senhas', 'permissoes', 'acessos', 'perfis'],
                     },
                     {
                         label: 'Auditoria do Sistema',
                         icon: 'pi pi-fw pi-search',
                         routerLink: ['/admin/auditoria'],
                         visible: this.isScreenVisible('auditoria', 'audit.view'),
-                        keywords: ['auditoria', 'logs', 'historico', 'seguranca', 'rastreamento', 'operacoes'],
+                        keywords: ['auditoria', 'logs', 'historico', 'seguranca', 'rastreamento'],
                     },
                 ],
             },
@@ -530,17 +484,6 @@ export class AppMenu implements OnInit {
 
         // Prepara lista indexada de todas as páginas para pesquisa rápida
         this.allFlatItems = this.extractFlatItems(this.model);
-    }
-
-    /**
-     * Retorna a lista de itens favoritos que o usuário possui permissão atual para visualizar
-     */
-    get favoriteItems(): AppMenuItemConfig[] {
-        const favRoutes = this.menuPrefs.favorites();
-        return this.allFlatItems.filter((item) => {
-            const link = item.routerLink?.[0];
-            return link && favRoutes.includes(link);
-        });
     }
 
     /**
@@ -589,27 +532,25 @@ export class AppMenu implements OnInit {
         this.searchQuery = '';
     }
 
-    private extractFlatItems(groups: AppMenuItemConfig[]): AppMenuItemConfig[] {
+    private extractFlatItems(items: AppMenuItemConfig[]): AppMenuItemConfig[] {
         const list: AppMenuItemConfig[] = [];
 
-        for (const group of groups) {
-            for (const item of group.items || []) {
-                if (item.items && item.items.length > 0) {
-                    // Categoria aninhada
-                    for (const sub of item.items) {
-                        list.push({
-                            ...sub,
-                            categoryLabel: item.label,
-                            id: item.id,
-                        });
-                    }
-                } else if (item.routerLink) {
-                    // Item direto
+        for (const item of items) {
+            if (item.items && item.items.length > 0) {
+                // Categoria aninhada
+                for (const sub of item.items) {
                     list.push({
-                        ...item,
-                        categoryLabel: group.label,
+                        ...sub,
+                        categoryLabel: item.label,
+                        id: item.id,
                     });
                 }
+            } else if (item.routerLink) {
+                // Item direto
+                list.push({
+                    ...item,
+                    categoryLabel: item.label,
+                });
             }
         }
 
@@ -638,30 +579,19 @@ export class AppMenu implements OnInit {
         return this.screenConfig.isScreenEnabled(screenKey) && permissions.some((permission) => this.can(permission));
     }
 
-    private filterVisibleHierarchy(groups: AppMenuItemConfig[]): AppMenuItemConfig[] {
-        return groups
-            .map((group) => {
-                const filteredItems = (group.items || [])
-                    .map((item) => {
-                        if (item.items && item.items.length > 0) {
-                            // Submenu/Categoria
-                            const subItems = item.items.filter((sub) => sub.visible !== false);
-                            return {
-                                ...item,
-                                items: subItems,
-                                visible: subItems.length > 0,
-                            };
-                        }
-                        return item;
-                    })
-                    .filter((item) => item.visible !== false);
-
-                return {
-                    ...group,
-                    items: filteredItems,
-                    visible: filteredItems.length > 0,
-                };
+    private filterVisibleHierarchy(items: AppMenuItemConfig[]): AppMenuItemConfig[] {
+        return items
+            .map((item) => {
+                if (item.items && item.items.length > 0) {
+                    const subItems = item.items.filter((sub) => sub.visible !== false);
+                    return {
+                        ...item,
+                        items: subItems,
+                        visible: subItems.length > 0,
+                    };
+                }
+                return item;
             })
-            .filter((group) => group.visible !== false && (group.items || []).length > 0);
+            .filter((item) => item.visible !== false);
     }
 }

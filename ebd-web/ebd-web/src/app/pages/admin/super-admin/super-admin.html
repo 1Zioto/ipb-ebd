@@ -4,83 +4,74 @@
   <!-- ========================================== -->
   <!-- 1. HEADER DO SUPER ADMINISTRADOR          -->
   <!-- ========================================== -->
-  <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-900 via-primary-800 to-surface-900 text-white p-6 sm:p-8 shadow-xl border border-primary-700/40">
-    <div class="absolute -right-10 -bottom-10 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-      <div class="flex items-start gap-4">
-        <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-primary-200 text-2xl shadow-inner shrink-0">
-          <i class="pi pi-sliders-h"></i>
-        </div>
-        <div>
-          <div class="flex flex-wrap items-center gap-2 mb-1.5">
-            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white m-0">
-              Central Super Admin
-            </h1>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center gap-1">
-              <i class="pi pi-lock text-[10px]"></i>
-              Acesso Master Exclusivo
-            </span>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-              Parametrização & Igrejas
-            </span>
-          </div>
-          <p class="text-xs sm:text-sm text-primary-100/80 m-0 max-w-2xl font-medium leading-relaxed">
-            Controle de visibilidade de telas em tempo real por igreja ou globalmente. Ative ou desative módulos conforme a conveniência da igreja local.
-          </p>
-        </div>
+  <!-- ========================================== -->
+  <!-- 1. HEADER DO SUPER ADMINISTRADOR (CLEAN & MODERNO) -->
+  <!-- ========================================== -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+    <div>
+      <div class="flex flex-wrap items-center gap-2 mb-1">
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0">
+          Central Super Admin
+        </h1>
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+          <i class="pi pi-lock text-[10px]"></i>
+          Acesso Master Exclusivo
+        </span>
       </div>
-
-      <!-- Ações Rápidas no Topo -->
-      <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <button
-          type="button"
-          (click)="toggleSuperAdminMode()"
-          class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border"
-          [ngClass]="auth.isSuperAdmin() ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200 hover:bg-emerald-500/30' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'"
-        >
-          <i class="pi pi-shield"></i>
-          <span>Modo Super Admin: <strong>{{ auth.isSuperAdmin() ? 'Ativo' : 'Inativo' }}</strong></span>
-        </button>
-
-        <a
-          routerLink="/dashboard"
-          class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all cursor-pointer no-underline"
-        >
-          <i class="pi pi-home"></i>
-          <span>Ir ao Dashboard</span>
-        </a>
-      </div>
+      <p class="text-xs sm:text-sm text-muted-color m-0 font-medium">
+        Controle de visibilidade de telas em tempo real por igreja ou globalmente.
+      </p>
     </div>
 
-    <!-- Navegação de Abas -->
-    <div class="flex flex-wrap items-center gap-2 mt-6 pt-5 border-t border-white/15">
+    <!-- Ações Rápidas no Topo -->
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
       <button
         type="button"
-        (click)="activeTab.set('screens')"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-        [ngClass]="activeTab() === 'screens' ? 'bg-white text-surface-900 shadow-md scale-[1.02]' : 'bg-white/10 hover:bg-white/20 text-white'"
+        (click)="toggleSuperAdminMode()"
+        class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border"
+        [ngClass]="auth.isSuperAdmin() ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25' : 'bg-surface-100 dark:bg-surface-800 border-surface text-surface-700 dark:text-surface-300 hover:bg-surface-hover'"
       >
-        <i class="pi pi-desktop text-sm"></i>
-        <span>1. Liberar & Ocultar Telas</span>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-black" [ngClass]="activeTab() === 'screens' ? 'bg-primary-100 text-primary-900' : 'bg-white/20 text-white'">
-          {{ activeChurchStats().enabled }} / {{ activeChurchStats().total }} ativas
-        </span>
+        <i class="pi pi-shield"></i>
+        <span>Modo Super Admin: <strong>{{ auth.isSuperAdmin() ? 'Ativo' : 'Inativo' }}</strong></span>
       </button>
 
-      <button
-        type="button"
-        (click)="activeTab.set('churches')"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-        [ngClass]="activeTab() === 'churches' ? 'bg-white text-surface-900 shadow-md scale-[1.02]' : 'bg-white/10 hover:bg-white/20 text-white'"
+      <a
+        routerLink="/dashboard"
+        class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-surface-100 dark:bg-surface-800 hover:bg-surface-hover text-surface-700 dark:text-surface-200 border border-surface transition-all cursor-pointer no-underline"
       >
-        <i class="pi pi-building text-sm"></i>
-        <span>2. Todas as Igrejas Cadastradas</span>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-black" [ngClass]="activeTab() === 'churches' ? 'bg-primary-100 text-primary-900' : 'bg-white/20 text-white'">
-          {{ screenConfig.churches().length }}
-        </span>
-      </button>
+        <i class="pi pi-home"></i>
+        <span>Ir ao Dashboard</span>
+      </a>
     </div>
+  </div>
+
+  <!-- Navegação de Abas -->
+  <div class="flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      (click)="activeTab.set('screens')"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+      [ngClass]="activeTab() === 'screens' ? 'bg-primary text-primary-contrast border-primary shadow-sm' : 'bg-surface-card hover:bg-surface-hover text-surface-700 dark:text-surface-300 border-surface'"
+    >
+      <i class="pi pi-desktop text-sm"></i>
+      <span>1. Liberar & Ocultar Telas</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" [ngClass]="activeTab() === 'screens' ? 'bg-white/20 text-white' : 'bg-surface-200 dark:bg-surface-700 text-surface-900 dark:text-surface-0'">
+        {{ activeChurchStats().enabled }} / {{ activeChurchStats().total }} ativas
+      </span>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab.set('churches')"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+      [ngClass]="activeTab() === 'churches' ? 'bg-primary text-primary-contrast border-primary shadow-sm' : 'bg-surface-card hover:bg-surface-hover text-surface-700 dark:text-surface-300 border-surface'"
+    >
+      <i class="pi pi-building text-sm"></i>
+      <span>2. Todas as Igrejas Cadastradas</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" [ngClass]="activeTab() === 'churches' ? 'bg-white/20 text-white' : 'bg-surface-200 dark:bg-surface-700 text-surface-900 dark:text-surface-0'">
+        {{ screenConfig.churches().length }}
+      </span>
+    </button>
   </div>
 
   <!-- ========================================== -->
