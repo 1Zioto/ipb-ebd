@@ -903,6 +903,116 @@
   }
 
   <!-- ========================================================================= -->
+  <!-- MODAL DE SELEÇÃO DE ABAS PARA O RELATÓRIO OFICIAL (PDF)                  -->
+  <!-- ========================================================================= -->
+  <p-dialog
+    [(visible)]="showReportModal"
+    [modal]="true"
+    [closable]="!isGeneratingPdf()"
+    [resizable]="false"
+    [draggable]="false"
+    styleClass="w-full max-w-2xl mx-4 rounded-3xl overflow-hidden shadow-2xl"
+    header="Gerar Relatório Timbrado (PDF) — Congregação"
+  >
+    <div class="space-y-5 pt-2">
+      <div class="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-start gap-3">
+        <span class="text-2xl mt-0.5">🖨️</span>
+        <div>
+          <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 m-0">
+            Personalize as Seções e Gráficos do Documento
+          </h3>
+          <p class="text-xs text-muted-color mt-1 mb-0 leading-relaxed">
+            Selecione quais abas e tópicos farão parte do relatório timbrado em PDF. Todos os gráficos correspondentes serão renderizados com alta nitidez para impressão e arquivo do Conselho.
+          </p>
+        </div>
+      </div>
+
+      <!-- Barra de Ações Rápidas -->
+      <div class="flex items-center justify-between border-b border-surface-200 dark:border-surface-800 pb-3">
+        <div class="text-xs font-semibold text-muted-color">
+          Selecione as abas desejadas:
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="toggleAllSections(true)"
+            class="text-xs font-bold text-primary hover:underline bg-transparent border-0 cursor-pointer p-0"
+          >
+            Selecionar Todas
+          </button>
+          <span class="text-muted-color text-xs">•</span>
+          <button
+            type="button"
+            (click)="toggleAllSections(false)"
+            class="text-xs font-bold text-muted-color hover:text-surface-900 dark:hover:text-surface-0 hover:underline bg-transparent border-0 cursor-pointer p-0"
+          >
+            Desmarcar Todas
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid com as 9 Opções Solicitadas -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
+        @for (sec of availableReportSections; track sec.key) {
+          <div
+            (click)="toggleSection(sec.key)"
+            class="flex items-start gap-3 p-3 rounded-2xl border transition-all cursor-pointer select-none"
+            [ngClass]="selectedSections()[sec.key]
+              ? 'bg-primary/5 border-primary/40 shadow-xs'
+              : 'bg-surface-50 dark:bg-surface-800/40 border-surface-200 dark:border-surface-800 opacity-70 hover:opacity-100'"
+          >
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="selectedSections()[sec.key]"
+              (ngModelChange)="toggleSection(sec.key)"
+              (click)="$event.stopPropagation()"
+            ></p-checkbox>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-base">{{ sec.icon }}</span>
+                <span class="text-xs font-black text-surface-900 dark:text-surface-0 tracking-tight">
+                  {{ sec.label }}
+                </span>
+              </div>
+              <p class="text-[11px] text-muted-color mt-1 mb-0 line-clamp-2 leading-tight">
+                {{ sec.description }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-200 dark:border-surface-800">
+        <button
+          type="button"
+          (click)="showReportModal.set(false)"
+          [disabled]="isGeneratingPdf()"
+          class="px-4 py-2 text-xs font-bold text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-xl transition-all cursor-pointer border-0 bg-transparent"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="prepareAndGeneratePdf()"
+          [disabled]="!hasAtLeastOneSectionSelected() || isGeneratingPdf()"
+          class="px-5 py-2.5 text-xs font-black text-white bg-primary hover:bg-primary-emphasis rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          @if (isGeneratingPdf()) {
+            <i class="pi pi-spin pi-spinner text-sm"></i>
+            <span>Processando Gráficos & PDF...</span>
+          } @else {
+            <i class="pi pi-file-pdf text-sm"></i>
+            <span>Gerar Relatório Timbrado (PDF)</span>
+          }
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- ========================================================================= -->
   <!-- MODELO TIMBRADO OFICIAL DE RELATÓRIO EXECUTIVO DA CONGREGAÇÃO (PDF)       -->
   <!-- Renderizado pelo PdfService com moldura A4 solene e cabeçalho da IPB      -->
   <!-- ========================================================================= -->
@@ -921,174 +1031,461 @@
           <div style="font-size: 11px; color: #475569; margin-top: 4px;">
             Exercício de Referência: <strong>{{ selectedYear() }}</strong> •
             Abrangência: <strong>{{ consolidated() ? 'Jurisdição Consolidada' : 'Congregação / Igreja Local' }}</strong> •
-            Emissão: <strong>{{ selectedYear() }}-10-16</strong>
+            Emissão Oficial: <strong>{{ selectedYear() }}-10-16</strong>
           </div>
         </div>
 
-      <!-- CARDS EXECUTIVOS EM GRID -->
-      <div style="margin-bottom: 20px;">
-        <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
-          1. Indicadores Vitais da Congregação
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px;">
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Total de Membros no Rol</div>
-              <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_membros ?? '-' }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Comungantes</div>
-              <div style="font-size: 18px; font-weight: 800; color: #059669; margin-top: 2px;">{{ overviewData()?.kpis?.comungantes ?? '-' }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Não Comungantes</div>
-              <div style="font-size: 18px; font-weight: 800; color: #0284c7; margin-top: 2px;">{{ overviewData()?.kpis?.nao_comungantes ?? '-' }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Sob Disciplina</div>
-              <div style="font-size: 18px; font-weight: 800; color: #d97706; margin-top: 2px;">{{ overviewData()?.kpis?.sob_disciplina ?? '-' }}</div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Famílias Vinculadas</div>
-              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_familias ?? '-' }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Alunos Matriculados EBD</div>
-              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_alunos_ebd ?? '-' }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Professores EBD</div>
-              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_professores ?? '-' }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Membros Dizimistas</div>
-              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_dizimistas ?? '-' }}</div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Admissões no Ano</div>
-              <div style="font-size: 16px; font-weight: 700; color: #059669; margin-top: 2px;">+{{ overviewData()?.kpis?.admissoes_ano ?? 0 }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Exclusões / Saídas</div>
-              <div style="font-size: 16px; font-weight: 700; color: #dc2626; margin-top: 2px;">-{{ overviewData()?.kpis?.saidas_ano ?? 0 }}</div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Crescimento Líquido</div>
-              <div style="font-size: 16px; font-weight: 700; margin-top: 2px;" [style.color]="(overviewData()?.kpis?.crescimento_liquido ?? 0) >= 0 ? '#059669' : '#dc2626'">
-                {{ (overviewData()?.kpis?.crescimento_liquido ?? 0) > 0 ? '+' : '' }}{{ overviewData()?.kpis?.crescimento_liquido ?? 0 }}
-              </div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Idade Média / Mediana</div>
-              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">
-                {{ overviewData()?.kpis?.media_idade ?? '-' }} / {{ overviewData()?.kpis?.mediana_idade ?? '-' }} anos
-              </div>
-            </td>
-          </tr>
-        </table>
-      </div>
+        <!-- =================================================================== -->
+        <!-- 1. 🏛️ VISÃO GERAL (SE SELECIONADA)                                 -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['overview']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              🏛️ 1. Visão Geral e Indicadores Vitais da Congregação
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px;">
+              <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Total no Rol de Membros</div>
+                  <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_membros ?? '-' }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Comungantes</div>
+                  <div style="font-size: 18px; font-weight: 800; color: #059669; margin-top: 2px;">{{ overviewData()?.kpis?.comungantes ?? '-' }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Não Comungantes</div>
+                  <div style="font-size: 18px; font-weight: 800; color: #0284c7; margin-top: 2px;">{{ overviewData()?.kpis?.nao_comungantes ?? '-' }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Sob Disciplina</div>
+                  <div style="font-size: 18px; font-weight: 800; color: #d97706; margin-top: 2px;">{{ overviewData()?.kpis?.sob_disciplina ?? '-' }}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Famílias Vinculadas</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_familias ?? '-' }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Alunos Matriculados EBD</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_alunos_ebd ?? '-' }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Professores EBD</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_professores ?? '-' }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Membros Dizimistas</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_dizimistas ?? '-' }}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Admissões no Ano</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #059669; margin-top: 2px;">+{{ overviewData()?.kpis?.admissoes_ano ?? 0 }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Exclusões / Saídas</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #dc2626; margin-top: 2px;">-{{ overviewData()?.kpis?.saidas_ano ?? 0 }}</div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Crescimento Líquido</div>
+                  <div style="font-size: 16px; font-weight: 700; margin-top: 2px;" [style.color]="(overviewData()?.kpis?.crescimento_liquido ?? 0) >= 0 ? '#059669' : '#dc2626'">
+                    {{ (overviewData()?.kpis?.crescimento_liquido ?? 0) > 0 ? '+' : '' }}{{ overviewData()?.kpis?.crescimento_liquido ?? 0 }}
+                  </div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Idade Média / Mediana</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">
+                    {{ overviewData()?.kpis?.media_idade ?? '-' }} / {{ overviewData()?.kpis?.mediana_idade ?? '-' }} anos
+                  </div>
+                </td>
+              </tr>
+            </table>
 
-      <!-- QUADRO DEMOGRÁFICO E FAIXAS ETÁRIAS -->
-      <div style="margin-bottom: 20px;">
-        <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
-          2. Perfil Etário e Distribuição por Sociedades Internas
-        </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-          <thead>
-            <tr style="background: #064e3b; color: #ffffff;">
-              <th style="padding: 6px 10px; text-align: left; border: 1px solid #064e3b;">Segmento Eclesiástico / Faixa Etária</th>
-              <th style="padding: 6px 10px; text-align: center; border: 1px solid #064e3b;">Público Alvo</th>
-              <th style="padding: 6px 10px; text-align: right; border: 1px solid #064e3b;">Total Membros</th>
-            </tr>
-          </thead>
-          <tbody>
+            <!-- Gráficos de Visão Geral -->
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <tr>
+                <td style="width: 49%; vertical-align: top; padding-right: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Composição da Membresia
+                  </div>
+                  @if (reportChartImages()['canonical']) {
+                    <img [src]="reportChartImages()['canonical']" alt="Composição da Membresia" style="width: 100%; max-height: 200px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+                <td style="width: 49%; vertical-align: top; padding-left: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Pirâmide Etária Resumida
+                  </div>
+                  @if (reportChartImages()['ageOverview']) {
+                    <img [src]="reportChartImages()['ageOverview']" alt="Pirâmide Etária" style="width: 100%; max-height: 200px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 2. 👥 MEMBROS DA CONGREGAÇÃO (SE SELECIONADA)                       -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['members']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              👥 2. Rol Nominal da Membresia da Congregação
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+              <thead>
+                <tr style="background: #064e3b; color: #ffffff;">
+                  <th style="padding: 5px 8px; text-align: center; border: 1px solid #064e3b; width: 10%;">Nº Rol</th>
+                  <th style="padding: 5px 8px; text-align: left; border: 1px solid #064e3b; width: 35%;">Nome do Membro</th>
+                  <th style="padding: 5px 8px; text-align: center; border: 1px solid #064e3b; width: 22%;">Condição Eclesiástica</th>
+                  <th style="padding: 5px 8px; text-align: center; border: 1px solid #064e3b; width: 15%;">Estado Civil</th>
+                  <th style="padding: 5px 8px; text-align: center; border: 1px solid #064e3b; width: 9%;">Idade</th>
+                  <th style="padding: 5px 8px; text-align: center; border: 1px solid #064e3b; width: 9%;">Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of membersData(); track m.id) {
+                  <tr [style.background]="$index % 2 === 0 ? '#ffffff' : '#f8fafc'">
+                    <td style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: 700; color: #64748b;">{{ m.roll_number || 'S/N' }}</td>
+                    <td style="padding: 4px 8px; border: 1px solid #cbd5e1; font-weight: 600;">{{ m.full_name }}</td>
+                    <td style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center;">
+                      {{ m.canonical_status === 'comungante' ? 'Comungante' : m.canonical_status === 'nao_comungante' ? 'Não Comungante' : m.canonical_status === 'sob_disciplina' ? 'Sob Disciplina' : (m.canonical_status || 'Membro') }}
+                    </td>
+                    <td style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center;">{{ m.marital_status || '-' }}</td>
+                    <td style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: 700;">{{ m.age !== null ? m.age + ' anos' : '-' }}</td>
+                    <td style="padding: 4px 8px; border: 1px solid #cbd5e1; text-align: center;">
+                      <span [style.color]="m.is_active ? '#059669' : '#dc2626'" style="font-weight: 700;">
+                        {{ m.is_active ? 'Ativo' : 'Inativo' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 3. 📊 DEMOGRAFIA (SE SELECIONADA)                                   -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['demographics']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              📊 3. Análise Demográfica, Faixas Etárias e Estado Civil
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+              <tr>
+                <td style="width: 49%; vertical-align: top; padding-right: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Faixas Etárias Detalhadas
+                  </div>
+                  @if (reportChartImages()['faixasDet']) {
+                    <img [src]="reportChartImages()['faixasDet']" alt="Faixas Etárias" style="width: 100%; max-height: 200px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+                <td style="width: 49%; vertical-align: top; padding-left: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Estado Civil da Membresia
+                  </div>
+                  @if (reportChartImages()['estadoCivil']) {
+                    <img [src]="reportChartImages()['estadoCivil']" alt="Estado Civil" style="width: 100%; max-height: 200px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+              </tr>
+            </table>
+
+            <div style="margin-top: 10px; text-align: center;">
+              <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                Distribuição de Aniversariantes por Mês
+              </div>
+              @if (reportChartImages()['aniversarios']) {
+                <img [src]="reportChartImages()['aniversarios']" alt="Aniversariantes" style="width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+              }
+            </div>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 4. 📈 MOVIMENTAÇÃO DO ROL (SE SELECIONADA)                          -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['movements']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              📈 4. Movimentação Histórica e Vital do Rol de Membros
+            </div>
+            <div style="margin-bottom: 10px; text-align: center;">
+              <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                Evolução Anual da Membresia (Admissões vs Saídas vs Saldo Líquido)
+              </div>
+              @if (reportChartImages()['evolucaoAnual']) {
+                <img [src]="reportChartImages()['evolucaoAnual']" alt="Evolução Anual" style="width: 100%; max-height: 200px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+              }
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <tr>
+                <td style="width: 49%; vertical-align: top; padding-right: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Admissões de Membros no Exercício
+                  </div>
+                  @if (reportChartImages()['admissoesMes']) {
+                    <img [src]="reportChartImages()['admissoesMes']" alt="Admissões por Mês" style="width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+                <td style="width: 49%; vertical-align: top; padding-left: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Modos de Recepção de Membros
+                  </div>
+                  @if (reportChartImages()['tiposRecepcao']) {
+                    <img [src]="reportChartImages()['tiposRecepcao']" alt="Modos de Recepção" style="width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 5. ⛪ VIDA ECLESIÁSTICA (SE SELECIONADA)                            -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['ecclesiastical']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              ⛪ 5. Vida Eclesiástica, Tempo de Membresia e Sacramentos
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 49%; vertical-align: top; padding-right: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Tempo de Permanência no Rol
+                  </div>
+                  @if (reportChartImages()['tempoMemb']) {
+                    <img [src]="reportChartImages()['tempoMemb']" alt="Tempo de Membresia" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+                <td style="width: 49%; vertical-align: top; padding-left: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Sacramentos e Profissões de Fé
+                  </div>
+                  @if (reportChartImages()['sacramentos']) {
+                    <img [src]="reportChartImages()['sacramentos']" alt="Sacramentos Ministrados" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 6. 👨‍👩‍👧‍👦 FAMÍLIAS & GEOGRAFIA (SE SELECIONADA)                      -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['families']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              👨‍👩‍👧‍👦 6. Núcleos Familiares e Abrangência Geográfica
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 49%; vertical-align: top; padding-right: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Distribuição por Tamanho Familiar
+                  </div>
+                  @if (reportChartImages()['tamanhosFam']) {
+                    <img [src]="reportChartImages()['tamanhosFam']" alt="Tamanho Familiar" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+                <td style="width: 49%; vertical-align: top; padding-left: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Concentração por Bairro / Região
+                  </div>
+                  @if (reportChartImages()['topBairros']) {
+                    <img [src]="reportChartImages()['topBairros']" alt="Concentração Bairros" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 7. 📖 ESCOLA DOMINICAL (SE SELECIONADA)                             -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['ebd']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              📖 7. Desempenho da Escola Bíblica Dominical (EBD)
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px;">
+              <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Frequência Média Geral</div>
+                  <div style="font-size: 16px; font-weight: 800; color: #059669; margin-top: 2px;">
+                    {{ overviewData()?.kpis?.frequencia_ebd_media ?? 0 }}%
+                  </div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Corpo Docente Ativo</div>
+                  <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 2px;">
+                    {{ overviewData()?.kpis?.total_professores ?? 0 }} Professores
+                  </div>
+                </td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
+                  <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Superintendência</div>
+                  <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 2px;">
+                    {{ overviewData()?.kpis?.total_superintendentes ?? 0 }} Oficiais
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 49%; vertical-align: top; padding-right: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Frequência Mensal
+                  </div>
+                  @if (reportChartImages()['freqEbd']) {
+                    <img [src]="reportChartImages()['freqEbd']" alt="Frequência Mensal EBD" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+                <td style="width: 49%; vertical-align: top; padding-left: 1%; text-align: center;">
+                  <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                    Presença por Classe / Turma
+                  </div>
+                  @if (reportChartImages()['classesEbd']) {
+                    <img [src]="reportChartImages()['classesEbd']" alt="Classes EBD" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+                  }
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 8. 🤝 SOCIEDADES INTERNAS (SE SELECIONADA)                          -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['societies']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              🤝 8. Arrolamento nas Sociedades Internas da IPB
+            </div>
+            <div style="margin-bottom: 10px; text-align: center;">
+              <div style="font-size: 10px; font-weight: 700; color: #334155; margin-bottom: 4px; text-align: left;">
+                Sócios Arrolados nas Sociedades Internas (UCP, UPA, UMP, SAF, UPH)
+              </div>
+              @if (reportChartImages()['sociedades']) {
+                <img [src]="reportChartImages()['sociedades']" alt="Sociedades Internas" style="width: 100%; max-height: 190px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; background: #ffffff;" />
+              }
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+              <thead>
+                <tr style="background: #064e3b; color: #ffffff;">
+                  <th style="padding: 6px 10px; text-align: left; border: 1px solid #064e3b;">Sociedade Interna</th>
+                  <th style="padding: 6px 10px; text-align: center; border: 1px solid #064e3b;">Faixa Etária / Público</th>
+                  <th style="padding: 6px 10px; text-align: right; border: 1px solid #064e3b;">Sócios Ativos</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">União de Crianças Presbiterianas (UCP)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">0 a 11 anos (Ambos)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.infantil ?? 0 }}</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">União Presbiteriana de Adolescentes (UPA)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">12 a 17 anos (Ambos)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.adolescentes ?? 0 }}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">União de Mocidade Presbiteriana (UMP)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">18 a 35 anos (Ambos)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.jovens ?? 0 }}</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Sociedade Auxiliadora Feminina (SAF)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">Mulheres (Adultas e Terceira Idade)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ ((overviewData()?.age_distribution?.adultos ?? 0) / 2) | number:'1.0-0' }}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">União Presbiteriana de Homens (UPH)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">Homens (Adultos e Terceira Idade)</td>
+                  <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ ((overviewData()?.age_distribution?.adultos ?? 0) / 2) | number:'1.0-0' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- 9. 📋 QUALIDADE CADASTRAL (SE SELECIONADA)                          -->
+        <!-- =================================================================== -->
+        @if (selectedSections()['quality']) {
+          <div style="margin-bottom: 24px; page-break-inside: avoid;">
+            <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+              📋 9. Auditoria de Qualidade e Integridade Cadastral
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+              <thead>
+                <tr style="background: #064e3b; color: #ffffff;">
+                  <th style="padding: 6px 8px; text-align: left; border: 1px solid #064e3b;">Categoria</th>
+                  <th style="padding: 6px 8px; text-align: left; border: 1px solid #064e3b;">Item Auditado</th>
+                  <th style="padding: 6px 8px; text-align: center; border: 1px solid #064e3b;">Pendentes</th>
+                  <th style="padding: 6px 8px; text-align: center; border: 1px solid #064e3b;">Percentual</th>
+                  <th style="padding: 6px 8px; text-align: center; border: 1px solid #064e3b;">Gravidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (d of dataQualityData()?.diagnostico ?? []; track d.item) {
+                  <tr [style.background]="$index % 2 === 0 ? '#ffffff' : '#f8fafc'">
+                    <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: 700; color: #334155;">{{ d.categoria }}</td>
+                    <td style="padding: 5px 8px; border: 1px solid #cbd5e1;">{{ d.item }}</td>
+                    <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800;">{{ d.pendentes }}</td>
+                    <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: center;">{{ d.percentual }}%</td>
+                    <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: center;">
+                      <span [style.color]="d.gravidade === 'Alta' ? '#dc2626' : d.gravidade === 'Média' ? '#d97706' : '#0284c7'" style="font-weight: 700;">
+                        {{ d.gravidade }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <!-- =================================================================== -->
+        <!-- TERMO DE ENCERRAMENTO E ASSINATURAS DO CONSELHO DA IPB              -->
+        <!-- =================================================================== -->
+        <div style="border-top: 1px solid #cbd5e1; padding-top: 24px; margin-top: 30px; page-break-inside: avoid;">
+          <p style="font-size: 10px; color: #64748b; text-align: justify; line-height: 1.4; margin-bottom: 30px;">
+            Certifico que o presente Relatório Executivo e Demográfico foi extraído fidedignamente a partir do Rol de Membros, Atas do Conselho e livros de registros eclesiásticos da Igreja Presbiteriana do Brasil, em estrito cumprimento às diretrizes constitucionais e eclesiásticas da denominação.
+          </p>
+
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
             <tr>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Crianças (0 a 11 anos)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">União de Crianças Presbiterianas (UCP)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.infantil ?? 0 }}</td>
+              <td style="width: 48%; text-align: center; vertical-align: bottom;">
+                <div style="border-top: 1.5px solid #0f172a; width: 85%; margin: 0 auto; padding-top: 6px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Pastor Titular / Presidente do Conselho</div>
+                  <div style="font-size: 9px; color: #64748b;">Igreja Presbiteriana do Brasil</div>
+                </div>
+              </td>
+              <td style="width: 4%;"></td>
+              <td style="width: 48%; text-align: center; vertical-align: bottom;">
+                <div style="border-top: 1.5px solid #0f172a; width: 85%; margin: 0 auto; padding-top: 6px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Secretário(a) do Conselho</div>
+                  <div style="font-size: 9px; color: #64748b;">Secretaria Eclesiástica</div>
+                </div>
+              </td>
             </tr>
-            <tr style="background: #f8fafc;">
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Adolescentes (12 a 17 anos)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">União Presbiteriana de Adolescentes (UPA)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.adolescentes ?? 0 }}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Jovens (18 a 35 anos)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">União de Mocidade Presbiteriana (UMP)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.jovens ?? 0 }}</td>
-            </tr>
-            <tr style="background: #f8fafc;">
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Adultos (36 a 59 anos)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">Sociedade Auxiliadora Feminina (SAF) / UPH</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.adultos ?? 0 }}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Melhor Idade (60 anos ou mais)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">Terceira Idade (UPI / SAF / UPH)</td>
-              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.melhor_idade ?? 0 }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- QUADRO DE ESCOLA DOMINICAL & PARTICIPAÇÃO -->
-      <div style="margin-bottom: 25px;">
-        <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
-          3. Desempenho da Escola Bíblica Dominical (EBD)
+          </table>
         </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Frequência Média Geral</div>
-              <div style="font-size: 16px; font-weight: 800; color: #059669; margin-top: 2px;">
-                {{ overviewData()?.kpis?.frequencia_ebd_media ?? 0 }}%
-              </div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Corpo Docente Ativo</div>
-              <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 2px;">
-                {{ overviewData()?.kpis?.total_professores ?? 0 }} Professores
-              </div>
-            </td>
-            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
-              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Superintendência</div>
-              <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 2px;">
-                {{ overviewData()?.kpis?.total_superintendentes ?? 0 }} Oficiais
-              </div>
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- TERMO DE ENCERRAMENTO E ASSINATURAS DO CONSELHO -->
-      <div style="border-top: 1px solid #cbd5e1; padding-top: 24px; margin-top: 30px;">
-        <p style="font-size: 10px; color: #64748b; text-align: justify; line-height: 1.4; margin-bottom: 30px;">
-          Certifico que o presente Relatório Executivo e Demográfico foi extraído fidedignamente a partir do Rol de Membros, Atas do Conselho e livros de registros eclesiásticos da Igreja Presbiteriana do Brasil, em cumprimento às diretrizes constitucionais da denominação.
-        </p>
-
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-          <tr>
-            <td style="width: 48%; text-align: center; vertical-align: bottom;">
-              <div style="border-top: 1.5px solid #0f172a; width: 85%; margin: 0 auto; padding-top: 6px;">
-                <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Pastor Titular / Presidente do Conselho</div>
-                <div style="font-size: 9px; color: #64748b;">Igreja Presbiteriana do Brasil</div>
-              </div>
-            </td>
-            <td style="width: 4%;"></td>
-            <td style="width: 48%; text-align: center; vertical-align: bottom;">
-              <div style="border-top: 1.5px solid #0f172a; width: 85%; margin: 0 auto; padding-top: 6px;">
-                <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Secretário(a) do Conselho</div>
-                <div style="font-size: 9px; color: #64748b;">Secretaria Eclesiástica</div>
-              </div>
-            </td>
-          </tr>
-        </table>
       </div>
     </div>
   </div>
 </div>
-</div>
+

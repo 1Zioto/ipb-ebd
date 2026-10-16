@@ -16,6 +16,9 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { InputTextModule } from 'primeng/inputtext';
+import { DialogModule } from 'primeng/dialog';
+import { CheckboxModule } from 'primeng/checkbox';
+import { firstValueFrom } from 'rxjs';
 import { Chart } from 'chart.js/auto';
 import {
   IntelligenceService,
@@ -31,6 +34,13 @@ import {
 } from '../../core/intelligence.service';
 import { AuthService } from '../../core/auth.service';
 import { PdfService } from '../../core/pdf.service';
+
+export interface ReportSectionOption {
+  key: string;
+  label: string;
+  icon: string;
+  description: string;
+}
 
 type IntelligenceTab =
   | 'overview'
@@ -55,6 +65,8 @@ type IntelligenceTab =
     TooltipModule,
     ProgressBarModule,
     InputTextModule,
+    DialogModule,
+    CheckboxModule,
   ],
   templateUrl: './intelligence.html',
 })
@@ -69,6 +81,36 @@ export class IntelligencePage implements OnInit, AfterViewInit, OnDestroy {
   consolidated = signal<boolean>(false);
   activeTab = signal<IntelligenceTab>('overview');
   loading = signal<boolean>(true);
+
+  // Modal de Configuração do Relatório Oficial (PDF)
+  showReportModal = signal<boolean>(false);
+  isGeneratingPdf = signal<boolean>(false);
+
+  availableReportSections: ReportSectionOption[] = [
+    { key: 'overview', label: 'Visão Geral', icon: '🏛️', description: 'Indicadores Vitais, Membresia e Perfil Etário' },
+    { key: 'members', label: 'Membros da Congregação', icon: '👥', description: 'Relação Nominal dos Membros Arrolados e Situação Eclesiástica' },
+    { key: 'demographics', label: 'Demografia', icon: '📊', description: 'Faixas Etárias Detalhadas, Estado Civil e Aniversariantes' },
+    { key: 'movements', label: 'Movimentação do Rol', icon: '📈', description: 'Evolução Anual, Entradas vs Saídas e Modos de Recepção' },
+    { key: 'ecclesiastical', label: 'Vida Eclesiástica', icon: '⛪', description: 'Tempo de Membresia no Rol, Batismos e Profissões de Fé' },
+    { key: 'families', label: 'Famílias & Geografia', icon: '👨‍👩‍👧‍👦', description: 'Distribuição dos Núcleos Familiares e Concentração Geográfica' },
+    { key: 'ebd', label: 'Escola Dominical', icon: '📖', description: 'Frequência Média Mensal e Desempenho por Turmas' },
+    { key: 'societies', label: 'Sociedades Internas', icon: '🤝', description: 'Sócios Arrolados em UCP, UPA, UMP, SAF e UPH' },
+    { key: 'quality', label: 'Qualidade Cadastral', icon: '📋', description: 'Auditoria de Registros Pendentes e Inconsistências' },
+  ];
+
+  selectedSections = signal<{ [key: string]: boolean }>({
+    overview: true,
+    members: true,
+    demographics: true,
+    movements: true,
+    ecclesiastical: true,
+    families: true,
+    ebd: true,
+    societies: true,
+    quality: true,
+  });
+
+  reportChartImages = signal<{ [key: string]: string }>({});
 
   // Estados de Dados
   overviewData = signal<OverviewMetrics | null>(null);
@@ -139,28 +181,530 @@ export class IntelligencePage implements OnInit, AfterViewInit, OnDestroy {
     this.loadCurrentTab();
   }
 
-  printReport(): void {
-    const doPrint = () => {
-      this.pdfSvc.gerarPdfEmNovaAba(
-        'relatorio-congregacao-pdf',
-        `relatorio-congregacao-${this.selectedYear()}`,
-        `Relatório Executivo e Demográfico da Congregação — IPB ${this.selectedYear()}`
-      );
-    };
+  openPrintModal(): void {
+    this.showReportModal.set(true);
+  }
 
-    if (!this.overviewData()) {
-      this.intelligenceService.getOverview(this.selectedYear(), undefined, this.consolidated()).subscribe({
-        next: (res) => {
-          this.overviewData.set(res);
-          // Aguarda um ciclo de renderização para alimentar o modelo do relatório
-          setTimeout(doPrint, 100);
+  toggleAllSections(select: boolean): void {
+    const updated: { [key: string]: boolean } = {};
+    for (const sec of this.availableReportSections) {
+      updated[sec.key] = select;
+    }
+    this.selectedSections.set(updated);
+  }
+
+  toggleSection(key: string): void {
+    this.selectedSections.update((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  }
+
+  hasAtLeastOneSectionSelected(): boolean {
+    return Object.values(this.selectedSections()).some((v) => v);
+  }
+
+  private createOffscreenChartImage(config: any, width = 720, height = 300): string {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return '';
+
+      const chartConfig = {
+        ...config,
+        options: {
+          ...config.options,
+          responsive: false,
+          animation: false,
         },
-        error: () => doPrint(),
-      });
-      return;
+      };
+
+      const chart = new Chart(ctx, chartConfig);
+      const dataUrl = chart.toBase64Image('image/png', 1);
+      chart.destroy();
+      return dataUrl;
+    } catch (err) {
+      console.warn('Erro ao gerar imagem de gráfico offscreen:', err);
+      return '';
+    }
+  }
+
+  private generateAllSelectedChartImages(): { [key: string]: string } {
+    const images: { [key: string]: string } = {};
+    const selected = this.selectedSections();
+
+    // 1. Visão Geral
+    if (selected['overview']) {
+      const data = this.overviewData();
+      if (data) {
+        images['canonical'] = this.createOffscreenChartImage({
+          type: 'doughnut',
+          data: {
+            labels: data.canonical_chart.labels,
+            datasets: [
+              {
+                data: data.canonical_chart.data,
+                backgroundColor: ['#047857', '#3b82f6', '#f59e0b', '#94a3b8'],
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            },
+          },
+        }, 340, 240);
+
+        images['ageOverview'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: ['Infantil (0-11)', 'Adolescentes (12-17)', 'Jovens (18-35)', 'Adultos (36-59)', '60+ Anos'],
+            datasets: [
+              {
+                label: 'Membros',
+                data: [
+                  data.age_distribution.infantil,
+                  data.age_distribution.adolescentes,
+                  data.age_distribution.jovens,
+                  data.age_distribution.adultos,
+                  data.age_distribution.melhor_idade,
+                ],
+                backgroundColor: 'rgba(4, 120, 87, 0.85)',
+                borderColor: '#047857',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+          },
+        }, 380, 240);
+      }
     }
 
-    doPrint();
+    // 2. Demografia
+    if (selected['demographics']) {
+      const data = this.demographicsData();
+      if (data) {
+        images['faixasDet'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.faixas_etarias.labels,
+            datasets: [
+              {
+                label: 'Pessoas',
+                data: data.faixas_etarias.data,
+                backgroundColor: 'rgba(14, 165, 233, 0.85)',
+                borderColor: '#0284c7',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true } },
+          },
+        }, 350, 240);
+
+        images['estadoCivil'] = this.createOffscreenChartImage({
+          type: 'pie',
+          data: {
+            labels: data.estado_civil.labels,
+            datasets: [
+              {
+                data: data.estado_civil.data,
+                backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#94a3b8'],
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } },
+          },
+        }, 350, 240);
+
+        images['aniversarios'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.aniversarios_mes.labels,
+            datasets: [
+              {
+                label: 'Aniversariantes',
+                data: data.aniversarios_mes.data,
+                backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                borderColor: '#d97706',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+          },
+        }, 720, 200);
+      }
+    }
+
+    // 3. Movimentação do Rol
+    if (selected['movements']) {
+      const data = this.movementsData();
+      if (data) {
+        images['evolucaoAnual'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.evolucao_anual.anos.map(String),
+            datasets: [
+              {
+                label: 'Admissões',
+                data: data.evolucao_anual.admissoes,
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                borderRadius: 4,
+              },
+              {
+                label: 'Saídas',
+                data: data.evolucao_anual.saidas,
+                backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                borderRadius: 4,
+              },
+              {
+                label: 'Saldo Líquido',
+                type: 'line',
+                data: data.evolucao_anual.saldo,
+                borderColor: '#0284c7',
+                borderWidth: 2,
+                tension: 0.2,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 9 } } } },
+            scales: { y: { beginAtZero: true } },
+          },
+        }, 720, 220);
+
+        images['admissoesMes'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.admissoes_mes.labels,
+            datasets: [
+              {
+                label: 'Admissões',
+                data: data.admissoes_mes.data,
+                backgroundColor: '#047857',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+          },
+        }, 350, 200);
+
+        images['tiposRecepcao'] = this.createOffscreenChartImage({
+          type: 'doughnut',
+          data: {
+            labels: data.tipos_recepcao.labels,
+            datasets: [
+              {
+                data: data.tipos_recepcao.data,
+                backgroundColor: ['#047857', '#0284c7', '#8b5cf6', '#f59e0b', '#ec4899', '#94a3b8'],
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 9 } } } },
+          },
+        }, 350, 200);
+      }
+    }
+
+    // 4. Vida Eclesiástica
+    if (selected['ecclesiastical']) {
+      const data = this.ecclesiasticalData();
+      if (data) {
+        images['tempoMemb'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.tempo_membresia.labels,
+            datasets: [
+              {
+                label: 'Membros',
+                data: data.tempo_membresia.data,
+                backgroundColor: 'rgba(4, 120, 87, 0.85)',
+                borderColor: '#047857',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+          },
+        }, 350, 220);
+
+        images['sacramentos'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.sacramentos_historico.anos.map(String),
+            datasets: [
+              {
+                label: 'Batismos',
+                data: data.sacramentos_historico.batismos,
+                backgroundColor: '#3b82f6',
+                borderRadius: 4,
+              },
+              {
+                label: 'Profissões de Fé',
+                data: data.sacramentos_historico.profissoes,
+                backgroundColor: '#10b981',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 9 } } } },
+            scales: { y: { beginAtZero: true } },
+          },
+        }, 350, 220);
+      }
+    }
+
+    // 5. Famílias & Geografia
+    if (selected['families']) {
+      const data = this.familiesGeoData();
+      if (data) {
+        images['tamanhosFam'] = this.createOffscreenChartImage({
+          type: 'doughnut',
+          data: {
+            labels: data.tamanhos_familia.labels,
+            datasets: [
+              {
+                data: data.tamanhos_familia.data,
+                backgroundColor: ['#0284c7', '#047857', '#f59e0b', '#ec4899', '#8b5cf6'],
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } },
+          },
+        }, 350, 220);
+
+        images['topBairros'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.top_bairros.labels,
+            datasets: [
+              {
+                label: 'Famílias',
+                data: data.top_bairros.data,
+                backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true } },
+          },
+        }, 350, 220);
+      }
+    }
+
+    // 6. Escola Dominical
+    if (selected['ebd']) {
+      const data = this.ebdData();
+      if (data) {
+        images['freqEbd'] = this.createOffscreenChartImage({
+          type: 'line',
+          data: {
+            labels: data.frequencia_mensal.labels,
+            datasets: [
+              {
+                label: 'Taxa (%)',
+                data: data.frequencia_mensal.taxas,
+                borderColor: '#047857',
+                backgroundColor: 'rgba(4, 120, 87, 0.1)',
+                fill: true,
+                tension: 0.2,
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100 } },
+          },
+        }, 350, 220);
+
+        images['classesEbd'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.classes.map((c) => c.name),
+            datasets: [
+              {
+                label: 'Taxa (%)',
+                data: data.classes.map((c) => c.rate),
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, max: 100 } },
+          },
+        }, 350, 220);
+      }
+    }
+
+    // 7. Sociedades Internas
+    if (selected['societies']) {
+      const data = this.societiesData();
+      if (data && data.grafico.labels.length > 0) {
+        images['sociedades'] = this.createOffscreenChartImage({
+          type: 'bar',
+          data: {
+            labels: data.grafico.labels,
+            datasets: [
+              {
+                label: 'Sócios Inscritos',
+                data: data.grafico.data,
+                backgroundColor: ['#ec4899', '#0284c7', '#f59e0b', '#8b5cf6', '#10b981'],
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+          },
+        }, 720, 220);
+      }
+    }
+
+    return images;
+  }
+
+  async prepareAndGeneratePdf(): Promise<void> {
+    if (!this.hasAtLeastOneSectionSelected()) return;
+
+    this.isGeneratingPdf.set(true);
+
+    try {
+      const selected = this.selectedSections();
+      const promises: Promise<any>[] = [];
+
+      // Carrega os dados pendentes para as seções selecionadas
+      if (selected['overview'] && !this.overviewData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getOverview(this.selectedYear(), undefined, this.consolidated()))
+            .then((res) => this.overviewData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (selected['members'] && this.membersData().length === 0) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getMembersList({ consolidated: this.consolidated() }))
+            .then((res) => {
+              this.membersData.set(res.members);
+              this.membersTotal.set(res.total);
+            })
+            .catch(() => {})
+        );
+      }
+
+      if (selected['demographics'] && !this.demographicsData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getDemographics())
+            .then((res) => this.demographicsData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (selected['movements'] && !this.movementsData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getMovements(this.selectedYear()))
+            .then((res) => this.movementsData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (selected['ecclesiastical'] && !this.ecclesiasticalData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getEcclesiasticalLife())
+            .then((res) => this.ecclesiasticalData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (selected['families'] && !this.familiesGeoData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getFamiliesGeo())
+            .then((res) => this.familiesGeoData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (selected['ebd'] && !this.ebdData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getEbdAnalytics(this.selectedYear()))
+            .then((res) => this.ebdData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (selected['societies'] && !this.societiesData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getSocietiesAnalytics())
+            .then((res) => this.societiesData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (selected['quality'] && !this.dataQualityData()) {
+        promises.push(
+          firstValueFrom(this.intelligenceService.getDataQuality())
+            .then((res) => this.dataQualityData.set(res))
+            .catch(() => {})
+        );
+      }
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
+
+      // Gera imagens de todos os gráficos selecionados
+      const images = this.generateAllSelectedChartImages();
+      this.reportChartImages.set(images);
+
+      // Fecha o diálogo de configuração
+      this.showReportModal.set(false);
+
+      // Aguarda o ciclo de renderização do Angular para atualizar as tags <img> do modelo
+      setTimeout(async () => {
+        await this.pdfSvc.gerarPdfEmNovaAba(
+          'relatorio-congregacao-pdf',
+          `relatorio-congregacao-${this.selectedYear()}`,
+          `Relatório Executivo e Demográfico da Congregação — IPB ${this.selectedYear()}`
+        );
+        this.isGeneratingPdf.set(false);
+      }, 300);
+    } catch (err) {
+      console.error('Falha ao preparar relatório em PDF:', err);
+      this.isGeneratingPdf.set(false);
+    }
+  }
+
+  printReport(): void {
+    this.openPrintModal();
   }
 
   exportMembersToExcel(): void {
