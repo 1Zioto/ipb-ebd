@@ -89,6 +89,13 @@ export class PdfService {
 
     // 3. Clona o elemento original e garante caminhos absolutos nas imagens
     const clone = originalElement.cloneNode(true) as HTMLElement;
+
+    // Garante que o elemento clonado esteja sempre visível, mesmo se o original estiver oculto na tela
+    clone.style.display = 'block';
+    clone.style.visibility = 'visible';
+    clone.classList.remove('hidden');
+    clone.removeAttribute('hidden');
+
     const origin = window.location.origin;
     const images = clone.querySelectorAll('img');
     images.forEach((img) => {

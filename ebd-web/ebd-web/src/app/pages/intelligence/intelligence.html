@@ -906,22 +906,24 @@
   <!-- MODELO TIMBRADO OFICIAL DE RELATÓRIO EXECUTIVO DA CONGREGAÇÃO (PDF)       -->
   <!-- Renderizado pelo PdfService com moldura A4 solene e cabeçalho da IPB      -->
   <!-- ========================================================================= -->
-  <div id="relatorio-congregacao-pdf" style="display: none;">
-    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #0f172a; padding: 10px;">
-      <!-- CABEÇALHO OFICIAL IPB -->
-      <div style="text-align: center; border-bottom: 2px solid #064e3b; padding-bottom: 14px; margin-bottom: 18px;">
-        <div style="font-family: 'Cinzel', serif; font-size: 18px; font-weight: 800; color: #064e3b; letter-spacing: 0.12em; text-transform: uppercase;">
-          Igreja Presbiteriana do Brasil
+  <div style="display: none;" aria-hidden="true">
+    <div id="relatorio-congregacao-pdf" class="ipb-moldura-solene text-surface-900 bg-white" style="display: block;">
+      <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #0f172a; padding: 10px;">
+        <!-- CABEÇALHO OFICIAL IPB -->
+        <div style="text-align: center; border-bottom: 2px solid #064e3b; padding-bottom: 14px; margin-bottom: 18px;">
+          <img src="/ipb-logo.png" alt="IPB" style="max-height: 54px; width: auto; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;" onerror="this.style.display='none'" />
+          <div style="font-family: 'Cinzel', serif; font-size: 18px; font-weight: 800; color: #064e3b; letter-spacing: 0.12em; text-transform: uppercase;">
+            Igreja Presbiteriana do Brasil
+          </div>
+          <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 4px; letter-spacing: 0.05em; text-transform: uppercase;">
+            Relatório Executivo, Demográfico e Pastoral da Congregação
+          </div>
+          <div style="font-size: 11px; color: #475569; margin-top: 4px;">
+            Exercício de Referência: <strong>{{ selectedYear() }}</strong> •
+            Abrangência: <strong>{{ consolidated() ? 'Jurisdição Consolidada' : 'Congregação / Igreja Local' }}</strong> •
+            Emissão: <strong>{{ selectedYear() }}-10-16</strong>
+          </div>
         </div>
-        <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 4px; letter-spacing: 0.05em; text-transform: uppercase;">
-          Relatório Executivo, Demográfico e Pastoral da Congregação
-        </div>
-        <div style="font-size: 11px; color: #475569; margin-top: 4px;">
-          Exercício de Referência: <strong>{{ selectedYear() }}</strong> •
-          Abrangência: <strong>{{ consolidated() ? 'Jurisdição Consolidada' : 'Congregação / Igreja Local' }}</strong> •
-          Emissão: <strong>{{ selectedYear() }}-10-16</strong>
-        </div>
-      </div>
 
       <!-- CARDS EXECUTIVOS EM GRID -->
       <div style="margin-bottom: 20px;">
@@ -1088,4 +1090,5 @@
       </div>
     </div>
   </div>
+</div>
 </div>

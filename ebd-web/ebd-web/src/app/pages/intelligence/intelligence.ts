@@ -109,6 +109,11 @@ export class IntelligencePage implements OnInit, AfterViewInit, OnDestroy {
   private charts: { [key: string]: any } = {};
 
   ngOnInit(): void {
+    // Carrega antecipadamente o resumo executivo para garantir que o relatório para impressão esteja sempre pronto
+    this.intelligenceService.getOverview(this.selectedYear(), undefined, this.consolidated()).subscribe({
+      next: (res) => this.overviewData.set(res),
+      error: () => {},
+    });
     this.loadCurrentTab();
   }
 
@@ -135,25 +140,27 @@ export class IntelligencePage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   printReport(): void {
+    const doPrint = () => {
+      this.pdfSvc.gerarPdfEmNovaAba(
+        'relatorio-congregacao-pdf',
+        `relatorio-congregacao-${this.selectedYear()}`,
+        `Relatório Executivo e Demográfico da Congregação — IPB ${this.selectedYear()}`
+      );
+    };
+
     if (!this.overviewData()) {
-      this.intelligenceService.getOverview(this.selectedYear(), undefined, this.consolidated()).subscribe((res) => {
-        this.overviewData.set(res);
-        setTimeout(() => {
-          this.pdfSvc.gerarPdfEmNovaAba(
-            'relatorio-congregacao-pdf',
-            `relatorio-congregacao-${this.selectedYear()}`,
-            `Relatório Executivo e Demográfico da Congregação — IPB ${this.selectedYear()}`
-          );
-        }, 150);
+      this.intelligenceService.getOverview(this.selectedYear(), undefined, this.consolidated()).subscribe({
+        next: (res) => {
+          this.overviewData.set(res);
+          // Aguarda um ciclo de renderização para alimentar o modelo do relatório
+          setTimeout(doPrint, 100);
+        },
+        error: () => doPrint(),
       });
       return;
     }
 
-    this.pdfSvc.gerarPdfEmNovaAba(
-      'relatorio-congregacao-pdf',
-      `relatorio-congregacao-${this.selectedYear()}`,
-      `Relatório Executivo e Demográfico da Congregação — IPB ${this.selectedYear()}`
-    );
+    doPrint();
   }
 
   exportMembersToExcel(): void {
