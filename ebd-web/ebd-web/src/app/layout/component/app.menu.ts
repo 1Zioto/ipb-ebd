@@ -266,11 +266,11 @@ export class AppMenu implements OnInit {
                         keywords: ['rol', 'membros', 'comungantes', 'nao comungantes', 'certidao', 'filiacao'],
                     },
                     {
-                        label: 'Cartas de Transferência',
+                        label: 'Modelos de Cartas',
                         icon: 'pi pi-fw pi-envelope',
-                        routerLink: ['/secretaria/cartas'],
+                        routerLink: ['/secretaria/modelos-cartas'],
                         visible: this.isScreenVisible('cartas', 'secretaria.rol.view'),
-                        keywords: ['cartas', 'transferencia', 'recepcao', 'demissao', 'oficio'],
+                        keywords: ['cartas', 'modelos de cartas', 'transferencia', 'batismo', 'casamento', 'apresentacao', 'recomendacao', 'disciplina', 'exclusao', 'posse', 'atestado'],
                     },
                     {
                         label: 'Estatística do Presbitério',

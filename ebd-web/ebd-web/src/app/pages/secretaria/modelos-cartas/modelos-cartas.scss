@@ -1,0 +1,308 @@
+.modelos-cartas-container {
+  min-height: 100vh;
+  background-color: var(--surface-ground, #f8fafc);
+}
+
+/* Barra Superior Navy */
+.navy-topbar {
+  background-color: #1e293b;
+  color: #ffffff;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+
+  .topbar-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin: 0;
+    text-align: center;
+  }
+
+  .nav-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+      color: #93c5fd;
+    }
+  }
+
+  .config-pill-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    padding: 0.4rem 1rem;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+      border-color: #ffffff;
+      color: #ffffff;
+    }
+  }
+}
+
+/* Subtítulo */
+.section-headline {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #475569;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+/* Grid de Cards */
+.document-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.25rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.doc-card {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--surface-border, #e2e8f0);
+  border-radius: 1rem;
+  padding: 1.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 140px;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.12), 0 8px 10px -6px rgba(37, 99, 235, 0.08);
+    border-color: #93c5fd;
+
+    .doc-icon-svg {
+      transform: scale(1.08);
+    }
+
+    .doc-title {
+      color: #2563eb;
+    }
+  }
+
+  .doc-icon-wrapper {
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .doc-icon-svg {
+    width: 36px;
+    height: 44px;
+    transition: transform 0.2s ease;
+  }
+
+  .doc-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--surface-900, #1e293b);
+    text-align: center;
+    transition: color 0.2s ease;
+  }
+
+  .doc-category-badge {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 9999px;
+    background-color: var(--surface-100, #f1f5f9);
+    color: var(--surface-600, #64748b);
+  }
+}
+
+/* Folha A4 Timbrada Oficial */
+.sheet-a4-preview {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 3rem 3.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: 'Times New Roman', Times, serif;
+  line-height: 1.7;
+  max-width: 800px;
+  margin: 0 auto;
+
+  .letterhead-header {
+    text-align: center;
+    border-bottom: 2px solid #047857;
+    padding-bottom: 1.25rem;
+    margin-bottom: 2rem;
+
+    .ipb-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #064e3b;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .church-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0.35rem 0 0.15rem 0;
+    }
+
+    .presbytery-info {
+      font-size: 0.85rem;
+      font-style: italic;
+      color: #475569;
+      margin: 0;
+    }
+
+    .meta-contacts {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.35rem;
+    }
+  }
+
+  .doc-heading-title {
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 1.5rem 0 0.25rem 0;
+  }
+
+  .doc-protocol-number {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    font-family: monospace;
+    margin-bottom: 2rem;
+  }
+
+  .doc-body-text {
+    font-size: 1.05rem;
+    text-align: justify;
+    text-indent: 2rem;
+    white-space: pre-line;
+    margin-bottom: 2.5rem;
+    color: #1e293b;
+  }
+
+  .doc-date-location {
+    text-align: right;
+    font-size: 0.95rem;
+    margin-bottom: 3.5rem;
+    font-style: italic;
+  }
+
+  .doc-signatures-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin-top: 2rem;
+
+    .signature-block {
+      text-align: center;
+
+      .sign-line {
+        border-top: 1px solid #1e293b;
+        margin-bottom: 0.5rem;
+      }
+
+      .sign-name {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin: 0;
+      }
+
+      .sign-role {
+        font-size: 0.8rem;
+        color: #475569;
+        margin: 0;
+      }
+    }
+  }
+
+  .doc-footer-verse {
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1rem;
+    margin-top: 3rem;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-style: italic;
+  }
+}
+
+/* Estilos de Impressão A4 Nativa */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-only-sheet,
+  .print-only-sheet * {
+    visibility: visible;
+  }
+
+  .print-only-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 2cm;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

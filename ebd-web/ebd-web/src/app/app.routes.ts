@@ -200,9 +200,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/secretaria/estatistica-presbiterio').then((m) => m.EstatisticaPresbiterioPage),
       },
       {
-        path: 'secretaria/cartas',
+        path: 'secretaria/modelos-cartas',
         canActivate: [permissionGuard('secretaria.rol.view'), screenGuard('cartas')],
-        loadComponent: () => import('./pages/secretaria/cartas-transferencia').then((m) => m.CartasTransferenciaPage),
+        loadComponent: () => import('./pages/secretaria/modelos-cartas/modelos-cartas').then((m) => m.ModelosCartasPage),
+      },
+      {
+        path: 'secretaria/cartas',
+        redirectTo: 'secretaria/modelos-cartas',
+        pathMatch: 'full',
       },
       {
         path: 'secretaria/atas',

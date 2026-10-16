@@ -197,11 +197,11 @@ export const SYSTEM_SCREENS: ScreenModuleDef[] = [
   },
   {
     key: 'cartas',
-    label: 'Cartas de Transferência',
+    label: 'Modelos de Cartas & Documentos',
     icon: 'pi pi-envelope',
     group: 'Secretaria & Membresia',
-    description: 'Emissão e recepção de cartas de membros entre igrejas da denominação.',
-    route: '/secretaria/cartas',
+    description: 'Emissão e preenchimento dos 10 modelos oficiais de cartas, certidões e termos da IPB.',
+    route: '/secretaria/modelos-cartas',
     defaultEnabled: true,
   },
   {

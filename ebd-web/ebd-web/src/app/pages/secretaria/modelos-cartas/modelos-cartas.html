@@ -1,0 +1,728 @@
+<div class="modelos-cartas-container p-4 md:p-6 no-print">
+  <p-toast></p-toast>
+
+  <!-- BARRA SUPERIOR NAVY (CONFORME IMAGEM DE REFERÊNCIA) -->
+  <header class="navy-topbar">
+    <button type="button" class="nav-btn" (click)="voltarAoPainel()" title="Voltar ao Painel Geral">
+      <i class="pi pi-arrow-left"></i>
+      <span>Painel</span>
+    </button>
+
+    <h1 class="topbar-title">MODELOS DE CARTAS</h1>
+
+    <div class="flex items-center gap-2">
+      <button type="button" class="config-pill-btn" (click)="historyDialog.set(true)" title="Ver Histórico de Documentos Emitidos">
+        <i class="pi pi-history text-xs"></i>
+        <span>Histórico ({{ issuedHistory().length }})</span>
+      </button>
+
+      <button type="button" class="config-pill-btn" (click)="abrirConfiguracao()" title="Configurar Timbre e Dados da Igreja">
+        <i class="pi pi-cog text-xs"></i>
+        <span>Configurar</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- SUBTÍTULO EM CAIXA ALTA -->
+  <div class="mb-4">
+    <div class="section-headline">SELECIONE O DOCUMENTO PARA PREENCHER:</div>
+  </div>
+
+  <!-- GRID DOS 10 MODELOS DE CARTAS (CONFORME IMAGEM DO USUÁRIO) -->
+  <div class="document-cards-grid">
+    @for (model of models; track model.key) {
+      <div class="doc-card" (click)="openDocumentFill(model)" [pTooltip]="model.subtitle" tooltipPosition="top">
+        <span class="doc-category-badge">{{ model.badge }}</span>
+
+        <!-- Ícone do Documento Azul Idêntico à Imagem -->
+        <div class="doc-icon-wrapper">
+          <svg class="doc-icon-svg" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Folha com canto superior direito dobrado -->
+            <path d="M4 4C4 1.79086 5.79086 0 8 0H26L38 12V44C38 46.2091 36.2091 48 34 48H8C5.79086 48 4 46.2091 4 44V4Z" fill="#FFFFFF" stroke="#2563EB" stroke-width="2.2" stroke-linejoin="round"/>
+            <!-- Dobra do canto -->
+            <path d="M26 0V12H38" fill="#DBEAFE" stroke="#2563EB" stroke-width="2.2" stroke-linejoin="round"/>
+            <!-- Linhas de texto simuladas no documento -->
+            <line x1="10" y1="18" x2="24" y2="18" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+            <line x1="10" y1="24" x2="32" y2="24" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/>
+            <line x1="10" y1="30" x2="28" y2="30" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/>
+            <line x1="10" y1="36" x2="20" y2="36" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/>
+            <!-- Símbolo sutil de chancela/estampa -->
+            <circle cx="28" cy="35" r="4.5" fill="#2563EB" fill-opacity="0.15" stroke="#2563EB" stroke-width="1.5"/>
+          </svg>
+        </div>
+
+        <div class="doc-title">{{ model.title }}</div>
+      </div>
+    }
+  </div>
+
+  <!-- AVISO DE CONFORMIDADE IPB -->
+  <div class="mt-8 p-4 rounded-xl bg-surface-card border border-surface-border flex items-center justify-between gap-4 text-xs text-surface-500">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-shield text-emerald-600 text-base"></i>
+      <span>Padrão oficial em conformidade com o <strong>Manual Presbiteriano da Igreja Presbiteriana do Brasil</strong>.</span>
+    </div>
+    <div class="font-medium text-surface-700">
+      {{ churchConfig().churchName }} • {{ churchConfig().presbytery }}
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE PREENCHIMENTO DO DOCUMENTO SELECIONADO                          -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="fillDialog"
+  [modal]="true"
+  [style]="{ width: '920px', maxWidth: '95vw' }"
+  [header]="selectedModel() ? 'Preencher: ' + selectedModel()?.title : 'Preencher Documento'"
+  styleClass="p-dialog-modern no-print"
+>
+  @if (selectedModel()) {
+    <div class="space-y-5 pt-2">
+      <!-- Identificação e Protocolo -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-surface-50 dark:bg-surface-800 rounded-xl border border-surface-border">
+        <div>
+          <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Nº do Documento / Protocolo</label>
+          <input type="text" pInputText class="w-full font-mono text-sm" [(ngModel)]="formDocumentNumber" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Data de Emissão</label>
+          <input type="date" pInputText class="w-full text-sm" [(ngModel)]="formIssueDate" (change)="regenerateBodyText()" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-surface-600 dark:text-surface-300 mb-1">Tipo de Documento</label>
+          <div class="text-sm font-bold text-primary mt-2 flex items-center gap-2">
+            <i class="pi pi-file"></i>
+            {{ selectedModel()?.title }}
+          </div>
+        </div>
+      </div>
+
+      <!-- SELEÇÃO RÁPIDA DE MEMBRO DO ROL (76 MEMBROS) -->
+      @if (selectedModel()?.key !== 'apresentacao_crianca' && selectedModel()?.key !== 'certificado_casamento') {
+        <div class="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-xl">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+              <i class="pi pi-user text-sm"></i>
+              Selecionar Membro do Rol da Igreja
+            </label>
+            <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              {{ members().length }} membros cadastrados
+            </span>
+          </div>
+
+          <div class="flex gap-2 mb-2">
+            <input
+              type="text"
+              pInputText
+              class="w-full text-sm"
+              placeholder="Digite o nome, rol ou CPF do membro..."
+              [ngModel]="searchMemberQuery()"
+              (ngModelChange)="searchMemberQuery.set($event)"
+            />
+          </div>
+
+          <!-- Sugestões Rápidas de Membros -->
+          <div class="max-h-36 overflow-y-auto space-y-1 bg-surface-card rounded-lg p-2 border border-surface-border">
+            @for (m of filteredMembers().slice(0, 8); track m.id) {
+              <div
+                class="flex items-center justify-between p-2 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded cursor-pointer transition-colors text-xs"
+                (click)="onSelectMember(m)"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-surface-900 dark:text-surface-0">{{ m.full_name }}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 font-mono text-[11px]">
+                    {{ m.roll_number || 'Sem Rol' }}
+                  </span>
+                  @if (m.families && m.families.length > 0) {
+                    <span class="text-surface-400 text-[11px]">({{ m.families[0].name }})</span>
+                  }
+                </div>
+                <div class="flex items-center gap-2">
+                  <p-tag [value]="m.canonical_status" severity="info"></p-tag>
+                  <button type="button" class="text-primary hover:underline font-semibold text-xs">Selecionar</button>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-3 text-center text-xs text-surface-500">Nenhum membro encontrado com este termo.</div>
+            }
+          </div>
+
+          @if (selectedMember()) {
+            <div class="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+              <div>
+                <strong>Membro Vinculado:</strong> {{ selectedMember()?.full_name }} • Rol: {{ selectedMember()?.roll_number }} • Tel: {{ selectedMember()?.phone || 'Não informado' }}
+              </div>
+              <button type="button" class="text-xs text-red-600 hover:underline" (click)="selectedMember.set(null); varMemberName.set(''); varRollNumber.set('')">Limpar</button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- CAMPOS ESPECÍFICOS CONFORME O MODELO -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Campos Básicos de Pessoa -->
+        @if (selectedModel()?.key !== 'apresentacao_crianca' && selectedModel()?.key !== 'certificado_casamento') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nome Completo do Membro *</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varMemberName" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Número no Rol de Membros</label>
+            <input type="text" pInputText class="w-full text-sm font-mono" [(ngModel)]="varRollNumber" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- APRESENTAÇÃO -->
+        @if (selectedModel()?.key === 'apresentacao') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Motivo do Trânsito / Viagem</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varTransitReason" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Período Previsto</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varTransitPeriod" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- APRESENTAÇÃO DE CRIANÇA -->
+        @if (selectedModel()?.key === 'apresentacao_crianca') {
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nome Completo da Criança *</label>
+            <input type="text" pInputText class="w-full text-sm font-bold" [(ngModel)]="varChildName" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data de Nascimento da Criança</label>
+            <input type="date" pInputText class="w-full text-sm" [(ngModel)]="varBirthDate" (change)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data da Apresentação</label>
+            <input type="date" pInputText class="w-full text-sm" [(ngModel)]="varPresentationDate" (change)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nome do Pai</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varFatherName" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nome da Mãe</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varMotherName" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- ATESTADO DE MEMBRESIA -->
+        @if (selectedModel()?.key === 'atestado_membresia') {
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Finalidade da Declaração</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varCertificatePurpose" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- CARTA DE DISCIPLINA -->
+        @if (selectedModel()?.key === 'carta_disciplina') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nº da Ata do Conselho</label>
+            <input type="text" pInputText class="w-full text-sm font-mono" [(ngModel)]="varMinutesNumber" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data da Sessão do Conselho</label>
+            <input type="date" pInputText class="w-full text-sm" [(ngModel)]="varCouncilMeetingDate" (change)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Período / Medida Disciplinar</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varDisciplinePeriod" (input)="regenerateBodyText()" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Motivo Pastoral da Deliberação</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varDisciplineReason" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- CERTIFICADO DE BATISMO -->
+        @if (selectedModel()?.key === 'certificado_batismo') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Tipo de Batismo</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varBaptismType" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data do Batismo</label>
+            <input type="date" pInputText class="w-full text-sm" [(ngModel)]="varBaptismDate" (change)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Ministro Oficiante</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varOfficiant" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data de Nascimento do Batizando</label>
+            <input type="date" pInputText class="w-full text-sm" [(ngModel)]="varBirthDate" (change)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- CERTIFICADO DE CASAMENTO -->
+        @if (selectedModel()?.key === 'certificado_casamento') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nome Completo do Noivo *</label>
+            <input type="text" pInputText class="w-full text-sm font-bold" [(ngModel)]="varGroomName" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nome Completo da Noiva *</label>
+            <input type="text" pInputText class="w-full text-sm font-bold" [(ngModel)]="varBrideName" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data da Cerimônia Religiosa</label>
+            <input type="date" pInputText class="w-full text-sm" [(ngModel)]="varWeddingDate" (change)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Ministro Celebrante</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varOfficiant" (input)="regenerateBodyText()" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Testemunhas do Matrimônio</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varWeddingWitnesses" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- EXCLUSÃO -->
+        @if (selectedModel()?.key === 'exclusao') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nº da Ata do Conselho</label>
+            <input type="text" pInputText class="w-full text-sm font-mono" [(ngModel)]="varMinutesNumber" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data da Decisão</label>
+            <input type="date" pInputText class="w-full text-sm" [(ngModel)]="varCouncilMeetingDate" (change)="regenerateBodyText()" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Motivo do Desligamento / Exclusão</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varExclusionReason" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- NOMEAÇÃO DE CARGO -->
+        @if (selectedModel()?.key === 'nomeacao_cargo') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Cargo / Função Eclesiástica *</label>
+            <input type="text" pInputText class="w-full text-sm font-bold" [(ngModel)]="varAppointedOffice" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Departamento / Sociedade Interna</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varDepartment" (input)="regenerateBodyText()" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Mandato / Período de Exercício</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varTermPeriod" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- RECOMENDAÇÃO -->
+        @if (selectedModel()?.key === 'recomendacao') {
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Igreja de Destino (Cidade/UF)</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varChurchDestination" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Prazo de Validade</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varRecommendationValidity" (input)="regenerateBodyText()" />
+          </div>
+        }
+
+        <!-- TRANSFERÊNCIA -->
+        @if (selectedModel()?.key === 'transferencia') {
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Igreja Presbiteriana de Destino *</label>
+            <input type="text" pInputText class="w-full text-sm" placeholder="Ex: Igreja Presbiteriana de Jardim Camburi - Vitória/ES" [(ngModel)]="varChurchDestination" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Forma de Admissão Original</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varReceptionType" (input)="regenerateBodyText()" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data de Admissão Original</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varReceptionDate" (input)="regenerateBodyText()" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Filhos Menores não-comungantes sob sua guarda</label>
+            <input type="text" pInputText class="w-full text-sm" [(ngModel)]="varMinorChildren" (input)="regenerateBodyText()" />
+          </div>
+        }
+      </div>
+
+      <!-- TEXTO OFICIAL GERADO (EDITÁVEL) -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-xs font-bold uppercase tracking-wider text-surface-700 dark:text-surface-300">
+            Texto do Documento (Redação Oficial da Chancelaria)
+          </label>
+          <button type="button" class="text-xs text-primary hover:underline font-semibold" (click)="regenerateBodyText()">
+            <i class="pi pi-refresh text-xs"></i> Restaurar Texto Padrão
+          </button>
+        </div>
+        <textarea
+          rows="6"
+          pInputTextarea
+          class="w-full text-xs font-serif leading-relaxed"
+          [(ngModel)]="customizedBodyText"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- RODAPÉ DE AÇÕES DO MODAL -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-border mt-4">
+      <div class="flex items-center gap-2">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-copy"
+          label="Copiar Texto"
+          class="p-button-outlined p-button-sm"
+          (click)="copiarTexto()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-save"
+          label="Salvar no Histórico"
+          class="p-button-outlined p-button-sm p-button-secondary"
+          (click)="salvarRegistroHistorico(true)"
+        ></button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          class="p-button-text p-button-sm"
+          (click)="fillDialog.set(false)"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-eye"
+          label="Visualizar Folha A4 Timbrada"
+          class="p-button-sm p-button-info"
+          (click)="openPreview()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-print"
+          label="Imprimir / Gerar PDF"
+          class="p-button-sm p-button-primary"
+          (click)="openPreview(); imprimirDocumento()"
+        ></button>
+      </div>
+    </div>
+  }
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE PRÉ-VISUALIZAÇÃO DA FOLHA A4 TIMBRADA OFICIAL DA IPB             -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="previewDialog"
+  [modal]="true"
+  [style]="{ width: '880px', maxWidth: '95vw' }"
+  header="Visualização Oficial A4 Timbrada — Chancelaria IPB"
+  styleClass="no-print"
+>
+  <!-- Barra de Ações do Documento -->
+  <div class="flex items-center justify-between mb-4 pb-3 border-b border-surface-border">
+    <div class="text-xs text-surface-500">
+      Visualização fiel ao documento impresso e ao PDF. Formato Padrão A4.
+    </div>
+    <div class="flex items-center gap-2">
+      <button pButton icon="pi pi-copy" label="Copiar Texto" class="p-button-outlined p-button-sm" (click)="copiarTexto()"></button>
+      <button pButton icon="pi pi-print" label="Imprimir / Gerar PDF" class="p-button-sm p-button-primary" (click)="imprimirDocumento()"></button>
+    </div>
+  </div>
+
+  <!-- FOLHA A4 TIMBRADA OFICIAL -->
+  <div class="sheet-a4-preview">
+    <!-- Cabeçalho Oficial IPB com Sarça Ardente -->
+    <div class="letterhead-header">
+      <!-- Símbolo da Sarça Ardente em SVG Vetorial Nítido -->
+      <div class="flex justify-center mb-2">
+        <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="46" stroke="#047857" stroke-width="3" fill="#F0FDF4"/>
+          <!-- Chamas da sarça -->
+          <path d="M50 20C46 32 38 38 42 50C44 55 48 58 50 64C52 58 56 55 58 50C62 38 54 32 50 20Z" fill="#DC2626"/>
+          <path d="M50 30C47 38 43 42 45 49C47 52 49 54 50 58C51 54 53 52 55 49C57 42 53 38 50 30Z" fill="#FBBF24"/>
+          <!-- Ramos da sarça ardente -->
+          <path d="M32 68C40 64 45 58 48 52" stroke="#065F46" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M68 68C60 64 55 58 52 52" stroke="#065F46" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M50 78V52" stroke="#065F46" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="ipb-title">Igreja Presbiteriana do Brasil</div>
+      <div class="church-name">{{ churchConfig().churchName }}</div>
+      <div class="presbytery-info">{{ churchConfig().presbytery }} • {{ churchConfig().synod }}</div>
+      <div class="meta-contacts">
+        CNPJ: {{ churchConfig().cnpj }} • {{ churchConfig().address }} — {{ churchConfig().cityState }}
+        <br />
+        Tel: {{ churchConfig().phone }} • E-mail: {{ churchConfig().email }}
+      </div>
+    </div>
+
+    <!-- Título do Documento -->
+    <div class="doc-heading-title">
+      {{ selectedModel()?.title }}
+    </div>
+    <div class="doc-protocol-number">
+      {{ formDocumentNumber() }}
+    </div>
+
+    <!-- Corpo do Documento -->
+    <div class="doc-body-text">
+      {{ customizedBodyText() }}
+    </div>
+
+    <!-- Data por extenso -->
+    <div class="doc-date-location">
+      {{ getDataPorExtenso() }}
+    </div>
+
+    <!-- Assinaturas Oficiais com Linha -->
+    <div class="doc-signatures-grid">
+      <div class="signature-block">
+        <div class="sign-line"></div>
+        <p class="sign-name">{{ churchConfig().pastorName }}</p>
+        <p class="sign-role">Pastor Presidente do Conselho</p>
+        <p class="text-[11px] text-surface-500 m-0">{{ churchConfig().pastorRegistration }}</p>
+      </div>
+      <div class="signature-block">
+        <div class="sign-line"></div>
+        <p class="sign-name">{{ churchConfig().secretaryName }}</p>
+        <p class="sign-role">Secretário do Conselho</p>
+        <p class="text-[11px] text-surface-500 m-0">Conselho da Igreja Local</p>
+      </div>
+    </div>
+
+    <!-- Rodapé Bíblico Oficial -->
+    <div class="doc-footer-verse">
+      {{ churchConfig().footerVerse }}
+    </div>
+  </div>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE CONFIGURAÇÃO DOS DADOS DA IGREJA [CONFIGURAR]                   -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="configDialog"
+  [modal]="true"
+  [style]="{ width: '640px', maxWidth: '95vw' }"
+  header="Configurar Cabeçalho Timbrado Oficial e Oficiais"
+  styleClass="p-dialog-modern no-print"
+>
+  <div class="space-y-4 pt-2">
+    <div>
+      <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Nome Oficial da Igreja *</label>
+      <input type="text" pInputText class="w-full text-sm font-bold" [(ngModel)]="editConfig().churchName" />
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Presbitério *</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="editConfig().presbytery" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Sínodo</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="editConfig().synod" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">CNPJ</label>
+        <input type="text" pInputText class="w-full text-sm font-mono" [(ngModel)]="editConfig().cnpj" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Cidade / UF *</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="editConfig().cityState" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Endereço Completo</label>
+      <input type="text" pInputText class="w-full text-sm" [(ngModel)]="editConfig().address" />
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Telefone da Secretaria</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="editConfig().phone" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">E-mail Oficial</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="editConfig().email" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Pastor Titular / Presidente *</label>
+        <input type="text" pInputText class="w-full text-sm font-semibold" [(ngModel)]="editConfig().pastorName" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Registro Ministerial / Presbiterial</label>
+        <input type="text" pInputText class="w-full text-sm" [(ngModel)]="editConfig().pastorRegistration" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Secretário do Conselho *</label>
+      <input type="text" pInputText class="w-full text-sm font-semibold" [(ngModel)]="editConfig().secretaryName" />
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Versículo de Rodapé</label>
+      <input type="text" pInputText class="w-full text-sm font-serif italic" [(ngModel)]="editConfig().footerVerse" />
+    </div>
+  </div>
+
+  <div class="flex items-center justify-end gap-2 pt-4 border-t border-surface-border mt-4">
+    <button pButton label="Cancelar" class="p-button-text p-button-sm" (click)="configDialog.set(false)"></button>
+    <button pButton icon="pi pi-check" label="Salvar Configurações" class="p-button-sm p-button-primary" (click)="salvarConfiguracao()"></button>
+  </div>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE HISTÓRICO DE DOCUMENTOS EMITIDOS                                 -->
+<!-- ========================================================================= -->
+<p-dialog
+  [(visible)]="historyDialog"
+  [modal]="true"
+  [style]="{ width: '840px', maxWidth: '95vw' }"
+  header="Histórico de Cartas e Documentos Emitidos"
+  styleClass="p-dialog-modern no-print"
+>
+  <div class="space-y-3 pt-2">
+    <p-table [value]="issuedHistory()" [rows]="8" [paginator]="true" responsiveLayout="scroll" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 140px">Protocolo</th>
+          <th>Documento</th>
+          <th>Destinatário / Membro</th>
+          <th>Data</th>
+          <th style="width: 120px; text-align: center">Ações</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-rec>
+        <tr>
+          <td>
+            <span class="font-mono text-xs font-bold px-2 py-1 bg-surface-100 dark:bg-surface-800 rounded">
+              {{ rec.code }}
+            </span>
+          </td>
+          <td>
+            <div class="font-semibold text-surface-900 dark:text-surface-0 text-xs">{{ rec.typeTitle }}</div>
+            @if (rec.churchDestination) {
+              <div class="text-[11px] text-surface-500">Destino: {{ rec.churchDestination }}</div>
+            }
+          </td>
+          <td>
+            <div class="text-xs font-medium">{{ rec.recipientName }}</div>
+            @if (rec.rollNumber) {
+              <span class="text-[11px] text-surface-400 font-mono">{{ rec.rollNumber }}</span>
+            }
+          </td>
+          <td>
+            <span class="text-xs text-surface-600 dark:text-surface-400">{{ rec.issueDate | date: 'dd/MM/yyyy' }}</span>
+          </td>
+          <td class="text-center">
+            <button
+              pButton
+              icon="pi pi-print"
+              class="p-button-rounded p-button-text p-button-sm p-button-primary"
+              pTooltip="Visualizar / Imprimir Novamente"
+              (click)="reimprimirDoHistorico(rec)"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-sm p-button-danger"
+              pTooltip="Excluir do Histórico"
+              (click)="excluirDoHistorico(rec.id)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="text-center p-6 text-xs text-surface-500">
+            Nenhum documento emitido registrado no histórico até o momento.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- FOLHA PURA EXCLUSIVA PARA IMPRESSÃO (NATIVE PRINT A4)                     -->
+<!-- ========================================================================= -->
+<div class="print-only-sheet sheet-a4-preview">
+  <!-- Cabeçalho Oficial IPB -->
+  <div class="letterhead-header">
+    <div class="flex justify-center mb-2">
+      <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="46" stroke="#047857" stroke-width="3" fill="#F0FDF4"/>
+        <path d="M50 20C46 32 38 38 42 50C44 55 48 58 50 64C52 58 56 55 58 50C62 38 54 32 50 20Z" fill="#DC2626"/>
+        <path d="M50 30C47 38 43 42 45 49C47 52 49 54 50 58C51 54 53 52 55 49C57 42 53 38 50 30Z" fill="#FBBF24"/>
+        <path d="M32 68C40 64 45 58 48 52" stroke="#065F46" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M68 68C60 64 55 58 52 52" stroke="#065F46" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M50 78V52" stroke="#065F46" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="ipb-title">Igreja Presbiteriana do Brasil</div>
+    <div class="church-name">{{ churchConfig().churchName }}</div>
+    <div class="presbytery-info">{{ churchConfig().presbytery }} • {{ churchConfig().synod }}</div>
+    <div class="meta-contacts">
+      CNPJ: {{ churchConfig().cnpj }} • {{ churchConfig().address }} — {{ churchConfig().cityState }}
+      <br />
+      Tel: {{ churchConfig().phone }} • E-mail: {{ churchConfig().email }}
+    </div>
+  </div>
+
+  <!-- Título do Documento -->
+  <div class="doc-heading-title">
+    {{ selectedModel()?.title }}
+  </div>
+  <div class="doc-protocol-number">
+    {{ formDocumentNumber() }}
+  </div>
+
+  <!-- Corpo do Documento -->
+  <div class="doc-body-text">
+    {{ customizedBodyText() }}
+  </div>
+
+  <!-- Data por extenso -->
+  <div class="doc-date-location">
+    {{ getDataPorExtenso() }}
+  </div>
+
+  <!-- Assinaturas Oficiais -->
+  <div class="doc-signatures-grid">
+    <div class="signature-block">
+      <div class="sign-line"></div>
+      <p class="sign-name">{{ churchConfig().pastorName }}</p>
+      <p class="sign-role">Pastor Presidente do Conselho</p>
+      <p class="text-[11px] text-surface-500 m-0">{{ churchConfig().pastorRegistration }}</p>
+    </div>
+    <div class="signature-block">
+      <div class="sign-line"></div>
+      <p class="sign-name">{{ churchConfig().secretaryName }}</p>
+      <p class="sign-role">Secretário do Conselho</p>
+      <p class="text-[11px] text-surface-500 m-0">Conselho da Igreja Local</p>
+    </div>
+  </div>
+
+  <!-- Rodapé Bíblico Oficial -->
+  <div class="doc-footer-verse">
+    {{ churchConfig().footerVerse }}
+  </div>
+</div>
