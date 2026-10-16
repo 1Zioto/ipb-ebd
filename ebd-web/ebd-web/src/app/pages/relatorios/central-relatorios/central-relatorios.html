@@ -1,0 +1,780 @@
+<div class="central-relatorios-container p-4 md:p-6 no-print">
+  <p-toast></p-toast>
+
+  <!-- 1. BARRA SUPERIOR NAVY (CONFORME IMAGEM DO USUÁRIO) -->
+  <header class="central-topbar">
+    <div class="topbar-left">
+      <button type="button" class="back-circle-btn" (click)="voltarAoPainel()" title="Voltar ao Painel Geral">
+        <i class="pi pi-arrow-left"></i>
+      </button>
+      <h1 class="topbar-title">CENTRAL DE RELATÓRIOS</h1>
+    </div>
+
+    <div class="topbar-right">
+      <span class="text-xs text-slate-300 font-medium hidden md:inline">
+        {{ churchConfig().churchName }}
+      </span>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-print"
+        label="Imprimir Relatório"
+        class="p-button-sm p-button-outlined p-button-secondary text-white border-white/40 hover:bg-white/10"
+        (click)="imprimirRelatorio('Relatório Geral Consolidado')"
+      ></button>
+    </div>
+  </header>
+
+  <!-- 2. LINHA DE KPIS / CARDS DE MÉTRICAS (CONFORME IMAGEM) -->
+  <section class="kpi-row">
+    <!-- Card 1: TOTAL MEMBROS -->
+    <div class="kpi-card">
+      <div class="kpi-icon-box blue">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">TOTAL MEMBROS</span>
+        <span class="kpi-value">{{ members().length }}</span>
+      </div>
+    </div>
+
+    <!-- Card 2: RECEITAS MÊS -->
+    <div class="kpi-card">
+      <div class="kpi-icon-box green">
+        <i class="pi pi-money-bill"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">RECEITAS MÊS</span>
+        <span class="kpi-value green-val">R$ {{ financialData().receitasTotal | number: '1.2-2' }}</span>
+      </div>
+    </div>
+
+    <!-- Card 3: DESPESAS MÊS -->
+    <div class="kpi-card">
+      <div class="kpi-icon-box red">
+        <i class="pi pi-shopping-cart"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">DESPESAS MÊS</span>
+        <span class="kpi-value red-val">R$ {{ financialData().despesasTotal | number: '1.2-2' }}</span>
+      </div>
+    </div>
+
+    <!-- Card 4: ANIVERSARIANTES MÊS ATUAL -->
+    <div class="kpi-card">
+      <div class="kpi-icon-box purple">
+        <i class="pi pi-gift"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">ANIVERSARIANTES (MÊS {{ currentMonth }})</span>
+        <span class="kpi-value text-purple-600">{{ birthdaysCountByMonth()[currentMonth] || 0 }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. SELETOR DE RELATÓRIOS EM ABAS / BOTÕES (CONFORME IMAGEM) -->
+  <nav class="report-tabs-bar" aria-label="Seletor de Relatórios">
+    <!-- 1. ANIVERSARIANTES -->
+    <button
+      type="button"
+      class="report-tab-btn"
+      [class.active]="activeTab() === 'aniversariantes'"
+      (click)="setTab('aniversariantes')"
+    >
+      <!-- Ícone Bolo de Aniversário em SVG Nítido -->
+      <svg class="tab-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/>
+        <path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/>
+        <path d="M2 21h20"/>
+        <path d="M7 8v3"/>
+        <path d="M12 8v3"/>
+        <path d="M17 8v3"/>
+        <path d="M7 4h.01"/>
+        <path d="M12 4h.01"/>
+        <path d="M17 4h.01"/>
+      </svg>
+      <span class="tab-label">ANIVERSARIANTES</span>
+    </button>
+
+    <!-- 2. DEMOGRÁFICO -->
+    <button
+      type="button"
+      class="report-tab-btn"
+      [class.active]="activeTab() === 'demografico'"
+      (click)="setTab('demografico')"
+    >
+      <i class="pi pi-chart-bar tab-icon"></i>
+      <span class="tab-label">DEMOGRÁFICO</span>
+    </button>
+
+    <!-- 3. FINANCEIRO -->
+    <button
+      type="button"
+      class="report-tab-btn"
+      [class.active]="activeTab() === 'financeiro'"
+      (click)="setTab('financeiro')"
+    >
+      <i class="pi pi-wallet tab-icon"></i>
+      <span class="tab-label">FINANCEIRO</span>
+    </button>
+
+    <!-- 4. PATRIMÔNIO -->
+    <button
+      type="button"
+      class="report-tab-btn"
+      [class.active]="activeTab() === 'patrimonio'"
+      (click)="setTab('patrimonio')"
+    >
+      <i class="pi pi-box tab-icon"></i>
+      <span class="tab-label">PATRIMÔNIO</span>
+    </button>
+
+    <!-- 5. ROL DE MEMBROS -->
+    <button
+      type="button"
+      class="report-tab-btn"
+      [class.active]="activeTab() === 'membros'"
+      (click)="setTab('membros')"
+    >
+      <i class="pi pi-id-card tab-icon"></i>
+      <span class="tab-label">ROL DE MEMBROS</span>
+    </button>
+
+    <!-- 6. ESCOLA DOMINICAL -->
+    <button
+      type="button"
+      class="report-tab-btn"
+      [class.active]="activeTab() === 'ebd'"
+      (click)="setTab('ebd')"
+    >
+      <i class="pi pi-book tab-icon"></i>
+      <span class="tab-label">ESCOLA DOMINICAL</span>
+    </button>
+  </nav>
+
+  <!-- 4. CONTEÚDO DA ABA SELECIONADA -->
+
+  <!-- ==================== ABA 1: ANIVERSARIANTES ==================== -->
+  @if (activeTab() === 'aniversariantes') {
+    <div class="report-content-panel">
+      <!-- Cabeçalho da Aba -->
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-surface-border">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+            🎂 Relatório de Aniversariantes da Membresia
+          </h2>
+          <p class="text-xs text-surface-500 m-0 mt-1">
+            Selecione o mês para visualizar a escala de celebrações, contatos para felicitações no WhatsApp e mural oficial.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-print"
+            label="Imprimir Mural de Aniversariantes"
+            class="p-button-sm p-button-primary"
+            (click)="imprimirRelatorio('Mural Oficial de Aniversariantes — ' + getSelectedMonthName())"
+          ></button>
+        </div>
+      </div>
+
+      <!-- Seletor de Meses Pills com Badge de Contagem -->
+      <div class="month-pills-wrapper">
+        @for (m of monthsList; track m.num) {
+          <button
+            type="button"
+            class="month-pill"
+            [class.active]="selectedMonth() === m.num"
+            (click)="selectMonth(m.num)"
+          >
+            <span>{{ m.label }}</span>
+            <span class="count-badge">{{ birthdaysCountByMonth()[m.num] || 0 }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Lista / Grid dos Aniversariantes do Mês -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (item of monthBirthdays(); track item.member.id) {
+          <div class="birthday-card">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-sm shadow-sm">
+                    {{ item.day }}
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 m-0 leading-tight">
+                      {{ item.member.full_name }}
+                    </h3>
+                    <span class="text-xs text-surface-400 font-mono">
+                      {{ item.member.roll_number || 'Sem Rol' }}
+                    </span>
+                  </div>
+                </div>
+
+                <p-tag [value]="item.ageTurning + ' anos'" severity="info"></p-tag>
+              </div>
+
+              <div class="text-xs text-surface-600 dark:text-surface-300 space-y-1 mb-3 mt-2">
+                <div>
+                  <i class="pi pi-calendar text-[11px] text-surface-400 mr-1"></i>
+                  Data: <strong>Dia {{ item.day }} de {{ getSelectedMonthName() }}</strong>
+                </div>
+                @if (item.member.families && item.member.families.length > 0) {
+                  <div>
+                    <i class="pi pi-home text-[11px] text-surface-400 mr-1"></i>
+                    {{ item.member.families[0].name }}
+                  </div>
+                }
+                <div>
+                  <i class="pi pi-phone text-[11px] text-surface-400 mr-1"></i>
+                  {{ item.phoneFormatted }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Botão de Felicitação WhatsApp -->
+            <button
+              pButton
+              type="button"
+              icon="pi pi-whatsapp"
+              label="Felicitar no WhatsApp"
+              class="p-button-sm p-button-outlined p-button-success w-full mt-2"
+              (click)="felicitarWhatsApp(item)"
+            ></button>
+          </div>
+        } @empty {
+          <div class="col-span-3 text-center p-8 bg-surface-50 dark:bg-surface-800 rounded-xl border border-surface-border">
+            <i class="pi pi-calendar-times text-3xl text-surface-400 block mb-2"></i>
+            <p class="text-sm font-semibold text-surface-700 dark:text-surface-300 m-0">
+              Nenhum aniversariante cadastrado para o mês de {{ getSelectedMonthName() }}.
+            </p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ==================== ABA 2: DEMOGRÁFICO ==================== -->
+  @if (activeTab() === 'demografico') {
+    <div class="report-content-panel">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-surface-border">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+            📊 Relatório Demográfico da Congregação
+          </h2>
+          <p class="text-xs text-surface-500 m-0 mt-1">
+            Distribuição etária, composição familiar, estado civil e perfil da membresia ativa.
+          </p>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-print"
+          label="Imprimir Demográfico"
+          class="p-button-sm p-button-primary"
+          (click)="imprimirRelatorio('Relatório Demográfico Oficial da Membresia')"
+        ></button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Faixas Etárias -->
+        <div class="p-4 rounded-xl border border-surface-border bg-surface-ground">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-surface-700 dark:text-surface-300 mb-3">
+            Faixas Etárias
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Crianças (0 a 11 anos)</span>
+                <strong>{{ demographics().faixas.criancas.count }} ({{ demographics().faixas.criancas.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().faixas.criancas.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Adolescentes (12 a 17 anos)</span>
+                <strong>{{ demographics().faixas.adolescentes.count }} ({{ demographics().faixas.adolescentes.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().faixas.adolescentes.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Jovens (18 a 35 anos)</span>
+                <strong>{{ demographics().faixas.jovens.count }} ({{ demographics().faixas.jovens.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().faixas.jovens.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Adultos (36 a 59 anos)</span>
+                <strong>{{ demographics().faixas.adultos.count }} ({{ demographics().faixas.adultos.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().faixas.adultos.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Melhor Idade (60+ anos)</span>
+                <strong>{{ demographics().faixas.idosos.count }} ({{ demographics().faixas.idosos.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().faixas.idosos.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado Civil -->
+        <div class="p-4 rounded-xl border border-surface-border bg-surface-ground">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-surface-700 dark:text-surface-300 mb-3">
+            Estado Civil
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Casados(as)</span>
+                <strong>{{ demographics().estadoCivil.casados.count }} ({{ demographics().estadoCivil.casados.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().estadoCivil.casados.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Solteiros(as)</span>
+                <strong>{{ demographics().estadoCivil.solteiros.count }} ({{ demographics().estadoCivil.solteiros.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().estadoCivil.solteiros.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Viúvos(as)</span>
+                <strong>{{ demographics().estadoCivil.viuvos.count }} ({{ demographics().estadoCivil.viuvos.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().estadoCivil.viuvos.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Outros</span>
+                <strong>{{ demographics().estadoCivil.outros.count }} ({{ demographics().estadoCivil.outros.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().estadoCivil.outros.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+          </div>
+        </div>
+
+        <!-- Condição Eclesiástica -->
+        <div class="p-4 rounded-xl border border-surface-border bg-surface-ground">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-surface-700 dark:text-surface-300 mb-3">
+            Condição Eclesiástica
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Membros Comungantes</span>
+                <strong>{{ demographics().condicaoEclesiastica.comungantes.count }} ({{ demographics().condicaoEclesiastica.comungantes.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().condicaoEclesiastica.comungantes.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Membros Não-Comungantes</span>
+                <strong>{{ demographics().condicaoEclesiastica.naoComungantes.count }} ({{ demographics().condicaoEclesiastica.naoComungantes.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().condicaoEclesiastica.naoComungantes.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span>Sob Processo Disciplinar</span>
+                <strong>{{ demographics().condicaoEclesiastica.sobDisciplina.count }} ({{ demographics().condicaoEclesiastica.sobDisciplina.pct }}%)</strong>
+              </div>
+              <p-progressBar [value]="demographics().condicaoEclesiastica.sobDisciplina.pct" [showValue]="false" styleClass="h-2"></p-progressBar>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== ABA 3: FINANCEIRO ==================== -->
+  @if (activeTab() === 'financeiro') {
+    <div class="report-content-panel">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-surface-border">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+            👛 Balancete e Relatório Financeiro Mensal
+          </h2>
+          <p class="text-xs text-surface-500 m-0 mt-1">
+            Demonstrativo de entradas por dízimos e ofertas e saídas por plano de contas.
+          </p>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-print"
+          label="Imprimir Balancete"
+          class="p-button-sm p-button-primary"
+          (click)="imprimirRelatorio('Balancete Financeiro Consolidado da Igreja')"
+        ></button>
+      </div>
+
+      <!-- Resumo Sintético -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-center">
+          <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase">Receitas Totais</span>
+          <div class="text-2xl font-extrabold text-emerald-600 mt-1">
+            R$ {{ financialData().receitasTotal | number: '1.2-2' }}
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-center">
+          <span class="text-xs font-bold text-red-800 dark:text-red-300 uppercase">Despesas Totais</span>
+          <div class="text-2xl font-extrabold text-red-600 mt-1">
+            R$ {{ financialData().despesasTotal | number: '1.2-2' }}
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-center">
+          <span class="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase">Saldo Operacional</span>
+          <div class="text-2xl font-extrabold text-blue-600 mt-1">
+            + R$ {{ financialData().saldoMes | number: '1.2-2' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Detalhamento em 2 Colunas -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Entradas -->
+        <div class="border border-surface-border rounded-xl p-4">
+          <h3 class="text-xs font-bold text-emerald-700 uppercase mb-3 flex items-center gap-1.5">
+            <i class="pi pi-arrow-down-left"></i> Entradas e Receitas
+          </h3>
+          <div class="space-y-3">
+            @for (rec of financialData().itensReceita; track rec.categoria) {
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>{{ rec.categoria }}</span>
+                  <strong class="text-emerald-700">R$ {{ rec.valor | number: '1.2-2' }} ({{ rec.pct }}%)</strong>
+                </div>
+                <p-progressBar [value]="rec.pct" [showValue]="false" styleClass="h-1.5"></p-progressBar>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Saídas -->
+        <div class="border border-surface-border rounded-xl p-4">
+          <h3 class="text-xs font-bold text-red-700 uppercase mb-3 flex items-center gap-1.5">
+            <i class="pi pi-arrow-up-right"></i> Saídas e Despesas
+          </h3>
+          <div class="space-y-3">
+            @for (desp of financialData().itensDespesa; track desp.categoria) {
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>{{ desp.categoria }}</span>
+                  <strong class="text-red-700">R$ {{ desp.valor | number: '1.2-2' }} ({{ desp.pct }}%)</strong>
+                </div>
+                <p-progressBar [value]="desp.pct" [showValue]="false" styleClass="h-1.5"></p-progressBar>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== ABA 4: PATRIMÔNIO ==================== -->
+  @if (activeTab() === 'patrimonio') {
+    <div class="report-content-panel">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-surface-border">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+            📦 Livro de Tombamento e Inventário Patrimonial
+          </h2>
+          <p class="text-xs text-surface-500 m-0 mt-1">
+            Bens móveis, equipamentos de som, multimídia, instrumentos e instalações sob gestão da Junta Diaconal.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <span class="text-xs text-surface-500 block">Valor Patrimonial Avaliado:</span>
+            <strong class="text-base text-primary">R$ {{ totalPatrimonioValor() | number: '1.2-2' }}</strong>
+          </div>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-print"
+            label="Imprimir Inventário"
+            class="p-button-sm p-button-primary"
+            (click)="imprimirRelatorio('Inventário e Livro de Tombamento Patrimonial Oficial')"
+          ></button>
+        </div>
+      </div>
+
+      <p-table [value]="patrimonioList()" responsiveLayout="scroll" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 120px">Tombamento</th>
+            <th>Descrição do Bem</th>
+            <th>Categoria</th>
+            <th>Localização</th>
+            <th>Estado</th>
+            <th style="text-align: right">Valor Estimado</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-bem>
+          <tr>
+            <td>
+              <span class="font-mono text-xs font-bold px-2 py-1 bg-surface-100 dark:bg-surface-800 rounded">
+                {{ bem.tombamento }}
+              </span>
+            </td>
+            <td>
+              <div class="font-bold text-xs text-surface-900 dark:text-surface-0">{{ bem.nome }}</div>
+            </td>
+            <td>
+              <span class="text-xs text-surface-600 dark:text-surface-400">{{ bem.categoria }}</span>
+            </td>
+            <td>
+              <span class="text-xs text-surface-600 dark:text-surface-400">{{ bem.localizacao }}</span>
+            </td>
+            <td>
+              <p-tag [value]="bem.estado" [severity]="bem.estado === 'Excelente' ? 'success' : 'info'"></p-tag>
+            </td>
+            <td style="text-align: right" class="font-bold text-xs">
+              R$ {{ bem.valor | number: '1.2-2' }}
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+
+  <!-- ==================== ABA 5: ROL DE MEMBROS ==================== -->
+  @if (activeTab() === 'membros') {
+    <div class="report-content-panel">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-surface-border">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+            🪪 Relatório Oficial do Rol de Membros
+          </h2>
+          <p class="text-xs text-surface-500 m-0 mt-1">
+            Relação comungante e não-comungante arrolada na Igreja Presbiteriana de Campo Verde.
+          </p>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-print"
+          label="Imprimir Rol de Membros"
+          class="p-button-sm p-button-primary"
+          (click)="imprimirRelatorio('Rol Oficial de Membros da Igreja')"
+        ></button>
+      </div>
+
+      <p-table [value]="members()" [rows]="10" [paginator]="true" responsiveLayout="scroll" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 110px">Nº Rol</th>
+            <th>Nome Completo</th>
+            <th>Condição Eclesiástica</th>
+            <th>Estado Civil</th>
+            <th>Admissão</th>
+            <th>Contato</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-m>
+          <tr>
+            <td class="font-mono text-xs font-bold">{{ m.roll_number || 'Sem Rol' }}</td>
+            <td class="font-semibold text-xs text-surface-900 dark:text-surface-0">{{ m.full_name }}</td>
+            <td><p-tag [value]="m.canonical_status" severity="info"></p-tag></td>
+            <td class="text-xs">{{ m.marital_status || '-' }}</td>
+            <td class="text-xs">{{ m.reception_date | date: 'dd/MM/yyyy' }}</td>
+            <td class="text-xs text-surface-600">{{ m.phone || '-' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+
+  <!-- ==================== ABA 6: ESCOLA DOMINICAL ==================== -->
+  @if (activeTab() === 'ebd') {
+    <div class="report-content-panel">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-surface-border">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+            📖 Relatório da Escola Bíblica Dominical (EBD)
+          </h2>
+          <p class="text-xs text-surface-500 m-0 mt-1">
+            Métricas de frequência de alunos, Bíblias, revistas e pontualidade dominical.
+          </p>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-print"
+          label="Imprimir Relatório EBD"
+          class="p-button-sm p-button-primary"
+          (click)="imprimirRelatorio('Relatório de Assiduidade e Frequência da EBD')"
+        ></button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl text-center border border-blue-200">
+          <span class="text-xs font-semibold text-blue-800 dark:text-blue-300">Alunos Matriculados</span>
+          <div class="text-xl font-bold text-blue-600">62 alunos</div>
+        </div>
+        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl text-center border border-emerald-200">
+          <span class="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Frequência Média</span>
+          <div class="text-xl font-bold text-emerald-600">84.5%</div>
+        </div>
+        <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl text-center border border-purple-200">
+          <span class="text-xs font-semibold text-purple-800 dark:text-purple-300">Bíblias Trazidas</span>
+          <div class="text-xl font-bold text-purple-600">92%</div>
+        </div>
+        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl text-center border border-amber-200">
+          <span class="text-xs font-semibold text-amber-800 dark:text-amber-300">Revistas de Estudo</span>
+          <div class="text-xl font-bold text-amber-600">88%</div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- ========================================================================= -->
+<!-- FOLHA A4 TIMBRADA PURA EXCLUSIVA PARA IMPRESSÃO (NATIVE PRINT A4)         -->
+<!-- ========================================================================= -->
+<div class="print-report-sheet">
+  <!-- Cabeçalho Oficial IPB -->
+  <div class="text-center pb-4 mb-6 border-b-2 border-emerald-700">
+    <div class="text-xs uppercase tracking-widest text-emerald-800 font-bold">Igreja Presbiteriana do Brasil</div>
+    <div class="text-xl font-extrabold text-slate-900 mt-1">{{ churchConfig().churchName }}</div>
+    <div class="text-xs italic text-slate-600">{{ churchConfig().presbytery }} • {{ churchConfig().synod }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">
+      CNPJ: {{ churchConfig().cnpj }} • {{ churchConfig().address }} — {{ churchConfig().cityState }}
+    </div>
+  </div>
+
+  <div class="text-center mb-6">
+    <h2 class="text-lg font-bold uppercase tracking-wider text-slate-900 m-0">
+      {{ printReportTitle() }}
+    </h2>
+    <div class="text-xs font-mono text-slate-500 mt-1">
+      Emitido em: {{ currentMonth }}/{{ 2026 }} • Padrão de Chancelaria Presbiteriana
+    </div>
+  </div>
+
+  <!-- CONTEÚDO IMPRESSO CONFORME A ABA ATIVA -->
+  @if (activeTab() === 'aniversariantes') {
+    <div class="mb-6">
+      <h3 class="text-sm font-bold uppercase mb-2">Aniversariantes do Mês de {{ getSelectedMonthName() }}</h3>
+      <table class="w-full text-xs border-collapse border border-slate-300">
+        <thead>
+          <tr class="bg-slate-100">
+            <th class="border border-slate-300 p-2 text-left" style="width: 60px">Dia</th>
+            <th class="border border-slate-300 p-2 text-left">Nome Completo</th>
+            <th class="border border-slate-300 p-2 text-left" style="width: 100px">Rol</th>
+            <th class="border border-slate-300 p-2 text-left" style="width: 80px">Idade</th>
+            <th class="border border-slate-300 p-2 text-left">Família</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of monthBirthdays(); track item.member.id) {
+            <tr>
+              <td class="border border-slate-300 p-2 font-bold text-center">{{ item.day }}</td>
+              <td class="border border-slate-300 p-2">{{ item.member.full_name }}</td>
+              <td class="border border-slate-300 p-2 font-mono">{{ item.member.roll_number || '-' }}</td>
+              <td class="border border-slate-300 p-2">{{ item.ageTurning }} anos</td>
+              <td class="border border-slate-300 p-2">{{ item.member.families[0]?.name || '-' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (activeTab() === 'financeiro') {
+    <div class="mb-6">
+      <h3 class="text-sm font-bold uppercase mb-2">Demonstrativo Financeiro do Mês</h3>
+      <table class="w-full text-xs border-collapse border border-slate-300 mb-4">
+        <thead>
+          <tr class="bg-slate-100">
+            <th class="border border-slate-300 p-2 text-left">Item / Categoria</th>
+            <th class="border border-slate-300 p-2 text-right">Valor</th>
+            <th class="border border-slate-300 p-2 text-right">Participação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="font-bold bg-emerald-50">
+            <td colspan="3" class="border border-slate-300 p-2">RECEITAS</td>
+          </tr>
+          @for (r of financialData().itensReceita; track r.categoria) {
+            <tr>
+              <td class="border border-slate-300 p-2">{{ r.categoria }}</td>
+              <td class="border border-slate-300 p-2 text-right">R$ {{ r.valor | number: '1.2-2' }}</td>
+              <td class="border border-slate-300 p-2 text-right">{{ r.pct }}%</td>
+            </tr>
+          }
+          <tr class="font-bold bg-red-50">
+            <td colspan="3" class="border border-slate-300 p-2">DESPESAS</td>
+          </tr>
+          @for (d of financialData().itensDespesa; track d.categoria) {
+            <tr>
+              <td class="border border-slate-300 p-2">{{ d.categoria }}</td>
+              <td class="border border-slate-300 p-2 text-right">R$ {{ d.valor | number: '1.2-2' }}</td>
+              <td class="border border-slate-300 p-2 text-right">{{ d.pct }}%</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (activeTab() === 'patrimonio') {
+    <div class="mb-6">
+      <h3 class="text-sm font-bold uppercase mb-2">Inventário Geral de Bens Tombados</h3>
+      <table class="w-full text-xs border-collapse border border-slate-300">
+        <thead>
+          <tr class="bg-slate-100">
+            <th class="border border-slate-300 p-2 text-left" style="width: 100px">Tombamento</th>
+            <th class="border border-slate-300 p-2 text-left">Descrição</th>
+            <th class="border border-slate-300 p-2 text-left">Localização</th>
+            <th class="border border-slate-300 p-2 text-left" style="width: 90px">Estado</th>
+            <th class="border border-slate-300 p-2 text-right" style="width: 110px">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (bem of patrimonioList(); track bem.tombamento) {
+            <tr>
+              <td class="border border-slate-300 p-2 font-mono font-bold">{{ bem.tombamento }}</td>
+              <td class="border border-slate-300 p-2">{{ bem.nome }}</td>
+              <td class="border border-slate-300 p-2">{{ bem.localizacao }}</td>
+              <td class="border border-slate-300 p-2">{{ bem.estado }}</td>
+              <td class="border border-slate-300 p-2 text-right">R$ {{ bem.valor | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Assinaturas Oficiais -->
+  <div class="grid grid-cols-2 gap-8 mt-12 pt-6 border-t border-slate-300">
+    <div class="text-center">
+      <div class="border-t border-slate-800 w-4/5 mx-auto mb-2"></div>
+      <p class="font-bold text-xs m-0">{{ churchConfig().pastorName }}</p>
+      <p class="text-[11px] text-slate-500 m-0">Pastor Presidente do Conselho</p>
+    </div>
+    <div class="text-center">
+      <div class="border-t border-slate-800 w-4/5 mx-auto mb-2"></div>
+      <p class="font-bold text-xs m-0">{{ churchConfig().secretaryName }}</p>
+      <p class="text-[11px] text-slate-500 m-0">Secretário do Conselho</p>
+    </div>
+  </div>
+
+  <div class="text-center text-[10px] text-slate-400 mt-8 italic">
+    "Mas faça-se tudo decentemente e com ordem." — 1 Coríntios 14:40
+  </div>
+</div>

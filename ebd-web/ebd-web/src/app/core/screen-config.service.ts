@@ -79,6 +79,15 @@ export const SYSTEM_SCREENS: ScreenModuleDef[] = [
     defaultEnabled: true,
   },
   {
+    key: 'relatorios_central',
+    label: 'Central de Relatórios',
+    icon: 'pi pi-th-large',
+    group: 'Visão Geral',
+    description: 'Central executiva unificada com aniversariantes, demografia, finanças, patrimônio e rol de membros.',
+    route: '/relatorios/central',
+    defaultEnabled: true,
+  },
+  {
     key: 'sociedades',
     label: 'Sociedades Internas (SAF, UPH, UMP, UPA, UCP)',
     icon: 'pi pi-id-card',

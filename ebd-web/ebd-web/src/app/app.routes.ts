@@ -65,6 +65,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/schedules/schedules').then((m) => m.SchedulesPage),
       },
       {
+        path: 'relatorios/central',
+        canActivate: [permissionGuard('report.view'), screenGuard('relatorios_central')],
+        loadComponent: () => import('./pages/relatorios/central-relatorios/central-relatorios').then((m) => m.CentralRelatoriosPage),
+      },
+      {
         path: 'relatorios',
         canActivate: [permissionGuard('report.view'), screenGuard('relatorios_ebd')],
         loadComponent: () => import('./pages/reports/reports').then((m) => m.EbdReportsPage),

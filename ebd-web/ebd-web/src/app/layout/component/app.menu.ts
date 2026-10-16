@@ -182,6 +182,13 @@ export class AppMenu implements OnInit {
                 visible: this.isScreenVisible('inteligencia', 'person.view'),
                 keywords: ['dashboard', 'congregacao', 'informacoes', 'membros', 'inteligencia', 'indicadores', 'demografia', 'estatisticas', 'graficos', 'rol'],
             },
+            {
+                label: 'Central de Relatórios',
+                icon: 'pi pi-fw pi-th-large',
+                routerLink: ['/relatorios/central'],
+                visible: this.isScreenVisible('relatorios_central', 'report.view'),
+                keywords: ['central de relatorios', 'relatorios', 'aniversariantes', 'demografico', 'financeiro', 'patrimonio', 'membros', 'balancete', 'tombamento'],
+            },
 
             // 2. Educação Cristã (Categoria sanfona / accordion)
             {
