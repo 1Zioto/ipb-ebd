@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { FALLBACK_MEMBERS_LIST } from './members-fallback.data';
 
 export interface OverviewMetrics {
   ano: number;
@@ -485,8 +486,25 @@ export class IntelligenceService {
 
     return this.http.get<{ total: number; members: CongregationMember[] }>(`${this.baseUrl}/intelligence/members-list`, { params: p }).pipe(
       catchError((err) => {
-        console.warn('API /intelligence/members-list offline ou inacessível, gerando amostra de membros:', err);
-        return of(FALLBACK_MEMBERS_LIST);
+        console.warn('API /intelligence/members-list offline ou inacessível, utilizando base oficial de membros:', err);
+        let list = [...FALLBACK_MEMBERS_LIST.members];
+        if (options?.is_active !== undefined) {
+          list = list.filter((m) => m.is_active === options.is_active);
+        }
+        if (options?.canonical_status) {
+          list = list.filter((m) => m.canonical_status === options.canonical_status);
+        }
+        if (options?.search) {
+          const s = options.search.toLowerCase();
+          list = list.filter(
+            (m) =>
+              (m.full_name && m.full_name.toLowerCase().includes(s)) ||
+              (m.roll_number && m.roll_number.toLowerCase().includes(s)) ||
+              (m.cpf && m.cpf.includes(s)) ||
+              (m.email && m.email.toLowerCase().includes(s))
+          );
+        }
+        return of({ total: list.length, members: list });
       })
     );
   }
@@ -616,84 +634,6 @@ export interface CongregationMember {
   notes: string | null;
 }
 
-const FALLBACK_MEMBERS_LIST: { total: number; members: CongregationMember[] } = {
-  total: 76,
-  members: [
-    {
-      id: 1,
-      roll_number: 'ROL-001',
-      full_name: 'Rev. Douglas Silva',
-      canonical_status: 'comungante',
-      is_active: true,
-      birth_date: '1985-04-12',
-      age: 41,
-      marital_status: 'Casado',
-      spouse_name: 'Ana Maria Silva',
-      phone: '(11) 98765-4321',
-      email: 'douglas@ipb.org.br',
-      cpf: '123.456.789-00',
-      reception_date: '2010-01-15',
-      reception_type: 'Transferência',
-      baptism_date: '1995-10-12',
-      profession_date: '2000-05-14',
-      is_tither: true,
-      envelope_number: '01',
-      can_teach: true,
-      can_superintend: true,
-      families: [{ id: 1, name: 'Família Silva' }],
-      sociedades: ['UPH'],
-      notes: 'Pastor Titular e Presidente do Conselho',
-    },
-    {
-      id: 2,
-      roll_number: 'ROL-002',
-      full_name: 'Ana Maria Silva',
-      canonical_status: 'comungante',
-      is_active: true,
-      birth_date: '1988-08-20',
-      age: 38,
-      marital_status: 'Casado',
-      spouse_name: 'Douglas Silva',
-      phone: '(11) 98765-1122',
-      email: 'ana@ipb.org.br',
-      cpf: '234.567.890-11',
-      reception_date: '2010-01-15',
-      reception_type: 'Transferência',
-      baptism_date: '1998-03-10',
-      profession_date: '2003-09-18',
-      is_tither: true,
-      envelope_number: '02',
-      can_teach: true,
-      can_superintend: false,
-      families: [{ id: 1, name: 'Família Silva' }],
-      sociedades: ['SAF'],
-      notes: 'Professora da classe de Mulheres',
-    },
-    {
-      id: 3,
-      roll_number: 'ROL-003',
-      full_name: 'Presb. Carlos Eduardo Oliveira',
-      canonical_status: 'comungante',
-      is_active: true,
-      birth_date: '1975-11-03',
-      age: 51,
-      marital_status: 'Casado',
-      spouse_name: 'Mariana Oliveira',
-      phone: '(11) 97123-4567',
-      email: 'carlos.eduardo@ipb.org.br',
-      cpf: '345.678.901-22',
-      reception_date: '2005-07-22',
-      reception_type: 'Profissão de Fé e Batismo',
-      baptism_date: '2005-07-22',
-      profession_date: '2005-07-22',
-      is_tither: true,
-      envelope_number: '03',
-      can_teach: true,
-      can_superintend: true,
-      families: [{ id: 2, name: 'Família Oliveira' }],
-      sociedades: ['UPH'],
-      notes: 'Vice-Presidente do Conselho',
-    },
-  ],
-};
+export { FALLBACK_MEMBERS_LIST };
+
 

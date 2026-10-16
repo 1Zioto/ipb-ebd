@@ -756,10 +756,10 @@ class EcclesiasticalIntelligenceController extends Controller
         if ($request->filled('search')) {
             $search = '%' . trim($request->query('search')) . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', $search)
-                  ->orWhere('roll_number', 'like', $search)
-                  ->orWhere('cpf', 'like', $search)
-                  ->orWhere('email', 'like', $search);
+                $q->where('full_name', 'ilike', $search)
+                  ->orWhere('roll_number', 'ilike', $search)
+                  ->orWhere('cpf', 'ilike', $search)
+                  ->orWhere('email', 'ilike', $search);
             });
         }
 
