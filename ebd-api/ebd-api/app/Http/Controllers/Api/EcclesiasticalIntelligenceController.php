@@ -686,14 +686,14 @@ class EcclesiasticalIntelligenceController extends Controller
                 'gravidade' => 'Baixa',
             ],
             [
-                'categoria' => 'Rol Canônico',
+                'categoria' => 'Rol de Membros',
                 'item' => 'Sem Número de Rol de Membros',
                 'pendentes' => $semRol,
                 'percentual' => round(($semRol / $total) * 100, 1),
                 'gravidade' => 'Alta',
             ],
             [
-                'categoria' => 'Rol Canônico',
+                'categoria' => 'Rol de Membros',
                 'item' => 'Sem Data de Recepção',
                 'pendentes' => $semDataAdmissao,
                 'percentual' => round(($semDataAdmissao / $total) * 100, 1),
@@ -731,7 +731,7 @@ class EcclesiasticalIntelligenceController extends Controller
     }
 
     /**
-     * 9. Listagem de Membros da Congregação com Dados Canônicos
+     * 9. Listagem de Membros da Congregação com Dados Eclesiásticos
      */
     public function membersList(Request $request): JsonResponse
     {
@@ -849,7 +849,7 @@ class EcclesiasticalIntelligenceController extends Controller
             fputcsv($handle, [
                 'Nº do Rol',
                 'Nome Completo',
-                'Status Canônico',
+                'Condição Eclesiástica',
                 'Situação',
                 'Data de Nascimento',
                 'Idade',

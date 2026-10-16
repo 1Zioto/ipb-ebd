@@ -306,7 +306,7 @@ export class IntelligencePage implements OnInit, AfterViewInit, OnDestroy {
     const data = this.overviewData();
     if (!data) return;
 
-    // 1. Rosca Canônica
+    // 1. Distribuição da Membresia
     if (this.canonicalCanvas?.nativeElement) {
       this.charts['canonical']?.destroy();
       const ctx = this.canonicalCanvas.nativeElement.getContext('2d');

@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 class SecretariaController extends Controller
 {
-    /** Rol Canônico de Membros */
+    /** Rol de Membros */
     public function membros(Request $request): JsonResponse
     {
         $query = Person::query()->with('families:id,name');
@@ -59,7 +59,7 @@ class SecretariaController extends Controller
         return response()->json($person->load('families'));
     }
 
-    /** Atualizar dados canônicos do membro */
+    /** Atualizar dados eclesiásticos do membro */
     public function updateMembro(Request $request, Person $person): JsonResponse
     {
         $this->ensureCurrentInstitution($request, $person->institution_id);

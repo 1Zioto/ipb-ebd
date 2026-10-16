@@ -112,7 +112,7 @@ class _RolMembrosScreenState extends State<RolMembrosScreen> {
     }
   }
 
-  // Informações de status canônico
+  // Informações de condição eclesiástica
   Map<String, dynamic> _getStatusConfig(String? rawStatus) {
     final st = (rawStatus ?? 'comungante').toLowerCase();
     switch (st) {
@@ -359,8 +359,8 @@ class _RolMembrosScreenState extends State<RolMembrosScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Seção 1: Dados Canônicos
-                    _buildSectionTitle('DADOS CANÔNICOS & ECLESIÁSTICOS', Icons.menu_book_rounded),
+                    // Seção 1: Dados Eclesiásticos
+                    _buildSectionTitle('DADOS ECLESIÁSTICOS & ROL', Icons.menu_book_rounded),
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -373,7 +373,7 @@ class _RolMembrosScreenState extends State<RolMembrosScreen> {
                         children: [
                           _buildDetailRow('Nº do ROL Oficial', '#$rol', isHighlighted: true),
                           const Divider(height: 16),
-                          _buildDetailRow('Status Canônico', stConfig['label']),
+                          _buildDetailRow('Condição Eclesiástica', stConfig['label']),
                           const Divider(height: 16),
                           _buildDetailRow('Modo de Recepção', modo),
                           const Divider(height: 16),
@@ -445,7 +445,7 @@ class _RolMembrosScreenState extends State<RolMembrosScreen> {
   }
 
   // -------------------------------------------------------------
-  // MODAL DE EDIÇÃO DE MEMBRO CANÔNICO
+  // MODAL DE EDIÇÃO DE MEMBRO
   // -------------------------------------------------------------
   void _mostrarEditarMembro(Map<String, dynamic> m) {
     final id = m['id'] is int ? m['id'] as int : int.tryParse(m['id']?.toString() ?? '0') ?? 0;
@@ -511,7 +511,7 @@ class _RolMembrosScreenState extends State<RolMembrosScreen> {
                         const SizedBox(width: 10),
                         const Expanded(
                           child: Text(
-                            'Editar Dados Canônicos',
+                            'Editar Dados Eclesiásticos',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                           ),
                         ),
@@ -541,7 +541,7 @@ class _RolMembrosScreenState extends State<RolMembrosScreen> {
                             Expanded(
                               flex: 5,
                               child: _buildDropdownField<String>(
-                                label: 'Status Canônico',
+                                label: 'Condição Eclesiástica',
                                 value: canonicalStatus,
                                 items: const [
                                   DropdownMenuItem(value: 'comungante', child: Text('Comungante')),
@@ -798,7 +798,7 @@ class _RolMembrosScreenState extends State<RolMembrosScreen> {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF065F46)),
                 ),
                 Text(
-                  '${_membros.length} membros no catálogo canônico',
+                  '${_membros.length} membros no rol oficial',
                   style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
                 ),
               ],

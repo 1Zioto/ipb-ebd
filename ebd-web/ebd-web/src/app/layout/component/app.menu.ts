@@ -265,7 +265,7 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-id-card',
                         routerLink: ['/secretaria/membros'],
                         visible: this.isScreenVisible('membros', 'secretaria.rol.view'),
-                        keywords: ['rol', 'membros', 'comungantes', 'nao comungantes', 'canonica', 'certidao'],
+                        keywords: ['rol', 'membros', 'comungantes', 'nao comungantes', 'certidao', 'filiacao'],
                     },
                     {
                         label: 'Cartas de Transferência',
@@ -316,7 +316,7 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-file-check',
                         routerLink: ['/secretaria/disciplina'],
                         visible: this.isScreenVisible('disciplina', 'person.view'),
-                        keywords: ['disciplina', 'jurisdicao pastoral', 'processo canonico', 'restauracao'],
+                        keywords: ['disciplina', 'jurisdicao pastoral', 'processo disciplinar', 'restauracao'],
                     },
                     {
                         label: 'Sociedades Internas',

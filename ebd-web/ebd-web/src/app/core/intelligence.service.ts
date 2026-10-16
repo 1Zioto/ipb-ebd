@@ -182,7 +182,7 @@ export interface DataQualityData {
   }>;
 }
 
-// Fallbacks baseados na base canônica da IPB
+// Fallbacks baseados na base oficial da IPB
 const FALLBACK_OVERVIEW: OverviewMetrics = {
   ano: 2026,
   institution_id: 5,
@@ -371,8 +371,8 @@ const FALLBACK_QUALITY: DataQualityData = {
     { categoria: 'Demografia', item: 'Sem Data de Nascimento', pendentes: 0, percentual: 0, gravidade: 'Alta' },
     { categoria: 'Contato', item: 'Sem Telefone / WhatsApp', pendentes: 0, percentual: 0, gravidade: 'Alta' },
     { categoria: 'Contato', item: 'Sem E-mail Cadastrado', pendentes: 0, percentual: 0, gravidade: 'Baixa' },
-    { categoria: 'Rol Canônico', item: 'Sem Número de Rol de Membros', pendentes: 0, percentual: 0, gravidade: 'Alta' },
-    { categoria: 'Rol Canônico', item: 'Sem Data de Recepção', pendentes: 0, percentual: 0, gravidade: 'Média' },
+    { categoria: 'Rol de Membros', item: 'Sem Número de Rol de Membros', pendentes: 0, percentual: 0, gravidade: 'Alta' },
+    { categoria: 'Rol de Membros', item: 'Sem Data de Recepção', pendentes: 0, percentual: 0, gravidade: 'Média' },
     { categoria: 'Vínculo Familiar', item: 'Membros sem Família Vinculada', pendentes: 72, percentual: 94.7, gravidade: 'Média' },
     { categoria: 'Geografia', item: 'Famílias sem Endereço Completo', pendentes: 0, percentual: 0, gravidade: 'Média' },
   ],
@@ -534,7 +534,7 @@ export class IntelligenceService {
     const headers = [
       'Nº do Rol',
       'Nome Completo',
-      'Status Canônico',
+      'Condição Eclesiástica',
       'Situação',
       'Data de Nascimento',
       'Idade',

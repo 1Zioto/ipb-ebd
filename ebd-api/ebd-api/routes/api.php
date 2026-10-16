@@ -284,7 +284,7 @@ Route::prefix('v1')->group(function () {
             Route::post('accounting/reopen-month', [FinancialAccountingController::class, 'reopenMonth'])->middleware('permission:financial.accounting.close');
         });
 
-        // ---- 🏛️ 1. Secretaria & Conselho da Igreja (Canônico IPB) ----
+        // ---- 🏛️ 1. Secretaria & Conselho da Igreja (Oficial IPB) ----
         Route::prefix('secretaria')->group(function () {
             Route::get('membros', [SecretariaController::class, 'membros'])->middleware('permission:secretaria.rol.view');
             Route::get('membros/{person}', [SecretariaController::class, 'showMembro'])->middleware('permission:secretaria.rol.view');
