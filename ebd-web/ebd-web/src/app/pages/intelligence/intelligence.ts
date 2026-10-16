@@ -176,6 +176,13 @@ export class IntelligencePage implements OnInit, AfterViewInit, OnDestroy {
     this.loadCurrentTab();
   }
 
+  setConsolidated(val: boolean): void {
+    if (this.consolidated() !== val) {
+      this.consolidated.set(val);
+      this.loadCurrentTab();
+    }
+  }
+
   toggleConsolidated(): void {
     this.consolidated.update((v) => !v);
     this.loadCurrentTab();

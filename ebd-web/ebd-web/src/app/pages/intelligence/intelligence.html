@@ -31,18 +31,62 @@
         </select>
       </div>
 
-      <button
-        type="button"
-        (click)="toggleConsolidated()"
-        class="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer"
-        [ngClass]="consolidated()
-          ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-800 dark:text-emerald-300'
-          : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300'"
-        title="Alternar entre esta igreja e jurisdição consolidada"
-      >
-        <i class="pi pi-sitemap text-xs"></i>
-        <span>{{ consolidated() ? 'Consolidado (Jurisdição)' : 'Igreja Local' }}</span>
-      </button>
+      <!-- SLICER DE ABRANGÊNCIA / JURISDIÇÃO (ESTILO BI / SEGMENTED CONTROL) -->
+      <!-- Desktop & Tablet: Slicer Segmentado -->
+      <div class="hidden sm:inline-flex items-center gap-1 bg-surface-100 dark:bg-surface-800/80 p-1 rounded-xl border border-surface-200 dark:border-surface-700 shadow-inner">
+        <span class="text-[11px] font-bold text-muted-color px-2 flex items-center gap-1 select-none">
+          <i class="pi pi-sitemap text-[10px]"></i>
+          <span>Âmbito:</span>
+        </span>
+
+        <!-- Opção 1: Igreja Local -->
+        <button
+          type="button"
+          (click)="setConsolidated(false)"
+          class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer border-0 select-none"
+          [ngClass]="!consolidated()
+            ? 'bg-white dark:bg-surface-900 text-surface-900 dark:text-surface-0 font-black shadow-xs border border-surface-200/80 dark:border-surface-700'
+            : 'bg-transparent text-muted-color hover:text-surface-800 dark:hover:text-surface-200 font-semibold'"
+          title="Exibir dados exclusivos desta Igreja Local / Sede"
+        >
+          <span class="text-sm">🏛️</span>
+          <span>Igreja Local</span>
+        </button>
+
+        <!-- Opção 2: Jurisdição Consolidada -->
+        <button
+          type="button"
+          (click)="setConsolidated(true)"
+          class="px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer border-0 select-none"
+          [ngClass]="consolidated()
+            ? 'bg-emerald-600 text-white font-black shadow-xs'
+            : 'bg-transparent text-muted-color hover:text-surface-800 dark:hover:text-surface-200 font-semibold'"
+          title="Consolidar dados da Igreja Local com todas as suas congregações / jurisdição geral"
+        >
+          <span class="text-sm">🌐</span>
+          <span>Jurisdição Consolidada</span>
+          <span
+            class="text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ml-0.5"
+            [ngClass]="consolidated() ? 'bg-white/20 text-white' : 'bg-surface-200 dark:bg-surface-700 text-muted-color'"
+          >
+            Geral
+          </span>
+        </button>
+      </div>
+
+      <!-- Mobile: Dropdown Seletor Compacto -->
+      <div class="inline-flex sm:hidden items-center gap-1.5 bg-surface-50 dark:bg-surface-800/60 px-3 py-1.5 rounded-xl border border-surface-200 dark:border-surface-700">
+        <label for="ambitoSelect" class="text-xs font-bold text-muted-color">Âmbito:</label>
+        <select
+          id="ambitoSelect"
+          [ngModel]="consolidated()"
+          (ngModelChange)="setConsolidated($event)"
+          class="bg-transparent text-xs font-black text-surface-900 dark:text-surface-0 border-0 outline-none cursor-pointer"
+        >
+          <option [ngValue]="false">🏛️ Igreja Local</option>
+          <option [ngValue]="true">🌐 Jurisdição Consolidada</option>
+        </select>
+      </div>
 
       <!-- Botão Exportar Lista de Membros para Excel -->
       <button
