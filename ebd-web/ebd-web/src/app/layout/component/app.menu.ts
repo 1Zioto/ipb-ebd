@@ -180,8 +180,6 @@ export class AppMenu implements OnInit {
                 icon: 'pi pi-fw pi-chart-bar',
                 routerLink: ['/inteligencia'],
                 visible: this.isScreenVisible('inteligencia', 'person.view'),
-                badge: 'NOVO',
-                badgeClass: 'badge-info',
                 keywords: ['dashboard', 'congregacao', 'informacoes', 'membros', 'inteligencia', 'indicadores', 'demografia', 'estatisticas', 'graficos', 'rol'],
             },
 
