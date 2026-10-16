@@ -13,6 +13,7 @@ class SociedadeMembro extends Model
     protected $table = 'sociedade_membros';
 
     protected $fillable = [
+        'institution_id',
         'sociedade_id',
         'person_id',
         'tipo_socio',
@@ -20,6 +21,7 @@ class SociedadeMembro extends Model
         'status',
         'cargo_atual',
         'observacoes',
+        'created_by',
     ];
 
     protected $casts = [
@@ -34,5 +36,15 @@ class SociedadeMembro extends Model
     public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'person_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function institution(): BelongsTo
+    {
+        return $this->belongsTo(Institution::class, 'institution_id');
     }
 }

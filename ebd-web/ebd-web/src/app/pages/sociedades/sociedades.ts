@@ -50,60 +50,117 @@ export class SociedadesPage implements OnInit {
   activeSigla = 'SAF';
   activeTab: 'membros' | 'atas' | 'diretoria' | 'atividades' = 'membros';
 
-  // --- 🏛️ CRIAÇÃO DE NOVA SOCIEDADE INTERNA ---
-  novaSociedadeDialog = false;
+  // --- 🏛️ CADASTRO & EDIÇÃO DE SOCIEDADE INTERNA ---
+  sociedadeDialog = false;
   salvandoSociedade = signal(false);
-  novaSociedadeForm = {
+  editandoSociedadeId: number | null = null;
+  formSociedade = {
     sigla: '',
     nome: '',
     lema: '',
-    faixa_etaria: '',
+    target_gender: 'Ambos' as 'Masculino' | 'Feminino' | 'Ambos',
+    min_age: null as number | null,
+    max_age: null as number | null,
+    is_active: true,
+    notes: '',
     ano_exercicio: new Date().getFullYear(),
   };
 
+  opcoesPublicoAlvo = [
+    { label: 'Ambos (Masculino e Feminino)', value: 'Ambos' },
+    { label: 'Masculino', value: 'Masculino' },
+    { label: 'Feminino', value: 'Feminino' },
+  ];
+
   abrirNovaSociedade(): void {
-    this.novaSociedadeForm = {
+    this.editandoSociedadeId = null;
+    this.formSociedade = {
       sigla: '',
       nome: '',
       lema: '',
-      faixa_etaria: '',
+      target_gender: 'Ambos',
+      min_age: null,
+      max_age: null,
+      is_active: true,
+      notes: '',
       ano_exercicio: new Date().getFullYear(),
     };
-    this.novaSociedadeDialog = true;
+    this.sociedadeDialog = true;
   }
 
-  salvarNovaSociedade(): void {
-    if (!this.novaSociedadeForm.sigla.trim() || !this.novaSociedadeForm.nome.trim()) {
+  abrirEditarSociedade(soc: SociedadeInterna): void {
+    this.editandoSociedadeId = soc.id;
+    this.formSociedade = {
+      sigla: soc.sigla,
+      nome: soc.nome,
+      lema: soc.lema || '',
+      target_gender: soc.target_gender || 'Ambos',
+      min_age: soc.min_age !== undefined ? soc.min_age : null,
+      max_age: soc.max_age !== undefined ? soc.max_age : null,
+      is_active: soc.is_active !== undefined ? soc.is_active : true,
+      notes: soc.notes || '',
+      ano_exercicio: soc.ano_exercicio || new Date().getFullYear(),
+    };
+    this.sociedadeDialog = true;
+  }
+
+  salvarSociedade(): void {
+    if (!this.formSociedade.sigla.trim() || !this.formSociedade.nome.trim()) {
       this.msg.add({ severity: 'warn', summary: 'Atenção', detail: 'Informe a sigla e o nome da sociedade.' });
       return;
     }
 
-    this.salvandoSociedade.set(true);
-    this.secService
-      .createSociedade({
-        sigla: this.novaSociedadeForm.sigla.toUpperCase().trim(),
-        nome: this.novaSociedadeForm.nome.trim(),
-        lema: this.novaSociedadeForm.lema.trim() || undefined,
-        faixa_etaria: this.novaSociedadeForm.faixa_etaria.trim() || undefined,
-        ano_exercicio: Number(this.novaSociedadeForm.ano_exercicio) || new Date().getFullYear(),
-      })
-      .subscribe({
-        next: (nova) => {
-          this.salvandoSociedade.set(false);
-          this.msg.add({ severity: 'success', summary: 'Sucesso', detail: `Sociedade ${nova.sigla} criada com sucesso!` });
-          this.novaSociedadeDialog = false;
-          this.activeSigla = nova.sigla;
-          this.carregarSociedades();
-        },
-        error: (err) => {
-          this.salvandoSociedade.set(false);
-          this.msg.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: err?.error?.message || 'Não foi possível criar a nova sociedade.',
-          });
-        },
+    if (
+      this.formSociedade.min_age !== null &&
+      this.formSociedade.max_age !== null &&
+      this.formSociedade.min_age > this.formSociedade.max_age
+    ) {
+      this.msg.add({
+        severity: 'warn',
+        summary: 'Faixa Etária Inválida',
+        detail: 'A idade mínima não pode ser maior do que a idade máxima.',
       });
+      return;
+    }
+
+    this.salvandoSociedade.set(true);
+    const payload = {
+      sigla: this.formSociedade.sigla.toUpperCase().trim(),
+      nome: this.formSociedade.nome.trim(),
+      lema: this.formSociedade.lema.trim() || undefined,
+      target_gender: this.formSociedade.target_gender,
+      min_age: this.formSociedade.min_age !== null && this.formSociedade.min_age !== undefined ? Number(this.formSociedade.min_age) : null,
+      max_age: this.formSociedade.max_age !== null && this.formSociedade.max_age !== undefined ? Number(this.formSociedade.max_age) : null,
+      is_active: this.formSociedade.is_active,
+      notes: this.formSociedade.notes.trim() || undefined,
+      ano_exercicio: Number(this.formSociedade.ano_exercicio) || new Date().getFullYear(),
+    };
+
+    const req$ = this.editandoSociedadeId
+      ? this.secService.updateSociedade(this.editandoSociedadeId, payload)
+      : this.secService.createSociedade(payload);
+
+    req$.subscribe({
+      next: (res) => {
+        this.salvandoSociedade.set(false);
+        this.msg.add({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: `Sociedade ${res.sigla} ${this.editandoSociedadeId ? 'atualizada' : 'cadastrada'} com sucesso!`,
+        });
+        this.sociedadeDialog = false;
+        this.activeSigla = res.sigla;
+        this.carregarSociedades();
+      },
+      error: (err) => {
+        this.salvandoSociedade.set(false);
+        this.msg.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: err?.error?.message || 'Erro ao salvar sociedade interna.',
+        });
+      },
+    });
   }
 
   // --- 👥 ROL DE SÓCIOS / MEMBROS ---
@@ -121,11 +178,25 @@ export class SociedadesPage implements OnInit {
     observacoes: '',
   };
 
-  // Arrolamento em Lote
+  // --- ⚡ ARROLAMENTO EM LOTE INTELIGENTE ---
   loteDialog = false;
-  loteTipo = 'efetivo';
-  loteBusca = '';
-  loteSelecionados: number[] = [];
+  confirmacaoLoteDialog = false;
+  candidatosLoading = signal(false);
+  candidatosLote = signal<any[]>([]);
+  candidatosMeta = signal<any>(null);
+  loteSelecionados = signal<number[]>([]);
+  loteTipo: 'efetivo' | 'cooperador' = 'efetivo';
+  loteObservacoes = '';
+
+  loteFiltro = {
+    target_gender: 'Ambos',
+    min_age: null as number | null,
+    max_age: null as number | null,
+    search: '',
+    situacao_cadastral: 'ativo',
+    situacao_sociedade: 'nao_arrolado',
+    apenas_elegiveis: false,
+  };
 
   // --- 📖 LIVRO DE ATAS ---
   atas = signal<SociedadeAta[]>([]);
@@ -216,7 +287,6 @@ export class SociedadesPage implements OnInit {
         this.membrosPotenciais.set(res.membros_potenciais);
         this.loading.set(false);
 
-        // Carrega dados da sociedade ativa
         const ativa = this.getSociedadeAtiva();
         if (ativa) {
           this.carregarMembros(ativa.id);
@@ -276,42 +346,46 @@ export class SociedadesPage implements OnInit {
 
   pessoasOpcoes = computed(() => {
     return this.pessoas().map((p) => ({
-      label: `${p.full_name} (${p.canonical_status || 'Membro'}${p.age ? ' • ' + p.age + ' anos' : ''})`,
+      label: `${p.full_name} (${p.gender || 'Não inf.'} • ${p.age !== null && p.age !== undefined ? p.age + ' anos' : 'Idade não inf.'} • ${p.canonical_status || 'Membro'})`,
       value: p.id,
       name: p.full_name,
     }));
   });
 
-  pessoasElegiveisParaLote = computed(() => {
-    const inscritosIds = new Set(this.membros().map((m) => m.person_id));
-    const all = this.pessoas().filter((p) => !inscritosIds.has(p.id));
-    const sigla = this.activeSigla;
+  pessoaSelecionadaInfo = computed(() => {
+    const personId = this.novoMembro.person_id;
+    if (!personId) return null;
+    const p = this.pessoas().find((item) => item.id === personId);
+    if (!p) return null;
 
-    return all.filter((p) => {
-      const idade = p.age ?? 30;
-      const notes = (p.notes ?? '').toLowerCase();
-      switch (sigla) {
-        case 'SAF':
-          return idade >= 20 || notes.includes('feminino') || notes.includes('mulher');
-        case 'UPH':
-          return idade >= 18 && (notes.includes('masculino') || !notes.includes('feminino'));
-        case 'UMP':
-          return idade >= 18 && idade <= 35;
-        case 'UPA':
-          return idade >= 12 && idade <= 17;
-        case 'UCP':
-          return idade <= 11;
-        default:
-          return true;
+    const soc = this.getSociedadeAtiva();
+    if (!soc) return { pessoa: p, elegivel: true, avisos: [] as string[] };
+
+    const avisos: string[] = [];
+    const targetGender = soc.target_gender || 'Ambos';
+    if (targetGender !== 'Ambos' && p.gender && p.gender.toLowerCase() !== targetGender.toLowerCase()) {
+      avisos.push(`Sexo (${p.gender}) diverge do público de referência (${targetGender})`);
+    }
+
+    if (p.age === null || p.age === undefined) {
+      avisos.push('Data de nascimento não cadastrada (idade não informada)');
+    } else {
+      if (soc.min_age !== null && soc.min_age !== undefined && p.age < soc.min_age) {
+        avisos.push(`Idade (${p.age} anos) abaixo da idade mínima sugerida (${soc.min_age} anos)`);
       }
-    });
-  });
+      if (soc.max_age !== null && soc.max_age !== undefined && p.age > soc.max_age) {
+        avisos.push(`Idade (${p.age} anos) acima da idade máxima sugerida (${soc.max_age} anos)`);
+      }
+    }
 
-  pessoasElegiveisFiltradas = computed(() => {
-    const list = this.pessoasElegiveisParaLote();
-    if (!this.loteBusca.trim()) return list;
-    const term = this.loteBusca.toLowerCase().trim();
-    return list.filter((p) => p.full_name.toLowerCase().includes(term));
+    const jaArroladoAtivo = this.membros().some((m) => m.person_id === p.id && m.status === 'ativo');
+
+    return {
+      pessoa: p,
+      elegivel: avisos.length === 0,
+      avisos,
+      jaArroladoAtivo,
+    };
   });
 
   abrirNovoMembro(): void {
@@ -332,61 +406,208 @@ export class SociedadesPage implements OnInit {
       return;
     }
 
+    const info = this.pessoaSelecionadaInfo();
+    if (info?.jaArroladoAtivo) {
+      this.msg.add({
+        severity: 'error',
+        summary: 'Vínculo Ativo Duplicado',
+        detail: 'Esta pessoa já possui vínculo ativo com esta sociedade.',
+      });
+      return;
+    }
+
     this.secService.addSociedadeMembro(soc.id, this.novoMembro).subscribe({
-      next: () => {
-        this.msg.add({ severity: 'success', summary: 'Sucesso', detail: 'Membro arrolado com sucesso na sociedade!' });
+      next: (res) => {
+        if (res.aviso) {
+          this.msg.add({
+            severity: 'warn',
+            summary: 'Sócio Arrolado com Aviso',
+            detail: res.aviso,
+            life: 6000,
+          });
+        } else {
+          this.msg.add({ severity: 'success', summary: 'Sucesso', detail: 'Membro arrolado com sucesso na sociedade!' });
+        }
         this.membroDialog = false;
         this.carregarMembros(soc.id);
         this.carregarSociedades();
       },
-      error: () => this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao arrolar membro.' }),
+      error: (err) => {
+        this.msg.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: err?.error?.message || 'Falha ao arrolar membro.',
+        });
+      },
     });
   }
 
+  // --- ⚡ MÉTODOS DE ARROLAMENTO EM LOTE INTELIGENTE ---
+
   abrirLoteDialog(): void {
-    this.loteTipo = 'efetivo';
-    this.loteBusca = '';
-    this.loteSelecionados = this.pessoasElegiveisParaLote().map((p) => p.id);
-    this.loteDialog = true;
-  }
-
-  toggleSelecaoLote(personId: number): void {
-    if (this.loteSelecionados.includes(personId)) {
-      this.loteSelecionados = this.loteSelecionados.filter((id) => id !== personId);
-    } else {
-      this.loteSelecionados = [...this.loteSelecionados, personId];
-    }
-  }
-
-  toggleSelecionarTodosLote(): void {
-    const visiveis = this.pessoasElegiveisFiltradas().map((p) => p.id);
-    const todosVisiveisInclusos = visiveis.length > 0 && visiveis.every((id) => this.loteSelecionados.includes(id));
-    if (todosVisiveisInclusos) {
-      this.loteSelecionados = this.loteSelecionados.filter((id) => !visiveis.includes(id));
-    } else {
-      this.loteSelecionados = Array.from(new Set([...this.loteSelecionados, ...visiveis]));
-    }
-  }
-
-  salvarLote(): void {
     const soc = this.getSociedadeAtiva();
-    if (!soc || this.loteSelecionados.length === 0) {
+    if (!soc) return;
+
+    // Carrega automaticamente os filtros com base nas configurações da sociedade
+    this.loteFiltro = {
+      target_gender: soc.target_gender || 'Ambos',
+      min_age: soc.min_age ?? null,
+      max_age: soc.max_age ?? null,
+      search: '',
+      situacao_cadastral: 'ativo',
+      situacao_sociedade: 'nao_arrolado',
+      apenas_elegiveis: false,
+    };
+
+    this.loteTipo = 'efetivo';
+    this.loteObservacoes = '';
+    this.loteSelecionados.set([]);
+    this.loteDialog = true;
+
+    this.carregarCandidatosLote();
+  }
+
+  carregarCandidatosLote(): void {
+    const soc = this.getSociedadeAtiva();
+    if (!soc) return;
+
+    this.candidatosLoading.set(true);
+    this.secService.getCandidatosArrolamento(soc.id, this.loteFiltro).subscribe({
+      next: (res) => {
+        this.candidatosLote.set(res.data);
+        this.candidatosMeta.set(res);
+        this.candidatosLoading.set(false);
+
+        // Se a seleção estiver vazia, pré-seleciona os que são compatíveis e ainda não estão arrolados
+        if (this.loteSelecionados().length === 0) {
+          const elegiveis = res.data
+            .filter((c: any) => !c.ja_arrolado && c.elegibilidade?.is_eligible)
+            .map((c: any) => c.id);
+          this.loteSelecionados.set(elegiveis);
+        }
+      },
+      error: () => {
+        this.candidatosLoading.set(false);
+        this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar os candidatos ao arrolamento.' });
+      },
+    });
+  }
+
+  restaurarFiltrosOriginais(): void {
+    const soc = this.getSociedadeAtiva();
+    if (!soc) return;
+    this.loteFiltro = {
+      target_gender: soc.target_gender || 'Ambos',
+      min_age: soc.min_age ?? null,
+      max_age: soc.max_age ?? null,
+      search: '',
+      situacao_cadastral: 'ativo',
+      situacao_sociedade: 'nao_arrolado',
+      apenas_elegiveis: false,
+    };
+    this.carregarCandidatosLote();
+  }
+
+  isLoteSelecionado(id: number): boolean {
+    return this.loteSelecionados().includes(id);
+  }
+
+  toggleSelecaoLote(id: number): void {
+    const cur = this.loteSelecionados();
+    if (cur.includes(id)) {
+      this.loteSelecionados.set(cur.filter((x) => x !== id));
+    } else {
+      this.loteSelecionados.set([...cur, id]);
+    }
+  }
+
+  marcarTodosElegiveisLote(): void {
+    const elegiveis = this.candidatosLote()
+      .filter((c) => !c.ja_arrolado)
+      .map((c) => c.id);
+    this.loteSelecionados.set(Array.from(new Set([...this.loteSelecionados(), ...elegiveis])));
+  }
+
+  desmarcarTodosLote(): void {
+    this.loteSelecionados.set([]);
+  }
+
+  // Diálogo de Confirmação Seguro
+  resumoConfirmacaoLote = computed(() => {
+    const soc = this.getSociedadeAtiva();
+    const selecionados = this.loteSelecionados();
+    const candidatos = this.candidatosLote();
+
+    const mapa = new Map(candidatos.map((c) => [c.id, c]));
+    let jaArroladosCount = 0;
+    let foraFaixaCount = 0;
+
+    for (const id of selecionados) {
+      const c = mapa.get(id);
+      if (c) {
+        if (c.ja_arrolado) jaArroladosCount++;
+        if (!c.elegibilidade?.is_eligible) foraFaixaCount++;
+      }
+    }
+
+    const novosCount = Math.max(0, selecionados.length - jaArroladosCount);
+
+    return {
+      sociedadeSigla: soc?.sigla || '',
+      sociedadeNome: soc?.nome || '',
+      totalSelecionados: selecionados.length,
+      jaArroladosCount,
+      novosCount,
+      foraFaixaCount,
+      tipoLabel: this.loteTipo === 'efetivo' ? 'Sócio Efetivo (Comungante)' : 'Sócio Cooperador',
+    };
+  });
+
+  abrirConfirmacaoLote(): void {
+    if (this.loteSelecionados().length === 0) {
       this.msg.add({ severity: 'warn', summary: 'Atenção', detail: 'Nenhuma pessoa selecionada para arrolamento.' });
       return;
     }
+    this.confirmacaoLoteDialog = true;
+  }
 
-    this.secService.arrolarMembrosEmLote(soc.id, {
-      person_ids: this.loteSelecionados,
-      tipo_socio: this.loteTipo,
-    }).subscribe({
-      next: (res) => {
-        this.msg.add({ severity: 'success', summary: 'Arrolamento Concluído', detail: res.message });
-        this.loteDialog = false;
-        this.carregarMembros(soc.id);
-        this.carregarSociedades();
-      },
-      error: () => this.msg.add({ severity: 'error', summary: 'Erro', detail: 'Falha no arrolamento em lote.' }),
-    });
+  salvarLoteConfirmado(): void {
+    const soc = this.getSociedadeAtiva();
+    if (!soc || this.loteSelecionados().length === 0) return;
+
+    this.salvandoSociedade.set(true);
+    this.secService
+      .arrolarMembrosEmLote(soc.id, {
+        person_ids: this.loteSelecionados(),
+        tipo_socio: this.loteTipo,
+        observacoes: this.loteObservacoes.trim() || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.salvandoSociedade.set(false);
+          this.confirmacaoLoteDialog = false;
+          this.loteDialog = false;
+
+          const r = res.resumo;
+          this.msg.add({
+            severity: 'success',
+            summary: 'Arrolamento Efetivado',
+            detail: `Sucesso: ${r.novos_arrolados} novos sócios arrolados na ${soc.sigla}. (${r.ja_arrolados} já eram sócios ativos).`,
+            life: 6000,
+          });
+
+          this.carregarMembros(soc.id);
+          this.carregarSociedades();
+        },
+        error: (err) => {
+          this.salvandoSociedade.set(false);
+          this.msg.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: err?.error?.message || 'Falha ao efetivar o arrolamento em lote.',
+          });
+        },
+      });
   }
 
   excluirMembro(m: SociedadeMembro): void {

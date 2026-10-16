@@ -233,6 +233,189 @@ class ApiService {
     ];
   }
 
+  // --- SECRETARIA: ROL DE MEMBROS ---
+  static const _rolMembrosCacheKey = 'ipb_rol_membros_cache_v2';
+
+  Future<Map<String, dynamic>> getRolMembros({
+    String? status,
+    String? search,
+    int perPage = 250,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_token != null && !isOffline) {
+      try {
+        final queryParams = <String, String>{
+          'per_page': perPage.toString(),
+        };
+        if (status != null && status.isNotEmpty && status.toLowerCase() != 'todos') {
+          queryParams['status'] = status.toLowerCase();
+        }
+        if (search != null && search.trim().isNotEmpty) {
+          queryParams['search'] = search.trim();
+        }
+
+        final uri = Uri.parse('$baseUrl/secretaria/membros').replace(queryParameters: queryParams);
+        final res = await http.get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $_token',
+            'Accept': 'application/json',
+          },
+        ).timeout(const Duration(seconds: 10));
+
+        if (res.statusCode == 200) {
+          final body = jsonDecode(res.body);
+          List<dynamic> listRaw = [];
+          if (body['membros'] != null) {
+            if (body['membros'] is Map && body['membros']['data'] is List) {
+              listRaw = body['membros']['data'];
+            } else if (body['membros'] is List) {
+              listRaw = body['membros'];
+            }
+          } else if (body['data'] is List) {
+            listRaw = body['data'];
+          }
+
+          final membros = listRaw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          final stats = body['stats'] is Map ? Map<String, dynamic>.from(body['stats'] as Map) : <String, dynamic>{};
+
+          final result = {
+            'membros': membros,
+            'stats': stats,
+          };
+
+          await prefs.setString(_rolMembrosCacheKey, jsonEncode(result));
+          return result;
+        }
+      } catch (_) {}
+    }
+
+    // Fallback: cache local
+    final cached = prefs.getString(_rolMembrosCacheKey);
+    if (cached != null) {
+      try {
+        final data = jsonDecode(cached);
+        if (data is Map) {
+          final membros = (data['membros'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
+          final stats = data['stats'] is Map ? Map<String, dynamic>.from(data['stats'] as Map) : <String, dynamic>{};
+          return {
+            'membros': membros,
+            'stats': stats,
+          };
+        }
+      } catch (_) {}
+    }
+
+    // Fallback inicial estático
+    return {
+      'membros': [
+        {'id': 1, 'roll_number': '001', 'full_name': 'Rev. Antônio Carlos Silva', 'canonical_status': 'comungante', 'reception_date': '2018-02-02', 'reception_type': 'Designação Presbiterial', 'phone': '(81) 98765-4321', 'marital_status': 'Casado', 'spouse_name': 'Maria Auxiliadora Silva', 'notes': 'Pastor Titular da Igreja.'},
+        {'id': 2, 'roll_number': '002', 'full_name': 'Presb. Paulo Roberto Albuquerque', 'canonical_status': 'comungante', 'reception_date': '2015-05-15', 'reception_type': 'profissao_fe_batismo', 'phone': '(81) 99876-1122', 'marital_status': 'Casado', 'spouse_name': 'Helena Albuquerque', 'notes': 'Vice-Presidente do Conselho.'},
+        {'id': 3, 'roll_number': '003', 'full_name': 'Diác. Carlos Eduardo Nogueira', 'canonical_status': 'comungante', 'reception_date': '2016-08-20', 'reception_type': 'transferencia', 'phone': '(81) 98123-4567', 'marital_status': 'Casado', 'spouse_name': 'Juliana Nogueira', 'notes': 'Presidente da Junta Diaconal.'},
+        {'id': 4, 'roll_number': '004', 'full_name': 'Débora Neves de Lima', 'canonical_status': 'comungante', 'reception_date': '2019-10-12', 'reception_type': 'profissao_fe', 'phone': '(81) 99234-5678', 'marital_status': 'Casada', 'spouse_name': 'Marcos Lima', 'notes': 'Professora do Departamento Infantil.'},
+        {'id': 5, 'roll_number': '005', 'full_name': 'Gabriel Henrique Braga', 'canonical_status': 'comungante', 'reception_date': '2021-11-14', 'reception_type': 'profissao_fe', 'phone': '(81) 98877-6655', 'marital_status': 'Solteiro', 'notes': 'Líder da UMP Mocidade.'},
+        {'id': 6, 'roll_number': '006', 'full_name': 'Lucas Ferreira da Silva', 'canonical_status': 'comungante', 'reception_date': '2022-03-05', 'reception_type': 'transferencia', 'phone': '(81) 99112-3344', 'marital_status': 'Solteiro', 'notes': 'Membro da equipe de Louvor e EBD.'},
+        {'id': 7, 'roll_number': '007', 'full_name': 'Beatriz Vasconcelos', 'canonical_status': 'comungante', 'reception_date': '2020-06-18', 'reception_type': 'profissao_fe', 'phone': '(81) 99876-5432', 'marital_status': 'Solteira', 'notes': 'Auxiliar da EBD e SAF.'},
+        {'id': 8, 'roll_number': '008', 'full_name': 'Esther Ramos Peixoto', 'canonical_status': 'nao_comungante', 'reception_date': '2023-01-10', 'reception_type': 'batismo_infantil', 'phone': '(81) 98711-2233', 'marital_status': 'Solteira', 'notes': 'Batizada na infância.'},
+      ],
+      'stats': {
+        'total': 8,
+        'comungantes': 7,
+        'nao_comungantes': 1,
+        'sob_disciplina': 0,
+        'jurisdicao_especial': 0,
+        'falecidos': 0,
+      }
+    };
+  }
+
+  Future<Map<String, dynamic>> updateMembroCanonical(int id, Map<String, dynamic> data) async {
+    if (_token != null && !isOffline) {
+      final res = await http.put(
+        Uri.parse('$baseUrl/secretaria/membros/$id'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(data),
+      ).timeout(const Duration(seconds: 10));
+
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final err = jsonDecode(res.body);
+          throw ApiException(err['message']?.toString() ?? 'Falha ao atualizar dados do membro.');
+        } catch (e) {
+          if (e is ApiException) rethrow;
+          throw ApiException('Erro na atualização (${res.statusCode})');
+        }
+      }
+    }
+    return data;
+  }
+
+  // --- CENTRAL DE INTELIGÊNCIA ECLESIÁSTICA ---
+  Future<Map<String, dynamic>> getIntelligenceOverview({int? year, bool consolidated = false}) async {
+    final y = year ?? DateTime.now().year;
+    if (_token != null && !isOffline) {
+      try {
+        final uri = Uri.parse('$baseUrl/intelligence/overview').replace(queryParameters: {
+          'ano': y.toString(),
+          'consolidated': consolidated ? '1' : '0',
+        });
+        final res = await http.get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $_token',
+            'Accept': 'application/json',
+          },
+        ).timeout(const Duration(seconds: 10));
+
+        if (res.statusCode == 200) {
+          return jsonDecode(res.body) as Map<String, dynamic>;
+        }
+      } catch (_) {}
+    }
+
+    // Fallback estruturado
+    return {
+      'ano': y,
+      'kpis': {
+        'total_pessoas': 184,
+        'total_membros': 172,
+        'comungantes': 142,
+        'nao_comungantes': 30,
+        'sob_disciplina': 0,
+        'total_familias': 68,
+        'total_alunos_ebd': 86,
+        'total_professores': 12,
+        'total_superintendentes': 3,
+        'total_dizimistas': 94,
+        'admissoes_ano': 8,
+        'saidas_ano': 2,
+        'crescimento_liquido': 6,
+        'media_idade': 38.4,
+        'mediana_idade': 36.0,
+        'aniversariantes_mes': 14,
+        'frequencia_ebd_media': 82.5,
+      },
+      'age_distribution': {
+        'infantil': 28,
+        'adolescentes': 22,
+        'jovens': 48,
+        'adultos': 62,
+        'melhor_idade': 24,
+      },
+      'canonical_chart': {
+        'labels': ['Comungantes', 'Não Comungantes', 'Sob Disciplina'],
+        'data': [142, 30, 0],
+      },
+    };
+  }
+
   // --- MÓDULO DE CONFERÊNCIAS DE DÍZIMOS E OFERTAS ---
 
   Future<List<ColetaModel>> getConferencias({

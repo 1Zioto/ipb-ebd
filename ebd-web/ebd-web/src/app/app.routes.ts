@@ -74,6 +74,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/reports/annual-report').then((m) => m.AnnualReportPage),
       },
       {
+        path: 'inteligencia',
+        loadComponent: () => import('./pages/intelligence/intelligence').then((m) => m.IntelligencePage),
+      },
+      {
         path: 'eventos/:id',
         canActivate: [permissionGuard('event.view'), screenGuard('calendario')],
         loadComponent: () => import('./pages/calendar/event-detail').then((m) => m.EventDetailPage),

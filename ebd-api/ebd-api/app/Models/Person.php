@@ -16,7 +16,7 @@ class Person extends Model
     protected $table = 'people';
 
     protected $fillable = [
-        'institution_id', 'full_name', 'birth_date', 'is_active', 'can_teach', 'can_superintend', 'notes',
+        'institution_id', 'full_name', 'gender', 'birth_date', 'is_active', 'can_teach', 'can_superintend', 'notes',
         'is_tither', 'tither_since', 'envelope_number',
         'canonical_status', 'roll_number', 'reception_type', 'reception_date',
         'baptism_date', 'profession_date', 'exit_type', 'exit_date',

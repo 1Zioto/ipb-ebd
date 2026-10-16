@@ -13,6 +13,7 @@ import '../screens/admin/usuarios_screen.dart';
 import '../screens/admin/auditoria_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/main_menu_screen.dart';
+import '../screens/intelligence_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final String currentRoute;
@@ -124,6 +125,18 @@ class AppDrawer extends StatelessWidget {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const EbdDashboardScreen()),
+                  );
+                },
+              ),
+              _buildMenuItem(
+                context,
+                icon: Icons.analytics_outlined,
+                title: 'Inteligência Eclesiástica',
+                selected: currentRoute == 'inteligencia',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const IntelligenceScreen()),
                   );
                 },
               ),

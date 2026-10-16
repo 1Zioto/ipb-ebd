@@ -65,38 +65,95 @@
   <!-- Cartão de Identificação da Sociedade -->
   <div class="card p-6 mb-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
+      <div class="flex-1 min-w-[280px]">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-xl">
+          <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-2xl shadow-sm">
             {{ soc.sigla }}
           </div>
           <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">{{ soc.nome }}</h2>
-            <div class="text-xs text-surface-500 font-medium mt-0.5">Público-alvo: {{ soc.faixa_etaria }}</div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">{{ soc.nome }}</h2>
+              <span
+                class="px-2 py-0.5 text-xs font-semibold rounded-full"
+                [class.bg-emerald-100]="soc.is_active !== false"
+                [class.text-emerald-800]="soc.is_active !== false"
+                [class.dark:bg-emerald-950/40]="soc.is_active !== false"
+                [class.dark:text-emerald-400]="soc.is_active !== false"
+                [class.bg-surface-200]="soc.is_active === false"
+                [class.text-surface-600]="soc.is_active === false"
+              >
+                {{ soc.is_active !== false ? 'Ativa' : 'Inativa' }}
+              </span>
+            </div>
+
+            <!-- Perfil de Referência Estruturado -->
+            <div class="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-surface-600 dark:text-surface-300">
+              <span class="inline-flex items-center gap-1 font-semibold text-primary">
+                <i class="pi pi-users text-xs"></i>
+                Público: <strong>{{ soc.target_gender || 'Ambos' }}</strong>
+              </span>
+              <span class="text-surface-300 dark:text-surface-600">•</span>
+              <span class="inline-flex items-center gap-1 font-semibold text-surface-700 dark:text-surface-200">
+                <i class="pi pi-calendar text-xs"></i>
+                Faixa Etária:
+                @if (soc.min_age !== null && soc.min_age !== undefined && soc.max_age !== null && soc.max_age !== undefined) {
+                  <strong>{{ soc.min_age }} a {{ soc.max_age }} anos</strong>
+                } @else if (soc.min_age !== null && soc.min_age !== undefined) {
+                  <strong>A partir de {{ soc.min_age }} anos</strong>
+                } @else if (soc.max_age !== null && soc.max_age !== undefined) {
+                  <strong>Até {{ soc.max_age }} anos</strong>
+                } @else {
+                  <strong>Faixa livre</strong>
+                }
+              </span>
+              @if (soc.notes) {
+                <span class="text-surface-300 dark:text-surface-600">•</span>
+                <span class="text-muted-color italic truncate max-w-xs" [title]="soc.notes">
+                  {{ soc.notes }}
+                </span>
+              }
+            </div>
           </div>
         </div>
+
         @if (soc.lema) {
-          <p class="text-sm italic text-surface-600 dark:text-surface-400 mt-3 mb-0">
+          <p class="text-xs italic text-surface-600 dark:text-surface-400 mt-3 mb-0 flex items-center gap-1.5">
+            <i class="pi pi-bookmark text-primary text-xs"></i>
             "{{ soc.lema }}"
           </p>
         }
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        @if (soc.costCenter) {
-          <div class="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs">
-            <span class="text-surface-400 block font-medium">Centro de Custo:</span>
-            <strong class="text-emerald-700 dark:text-emerald-300">{{ soc.costCenter.code }} — {{ soc.costCenter.name }}</strong>
-          </div>
-        }
-        <div class="px-3 py-1.5 bg-surface-100 dark:bg-surface-800 border border-surface rounded-xl text-xs text-center">
-          <span class="text-surface-400 block font-medium">Sócios Cadastrados:</span>
-          <strong class="text-base text-surface-900 dark:text-surface-100">{{ membros().length }}</strong>
+      <!-- Indicadores Numéricos Sakai da Sociedade -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="px-3 py-2 bg-surface-100 dark:bg-surface-800 border border-surface rounded-xl text-center min-w-[90px]">
+          <span class="text-[11px] text-surface-400 block font-semibold uppercase tracking-wider">Total Sócios</span>
+          <strong class="text-base font-extrabold text-surface-900 dark:text-surface-100">{{ membros().length }}</strong>
         </div>
-        <div class="px-3 py-1.5 bg-surface-100 dark:bg-surface-800 border border-surface rounded-xl text-xs text-center">
-          <span class="text-surface-400 block font-medium">Atas no Livro:</span>
-          <strong class="text-base text-surface-900 dark:text-surface-100">{{ atas().length }}</strong>
+
+        <div class="px-3 py-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-center min-w-[95px]" title="Sócios que atendem ao perfil referencial da sociedade">
+          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 block font-semibold uppercase tracking-wider">Na Faixa</span>
+          <strong class="text-base font-extrabold text-emerald-700 dark:text-emerald-300">
+            {{ soc.indicadores?.dentro_faixa ?? 0 }}
+          </strong>
         </div>
+
+        <div class="px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-center min-w-[95px]" pTooltip="Sócios fora da faixa recomendada. Permanência 100% garantida (idade é critério apenas referencial)." tooltipPosition="bottom">
+          <span class="text-[11px] text-amber-600 dark:text-amber-400 block font-semibold uppercase tracking-wider">Fora da Faixa</span>
+          <strong class="text-base font-extrabold text-amber-700 dark:text-amber-300">
+            {{ soc.indicadores?.fora_da_faixa ?? 0 }}
+          </strong>
+        </div>
+
+        <p-button
+          icon="pi pi-cog"
+          label="Configurar"
+          [text]="true"
+          severity="secondary"
+          size="small"
+          pTooltip="Editar parâmetros da sociedade (sigla, público, idades, etc.)"
+          (onClick)="abrirEditarSociedade(soc)"
+        />
       </div>
     </div>
   </div>
@@ -191,8 +248,8 @@
 
         <div class="flex items-center gap-2">
           <p-button
-            label="Arrolar em Lote"
-            icon="pi pi-user-plus"
+            label="Arrolamento em Lote"
+            icon="pi pi-users"
             [outlined]="true"
             size="small"
             (onClick)="abrirLoteDialog()"
@@ -208,10 +265,12 @@
 
       <!-- Tabela do Rol de Sócios -->
       <div class="card p-0 overflow-hidden border border-surface">
-        <p-table [value]="membrosFiltrados()" [loading]="membrosLoading()" [tableStyle]="{ 'min-width': '50rem' }" [rows]="10" [paginator]="true">
+        <p-table [value]="membrosFiltrados()" [loading]="membrosLoading()" [tableStyle]="{ 'min-width': '58rem' }" [rows]="10" [paginator]="true">
           <ng-template pTemplate="header">
             <tr class="bg-surface-ground">
               <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Sócio(a)</th>
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Sexo & Idade</th>
+              <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Enquadramento</th>
               <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Tipo de Sócio</th>
               <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Cargo / Função</th>
               <th class="py-3 px-4 font-bold text-xs uppercase text-muted-color">Data Admissão</th>
@@ -231,26 +290,72 @@
                   {{ m.person?.phone || m.person?.email || 'Membro da Igreja' }}
                 </div>
               </td>
+
+              <!-- Sexo & Idade Dinâmica -->
+              <td class="py-3 px-4 text-xs font-medium text-surface-700 dark:text-surface-300">
+                <div class="flex items-center gap-1.5">
+                  <span>{{ m.person?.gender || 'Sexo não inf.' }}</span>
+                  <span class="text-surface-400">•</span>
+                  <strong class="text-surface-900 dark:text-surface-100">
+                    {{ m.person?.birth_date ? (m.person?.age + ' anos') : 'Idade não inf.' }}
+                  </strong>
+                </div>
+              </td>
+
+              <!-- Enquadramento na Sociedade (Canônico: apenas referencial, nunca desliga) -->
+              <td class="py-3 px-4">
+                @if (m.elegibilidade?.status === 'dentro') {
+                  <p-tag value="Na Faixa" severity="success" [rounded]="true" />
+                } @else if (m.elegibilidade?.status === 'acima_faixa') {
+                  <p-tag
+                    value="Acima da Faixa"
+                    severity="warn"
+                    [rounded]="true"
+                    pTooltip="Sócio ultrapassou a idade máxima de referência, mantendo vínculo ativo com total direito."
+                  />
+                } @else if (m.elegibilidade?.status === 'abaixo_faixa') {
+                  <p-tag
+                    value="Abaixo da Faixa"
+                    severity="info"
+                    [rounded]="true"
+                    pTooltip="Sócio com idade abaixo da mínima sugerida (inclusão manual permitida)."
+                  />
+                } @else if (m.elegibilidade?.status === 'fora_genero') {
+                  <p-tag
+                    value="Público Distinto"
+                    severity="secondary"
+                    [rounded]="true"
+                    pTooltip="Gênero divergente da referência da sociedade."
+                  />
+                } @else {
+                  <p-tag value="Idade não inf." severity="secondary" [rounded]="true" />
+                }
+              </td>
+
               <td class="py-3 px-4">
                 <p-tag
                   [value]="m.tipo_socio === 'efetivo' ? 'Sócio Efetivo' : 'Sócio Cooperador'"
                   [severity]="m.tipo_socio === 'efetivo' ? 'success' : 'info'"
                 />
               </td>
+
               <td class="py-3 px-4 font-medium text-xs">
                 <span [class.text-primary]="m.cargo_atual" [class.font-bold]="m.cargo_atual">
                   {{ m.cargo_atual || 'Sócio Ativo' }}
                 </span>
               </td>
+
               <td class="py-3 px-4 text-xs text-surface-600 dark:text-surface-400">
                 {{ m.data_admissao | date: 'dd/MM/yyyy' }}
               </td>
+
               <td class="py-3 px-4">
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   {{ m.status | uppercase }}
                 </span>
               </td>
+
               <td class="py-3 px-4 text-right whitespace-nowrap" (click)="$event.stopPropagation()">
                 <div class="flex items-center justify-end gap-1">
                   <p-button
@@ -459,7 +564,7 @@
 <!-- ============================================================== -->
 <!-- MODAL: NOVO SÓCIO INDIVIDUAL                                   -->
 <!-- ============================================================== -->
-<p-dialog header="Arrolar Novo Sócio na Sociedade" [(visible)]="membroDialog" [modal]="true" [style]="{ width: '480px' }">
+<p-dialog header="Arrolar Novo Sócio — {{ activeSigla }}" [(visible)]="membroDialog" [modal]="true" [style]="{ width: '540px', maxWidth: '95vw' }">
   <div class="flex flex-col gap-4 pt-2">
     <div>
       <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Membro da Igreja *</label>
@@ -469,7 +574,7 @@
         optionValue="value"
         [filter]="true"
         filterBy="label,name"
-        filterPlaceholder="Digite para buscar membro..."
+        filterPlaceholder="Digite para buscar membro pelo nome..."
         [showClear]="true"
         placeholder="Selecione ou pesquise o membro..."
         [(ngModel)]="novoMembro.person_id"
@@ -478,33 +583,85 @@
       />
     </div>
 
-    <div>
-      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Tipo de Sócio *</label>
-      <select
-        [(ngModel)]="novoMembro.tipo_socio"
-        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm font-medium outline-none"
+    <!-- Informações da Pessoa Selecionada e Avaliação de Referência -->
+    @if (pessoaSelecionadaInfo(); as info) {
+      <div class="p-3.5 rounded-xl border transition-all text-xs"
+        [class.bg-emerald-50]="info.elegivel && !info.jaArroladoAtivo"
+        [class.border-emerald-200]="info.elegivel && !info.jaArroladoAtivo"
+        [class.dark:bg-emerald-950/20]="info.elegivel && !info.jaArroladoAtivo"
+        [class.bg-amber-50]="!info.elegivel && !info.jaArroladoAtivo"
+        [class.border-amber-200]="!info.elegivel && !info.jaArroladoAtivo"
+        [class.dark:bg-amber-950/20]="!info.elegivel && !info.jaArroladoAtivo"
+        [class.bg-red-50]="info.jaArroladoAtivo"
+        [class.border-red-200]="info.jaArroladoAtivo"
+        [class.dark:bg-red-950/20]="info.jaArroladoAtivo"
       >
-        <option value="efetivo">Sócio Efetivo (Comungante Pleno)</option>
-        <option value="cooperador">Sócio Cooperador (Não-comungante / Visitante)</option>
-      </select>
+        <div class="flex items-center justify-between font-bold mb-1.5">
+          <span class="text-surface-900 dark:text-surface-100">{{ info.pessoa.full_name }}</span>
+          <span class="text-muted-color font-normal">
+            {{ info.pessoa.gender || 'Sexo não inf.' }} &bull;
+            {{ info.pessoa.age !== null && info.pessoa.age !== undefined ? info.pessoa.age + ' anos' : 'Idade não inf.' }}
+          </span>
+        </div>
+
+        @if (info.jaArroladoAtivo) {
+          <div class="flex items-center gap-1.5 text-red-700 dark:text-red-400 font-semibold mt-1">
+            <i class="pi pi-times-circle"></i>
+            <span>Esta pessoa já possui vínculo ativo com a {{ activeSigla }}. Não é permitido arrolamento duplicado.</span>
+          </div>
+        } @else if (!info.elegivel) {
+          <div class="text-amber-800 dark:text-amber-300 space-y-1">
+            <div class="flex items-center gap-1.5 font-semibold">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>Fora da faixa ou público de referência:</span>
+            </div>
+            <ul class="list-disc list-inside text-[11px] opacity-90 pl-1">
+              @for (aviso of info.avisos; track aviso) {
+                <li>{{ aviso }}</li>
+              }
+            </ul>
+            <div class="text-[11px] font-medium text-amber-700 dark:text-amber-400 mt-1">
+              ℹ️ Os critérios são meramente referenciais. A inclusão manual é permitida e pode ser confirmada abaixo.
+            </div>
+          </div>
+        } @else {
+          <div class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
+            <i class="pi pi-check-circle"></i>
+            <span>Pessoa compatível com o público e faixa etária da {{ activeSigla }}.</span>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Tipo de Sócio *</label>
+        <select
+          [(ngModel)]="novoMembro.tipo_socio"
+          class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm font-medium outline-none"
+        >
+          <option value="efetivo">Sócio Efetivo (Comungante Pleno)</option>
+          <option value="cooperador">Sócio Cooperador (Não-comungante / Visitante)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Data de Admissão</label>
+        <input
+          type="date"
+          class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
+          [(ngModel)]="novoMembro.data_admissao"
+        />
+      </div>
     </div>
 
     <div>
-      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Cargo / Função (Opcional)</label>
+      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Cargo / Função na Sociedade (Opcional)</label>
       <input
         pInputText
         class="w-full"
         [(ngModel)]="novoMembro.cargo_atual"
-        placeholder="Ex: Sócia Efetiva, Secretária, etc."
-      />
-    </div>
-
-    <div>
-      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Data de Admissão</label>
-      <input
-        type="date"
-        class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
-        [(ngModel)]="novoMembro.data_admissao"
+        placeholder="Ex: Sócia Efetiva, Secretária, Conselheira..."
       />
     </div>
 
@@ -522,179 +679,486 @@
   <ng-template pTemplate="footer">
     <div class="flex justify-end gap-2 pt-3">
       <p-button label="Cancelar" [text]="true" (onClick)="membroDialog = false" />
-      <p-button label="Arrolar Sócio" icon="pi pi-check" (onClick)="salvarMembro()" />
-    </div>
-  </ng-template>
-</p-dialog>
-
-<!-- ============================================================== -->
-<!-- MODAL: CRIAR NOVA SOCIEDADE INTERNA                             -->
-<!-- ============================================================== -->
-<p-dialog
-  header="Criar Nova Sociedade Interna"
-  [(visible)]="novaSociedadeDialog"
-  [modal]="true"
-  [style]="{ width: '520px', maxWidth: '95vw' }"
->
-  <div class="flex flex-col gap-4 pt-2">
-    <div class="p-3 bg-primary/10 rounded-xl text-xs text-primary font-medium">
-      <i class="pi pi-info-circle mr-1"></i>
-      Cadastre uma nova sociedade interna ou força ativa da igreja local (ex: SAF, UPH, UMP, UPA, UCP ou novos departamentos/sociedades).
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Sigla *</label>
-        <input
-          pInputText
-          class="w-full font-bold uppercase"
-          [(ngModel)]="novaSociedadeForm.sigla"
-          placeholder="Ex: SAF, UPH"
-          required
-        />
-      </div>
-
-      <div class="sm:col-span-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Nome Completo *</label>
-        <input
-          pInputText
-          class="w-full"
-          [(ngModel)]="novaSociedadeForm.nome"
-          placeholder="Ex: Sociedade Auxiliadora Feminina"
-          required
-        />
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div class="sm:col-span-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Público-Alvo / Faixa Etária</label>
-        <input
-          pInputText
-          class="w-full"
-          [(ngModel)]="novaSociedadeForm.faixa_etaria"
-          placeholder="Ex: Mulheres a partir de 25 anos"
-        />
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Ano de Exercício</label>
-        <input
-          type="number"
-          class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
-          [(ngModel)]="novaSociedadeForm.ano_exercicio"
-        />
-      </div>
-    </div>
-
-    <div>
-      <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Lema Eclesiástico Oficial</label>
-      <input
-        pInputText
-        class="w-full"
-        [(ngModel)]="novaSociedadeForm.lema"
-        placeholder="Ex: Sê tu uma bênção."
-      />
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <div class="flex justify-end gap-2 pt-3">
-      <p-button label="Cancelar" [text]="true" (onClick)="novaSociedadeDialog = false" />
-      <p-button
-        label="Criar Sociedade"
-        icon="pi pi-check"
-        [loading]="salvandoSociedade()"
-        (onClick)="salvarNovaSociedade()"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
-
-<!-- ============================================================== -->
-<!-- MODAL: ARROLAMENTO EM LOTE DE PESSOAS ELEGÍVEIS                -->
-<!-- ============================================================== -->
-<p-dialog header="Arrolamento em Lote — {{ activeSigla }}" [(visible)]="loteDialog" [modal]="true" [style]="{ width: '640px' }">
-  <div class="flex flex-col gap-4 pt-2">
-    <div class="p-3 bg-primary/10 rounded-xl text-xs text-primary font-medium">
-      <i class="pi pi-info-circle mr-1"></i>
-      Pessoas da igreja sugeridas automaticamente com base no perfil e faixa etária da <strong>{{ activeSigla }}</strong>.
-      Selecione as pessoas que deseja arrolar como sócios oficiais da sociedade.
-    </div>
-
-    <!-- Campo de busca rápida no lote -->
-    <p-iconfield styleClass="w-full">
-      <p-inputicon styleClass="pi pi-search text-muted-color" />
-      <input
-        pInputText
-        type="text"
-        placeholder="Pesquisar pessoa na lista por nome..."
-        class="w-full"
-        [(ngModel)]="loteBusca"
-      />
-    </p-iconfield>
-
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <label class="text-xs font-bold uppercase text-muted-color">Arrolar como:</label>
-        <select
-          [(ngModel)]="loteTipo"
-          class="bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-lg px-2.5 py-1 text-xs font-bold outline-none"
-        >
-          <option value="efetivo">Sócio Efetivo</option>
-          <option value="cooperador">Sócio Cooperador</option>
-        </select>
-      </div>
-
-      <button
-        type="button"
-        (click)="toggleSelecionarTodosLote()"
-        class="text-xs font-bold text-primary hover:underline cursor-pointer bg-transparent border-none"
-      >
-        {{ loteSelecionados.length === pessoasElegiveisParaLote().length ? 'Desmarcar Todos' : 'Marcar Todos' }}
-      </button>
-    </div>
-
-    <div class="max-h-80 overflow-y-auto border border-surface rounded-2xl divide-y divide-surface">
-      @for (p of pessoasElegiveisFiltradas(); track p.id) {
-        <label class="flex items-center gap-3 p-3 hover:bg-surface-hover/50 cursor-pointer transition">
-          <input
-            type="checkbox"
-            [checked]="loteSelecionados.includes(p.id)"
-            (change)="toggleSelecaoLote(p.id)"
-            class="rounded border-surface text-primary focus:ring-primary w-4 h-4 cursor-pointer"
-          />
-          <div class="min-w-0 flex-1">
-            <div class="font-bold text-sm text-surface-900 dark:text-surface-0">{{ p.full_name }}</div>
-            <div class="text-xs text-muted-color">
-              {{ p.canonical_status || 'Membro' }} &bull; {{ p.age ? p.age + ' anos' : 'Idade não inf.' }}
-            </div>
-          </div>
-        </label>
-      } @empty {
-        <div class="p-6 text-center text-xs text-muted-color">
-          @if (loteBusca) {
-            Nenhuma pessoa encontrada com o termo "{{ loteBusca }}".
-          } @else {
-            Todas as pessoas elegíveis para este perfil já estão arroladas nesta sociedade!
-          }
-        </div>
-      }
-    </div>
-
-    <div class="text-xs text-muted-color font-medium">
-      {{ loteSelecionados.length }} pessoa(s) selecionada(s) para arrolamento.
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <div class="flex justify-end gap-2 pt-3">
-      <p-button label="Cancelar" [text]="true" (onClick)="loteDialog = false" />
       <p-button
         label="Confirmar Arrolamento"
+        icon="pi pi-check"
+        [disabled]="!novoMembro.person_id || pessoaSelecionadaInfo()?.jaArroladoAtivo"
+        (onClick)="salvarMembro()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: CADASTRO & EDIÇÃO DE SOCIEDADE INTERNA                  -->
+<!-- ============================================================== -->
+<p-dialog
+  [header]="editandoSociedadeId ? ('Editar Sociedade — ' + formSociedade.sigla) : 'Criar Nova Sociedade Interna'"
+  [(visible)]="sociedadeDialog"
+  [modal]="true"
+  [style]="{ width: '580px', maxWidth: '95vw' }"
+>
+  <div class="flex flex-col gap-5 pt-2">
+    <!-- Bloco 1: Identificação -->
+    <div>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3 flex items-center gap-1.5">
+        <i class="pi pi-id-card"></i> 1. Identificação da Sociedade
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Sigla *</label>
+          <input
+            pInputText
+            class="w-full font-bold uppercase"
+            [(ngModel)]="formSociedade.sigla"
+            placeholder="Ex: SAF, UMP"
+            required
+          />
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Nome Oficial *</label>
+          <input
+            pInputText
+            class="w-full"
+            [(ngModel)]="formSociedade.nome"
+            placeholder="Ex: Sociedade Auxiliadora Feminina"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Lema Eclesiástico Oficial</label>
+          <input
+            pInputText
+            class="w-full"
+            [(ngModel)]="formSociedade.lema"
+            placeholder="Ex: Sê tu uma bênção."
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Ano de Exercício</label>
+          <input
+            type="number"
+            class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
+            [(ngModel)]="formSociedade.ano_exercicio"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloco 2: Perfil de Referência -->
+    <div class="pt-4 border-t border-surface">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3 flex items-center gap-1.5">
+        <i class="pi pi-filter"></i> 2. Perfil de Referência (Sugestão & Organização)
+      </h4>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Público-Alvo</label>
+          <select
+            [(ngModel)]="formSociedade.target_gender"
+            class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm font-medium outline-none"
+          >
+            <option value="Ambos">Ambos (Masc. e Fem.)</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Feminino">Feminino</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Idade Mínima</label>
+          <input
+            type="number"
+            min="0"
+            max="150"
+            class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
+            [(ngModel)]="formSociedade.min_age"
+            placeholder="Opcional (ex: 18)"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Idade Máxima</label>
+          <input
+            type="number"
+            min="0"
+            max="150"
+            class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm outline-none"
+            [(ngModel)]="formSociedade.max_age"
+            placeholder="Opcional (ex: 32)"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Situação</label>
+          <select
+            [(ngModel)]="formSociedade.is_active"
+            class="w-full bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-xl p-2.5 text-sm font-medium outline-none"
+          >
+            <option [ngValue]="true">Ativa</option>
+            <option [ngValue]="false">Inativa</option>
+          </select>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Observações</label>
+          <input
+            pInputText
+            class="w-full"
+            [(ngModel)]="formSociedade.notes"
+            placeholder="Observações complementares..."
+          />
+        </div>
+      </div>
+
+      <div class="p-3 bg-surface-100 dark:bg-surface-800 rounded-xl text-xs text-surface-600 dark:text-surface-300 mt-3 leading-relaxed">
+        <i class="pi pi-info-circle text-primary mr-1"></i>
+        <strong>Aviso Canônico:</strong> A idade e o público-alvo são critérios orientativos para filtros inteligentes. Membros arrolados que ultrapassarem a idade máxima ou mudarem de faixa <strong>nunca são desligados automaticamente</strong>.
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Cancelar" [text]="true" (onClick)="sociedadeDialog = false" />
+      <p-button
+        [label]="editandoSociedadeId ? 'Salvar Alterações' : 'Cadastrar Sociedade'"
+        icon="pi pi-check"
+        [loading]="salvandoSociedade()"
+        (onClick)="salvarSociedade()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: ARROLAMENTO EM LOTE INTELIGENTE                         -->
+<!-- ============================================================== -->
+<p-dialog
+  header="⚡ Arrolamento em Lote Inteligente — {{ activeSigla }}"
+  [(visible)]="loteDialog"
+  [modal]="true"
+  [style]="{ width: '920px', maxWidth: '98vw' }"
+>
+  <div class="flex flex-col gap-4 pt-1">
+    <!-- Painel de Filtros Temporários Editáveis -->
+    <div class="p-4 bg-surface-50 dark:bg-surface-800/60 border border-surface rounded-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-filter text-primary"></i>
+          <span class="text-xs font-bold uppercase tracking-wider text-surface-900 dark:text-surface-0">
+            Filtros Dinâmicos de Arrolamento
+          </span>
+          <span class="text-[11px] text-muted-color">(Temporários — não alteram o cadastro da sociedade)</span>
+        </div>
+
+        <button
+          type="button"
+          class="text-xs text-primary font-bold hover:underline cursor-pointer bg-transparent border-none flex items-center gap-1"
+          (click)="restaurarFiltrosOriginais()"
+        >
+          <i class="pi pi-refresh text-xs"></i> Restaurar Padrão da {{ activeSigla }}
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-muted-color mb-1">Público-Alvo</label>
+          <select
+            [(ngModel)]="loteFiltro.target_gender"
+            (change)="carregarCandidatosLote()"
+            class="w-full bg-surface-0 dark:bg-surface-900 text-surface-900 dark:text-surface-0 border border-surface rounded-lg p-2 text-xs font-medium outline-none"
+          >
+            <option value="Ambos">Ambos</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Feminino">Feminino</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-muted-color mb-1">Idade Mínima</label>
+          <input
+            type="number"
+            [(ngModel)]="loteFiltro.min_age"
+            (keyup.enter)="carregarCandidatosLote()"
+            placeholder="Livre"
+            class="w-full bg-surface-0 dark:bg-surface-900 text-surface-900 dark:text-surface-0 border border-surface rounded-lg p-2 text-xs outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-muted-color mb-1">Idade Máxima</label>
+          <input
+            type="number"
+            [(ngModel)]="loteFiltro.max_age"
+            (keyup.enter)="carregarCandidatosLote()"
+            placeholder="Livre"
+            class="w-full bg-surface-0 dark:bg-surface-900 text-surface-900 dark:text-surface-0 border border-surface rounded-lg p-2 text-xs outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-muted-color mb-1">Na Sociedade</label>
+          <select
+            [(ngModel)]="loteFiltro.situacao_sociedade"
+            (change)="carregarCandidatosLote()"
+            class="w-full bg-surface-0 dark:bg-surface-900 text-surface-900 dark:text-surface-0 border border-surface rounded-lg p-2 text-xs font-medium outline-none"
+          >
+            <option value="nao_arrolado">Não Arrolados</option>
+            <option value="ja_arrolado">Já Arrolados</option>
+            <option value="todos">Todos</option>
+          </select>
+        </div>
+
+        <div class="col-span-2">
+          <label class="block text-[11px] font-bold uppercase text-muted-color mb-1">Buscar por Nome</label>
+          <div class="flex gap-1.5">
+            <input
+              type="text"
+              [(ngModel)]="loteFiltro.search"
+              (keyup.enter)="carregarCandidatosLote()"
+              placeholder="Digite o nome..."
+              class="w-full bg-surface-0 dark:bg-surface-900 text-surface-900 dark:text-surface-0 border border-surface rounded-lg p-2 text-xs outline-none"
+            />
+            <button
+              type="button"
+              (click)="carregarCandidatosLote()"
+              class="px-3 bg-primary text-primary-contrast rounded-lg text-xs font-bold hover:opacity-90 transition cursor-pointer"
+            >
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Controle e Seleção Rápida -->
+    <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5">
+          <label class="font-bold uppercase text-muted-color">Arrolar como:</label>
+          <select
+            [(ngModel)]="loteTipo"
+            class="bg-surface-ground text-surface-900 dark:text-surface-0 border border-surface rounded-lg px-2.5 py-1 text-xs font-bold outline-none"
+          >
+            <option value="efetivo">Sócio Efetivo (Comungante)</option>
+            <option value="cooperador">Sócio Cooperador (Não-comungante)</option>
+          </select>
+        </div>
+
+        <div class="text-surface-600 dark:text-surface-300 font-semibold">
+          Total elegíveis: <strong>{{ candidatosLote().length }}</strong>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="marcarTodosElegiveisLote()"
+          class="px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/5 rounded-lg border border-primary/30 cursor-pointer transition"
+        >
+          Marcar Elegíveis
+        </button>
+        <button
+          type="button"
+          (click)="desmarcarTodosLote()"
+          class="px-2.5 py-1 text-xs font-semibold text-surface-600 hover:bg-surface-100 rounded-lg border border-surface cursor-pointer transition"
+        >
+          Desmarcar Todos
+        </button>
+        <span class="px-3 py-1 bg-primary/10 text-primary font-bold rounded-lg">
+          {{ loteSelecionados().length }} selecionado(s)
+        </span>
+      </div>
+    </div>
+
+    <!-- Tabela de Candidatos com Seleção Persistente -->
+    <div class="border border-surface rounded-2xl overflow-hidden">
+      <p-table
+        [value]="candidatosLote()"
+        [loading]="candidatosLoading()"
+        [rows]="8"
+        [paginator]="true"
+        [tableStyle]="{ 'min-width': '50rem' }"
+      >
+        <ng-template pTemplate="header">
+          <tr class="bg-surface-ground text-xs font-bold uppercase text-muted-color">
+            <th style="width: 3.5rem" class="py-2.5 px-3 text-center">Sel.</th>
+            <th class="py-2.5 px-3">Nome do Candidato</th>
+            <th class="py-2.5 px-3">Sexo & Idade</th>
+            <th class="py-2.5 px-3">Elegibilidade Oficial</th>
+            <th class="py-2.5 px-3">Situação na Sociedade</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-c>
+          <tr
+            class="border-b border-surface hover:bg-surface-hover/40 transition cursor-pointer"
+            (click)="!c.ja_arrolado && toggleSelecaoLote(c.id)"
+          >
+            <!-- Checkbox -->
+            <td class="py-2.5 px-3 text-center" (click)="$event.stopPropagation()">
+              <input
+                type="checkbox"
+                [checked]="isLoteSelecionado(c.id)"
+                [disabled]="c.ja_arrolado"
+                (change)="toggleSelecaoLote(c.id)"
+                class="rounded border-surface text-primary focus:ring-primary w-4 h-4 cursor-pointer disabled:opacity-40"
+              />
+            </td>
+
+            <!-- Nome -->
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-sm text-surface-900 dark:text-surface-0">{{ c.full_name }}</div>
+              <div class="text-[11px] text-muted-color">
+                {{ c.canonical_status || 'Membro' }}
+              </div>
+            </td>
+
+            <!-- Sexo & Idade Dinâmica -->
+            <td class="py-2.5 px-3 text-xs text-surface-700 dark:text-surface-300">
+              <div class="flex items-center gap-1.5">
+                <span>{{ c.gender || 'Não inf.' }}</span>
+                <span class="text-surface-400">•</span>
+                <strong class="text-surface-900 dark:text-surface-100">
+                  {{ c.birth_date ? (c.age + ' anos') : 'Idade não inf.' }}
+                </strong>
+              </div>
+            </td>
+
+            <!-- Elegibilidade Oficial da Sociedade -->
+            <td class="py-2.5 px-3">
+              @if (c.elegibilidade?.is_eligible) {
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  <i class="pi pi-check-circle"></i> Na Faixa
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400" [title]="c.elegibilidade?.reasons?.join('; ')">
+                  <i class="pi pi-exclamation-triangle"></i> Fora da Faixa
+                </span>
+              }
+            </td>
+
+            <!-- Situação na Sociedade -->
+            <td class="py-2.5 px-3">
+              @if (c.ja_arrolado) {
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-surface-200 text-surface-700 dark:bg-surface-700 dark:text-surface-200">
+                  Já Arrolado
+                </span>
+              } @else {
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                  Disponível
+                </span>
+              }
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center py-6 text-muted-color text-xs">
+              Nenhum candidato encontrado com os filtros selecionados.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-between pt-3">
+      <span class="text-xs text-muted-color">
+        {{ loteSelecionados().length }} pessoa(s) selecionada(s)
+      </span>
+      <div class="flex gap-2">
+        <p-button label="Cancelar" [text]="true" (onClick)="loteDialog = false" />
+        <p-button
+          label="Avançar para Confirmação"
+          icon="pi pi-arrow-right"
+          [disabled]="loteSelecionados().length === 0"
+          (onClick)="abrirConfirmacaoLote()"
+        />
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================== -->
+<!-- MODAL: CONFIRMAÇÃO DO ARROLAMENTO EM LOTE                      -->
+<!-- ============================================================== -->
+<p-dialog
+  header="Confirmar Arrolamento em Lote"
+  [(visible)]="confirmacaoLoteDialog"
+  [modal]="true"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+>
+  @if (resumoConfirmacaoLote(); as r) {
+    <div class="flex flex-col gap-4 pt-2 text-sm">
+      <div class="p-4 rounded-xl bg-primary/10 border border-primary/20 text-surface-900 dark:text-surface-100">
+        <div class="text-xs text-primary font-bold uppercase tracking-wider mb-1">Sociedade Destino</div>
+        <div class="font-extrabold text-lg text-primary">{{ r.sociedadeSigla }} — {{ r.sociedadeNome }}</div>
+      </div>
+
+      <div class="space-y-2 border border-surface rounded-xl p-3 text-xs">
+        <div class="flex items-center justify-between py-1 border-b border-surface">
+          <span class="text-muted-color">Total de pessoas selecionadas:</span>
+          <strong class="text-surface-900 dark:text-surface-0">{{ r.totalSelecionados }}</strong>
+        </div>
+
+        <div class="flex items-center justify-between py-1 border-b border-surface">
+          <span class="text-muted-color">Já possuem vínculo ativo (mantidos):</span>
+          <span class="font-semibold text-surface-600 dark:text-surface-400">{{ r.jaArroladosCount }}</span>
+        </div>
+
+        <div class="flex items-center justify-between py-1 border-b border-surface">
+          <span class="text-emerald-700 dark:text-emerald-400 font-bold">Novos vínculos que serão criados:</span>
+          <strong class="text-emerald-700 dark:text-emerald-400 text-sm">{{ r.novosCount }}</strong>
+        </div>
+
+        @if (r.foraFaixaCount > 0) {
+          <div class="flex items-center justify-between py-1 border-b border-surface text-amber-700 dark:text-amber-400">
+            <span>Fora da faixa/público de referência:</span>
+            <strong>{{ r.foraFaixaCount }} (permanência permitida)</strong>
+          </div>
+        }
+
+        <div class="flex items-center justify-between py-1">
+          <span class="text-muted-color">Enquadramento no Rol:</span>
+          <strong class="text-surface-900 dark:text-surface-0">{{ r.tipoLabel }}</strong>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-1.5">Observação da Ata / Operação (Opcional)</label>
+        <input
+          pInputText
+          class="w-full"
+          [(ngModel)]="loteObservacoes"
+          placeholder="Ex: Arrolamento anual aprovado em reunião..."
+        />
+      </div>
+
+      <div class="p-3 bg-surface-100 dark:bg-surface-800 rounded-xl text-[11px] text-surface-600 dark:text-surface-400">
+        <i class="pi pi-shield text-primary mr-1"></i>
+        A operação registrará a data, autor e respeitará a integridade institucional sem duplicidades.
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2 pt-3">
+      <p-button label="Voltar e Ajustar" [text]="true" (onClick)="confirmacaoLoteDialog = false" />
+      <p-button
+        label="Confirmar e Efetivar"
         icon="pi pi-check-circle"
-        [disabled]="loteSelecionados.length === 0"
-        (onClick)="salvarLote()"
+        [loading]="salvandoSociedade()"
+        (onClick)="salvarLoteConfirmado()"
       />
     </div>
   </ng-template>

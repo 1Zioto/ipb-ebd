@@ -93,6 +93,50 @@ export interface AtaConselho {
   status: 'Rascunho' | 'Aprovada' | 'Assinada';
 }
 
+export interface SociedadeIndicadores {
+  total_socios: number;
+  socios_ativos: number;
+  dentro_faixa: number;
+  acima_faixa: number;
+  abaixo_faixa: number;
+  fora_genero: number;
+  sem_nascimento: number;
+  fora_da_faixa: number;
+}
+
+export interface SociedadeElegibilidade {
+  is_eligible: boolean;
+  status: 'dentro' | 'acima_faixa' | 'abaixo_faixa' | 'fora_genero' | 'sem_nascimento' | string;
+  label: string;
+  reasons: string[];
+}
+
+export interface CandidatoArrolamento {
+  id: number;
+  full_name: string;
+  gender?: string;
+  birth_date?: string;
+  age?: number;
+  phone?: string;
+  email?: string;
+  canonical_status?: string;
+  is_active: boolean;
+  ja_arrolado: boolean;
+  elegibilidade: SociedadeElegibilidade;
+  compativel_com_filtro: boolean;
+  filtro_status: string;
+}
+
+export interface CandidatosArrolamentoResponse {
+  sociedade: Partial<SociedadeInterna>;
+  filtros_aplicados: any;
+  total: number;
+  elegiveis_count: number;
+  fora_referencia_count: number;
+  ja_arrolados_count: number;
+  data: CandidatoArrolamento[];
+}
+
 export interface SociedadeMembro {
   id: number;
   sociedade_id: number;
@@ -102,13 +146,16 @@ export interface SociedadeMembro {
   status: 'ativo' | 'inativo' | 'licenciado';
   cargo_atual?: string;
   observacoes?: string;
+  elegibilidade?: SociedadeElegibilidade;
   person?: {
     id: number;
     full_name: string;
     phone?: string;
     email?: string;
+    gender?: 'Masculino' | 'Feminino' | string;
     canonical_status?: string;
     birth_date?: string;
+    age?: number;
   };
 }
 
@@ -139,6 +186,11 @@ export interface SociedadeInterna {
   nome: string;
   lema?: string;
   faixa_etaria?: string;
+  target_gender?: 'Masculino' | 'Feminino' | 'Ambos';
+  min_age?: number | null;
+  max_age?: number | null;
+  is_active?: boolean;
+  notes?: string | null;
   ano_exercicio: number;
   diretorias?: { id: number; cargo: string; ano: number; person: { id: number; full_name: string; phone?: string; email?: string } }[];
   atividades?: { id: number; titulo: string; data: string; horario?: string; tipo: string; local?: string; descricao?: string }[];
@@ -147,6 +199,7 @@ export interface SociedadeInterna {
   membros_count?: number;
   atas_count?: number;
   costCenter?: { id: number; code: string; name: string };
+  indicadores?: SociedadeIndicadores;
 }
 
 export interface CatecumenoDiscipulo {
@@ -238,11 +291,12 @@ export class SecretariaService {
   private api = environment.apiUrl;
 
   // 🏛️ Secretaria & Rol de Membros
-  getMembros(params?: { status?: string; search?: string; page?: number }): Observable<{ membros: { data: CanonicalMember[]; current_page: number; last_page: number; total: number }; stats: CanonicalStats }> {
+  getMembros(params?: { status?: string; search?: string; page?: number; per_page?: number }): Observable<{ membros: { data: CanonicalMember[]; current_page: number; last_page: number; total: number }; stats: CanonicalStats }> {
     let p = new HttpParams();
     if (params?.status) p = p.set('status', params.status);
     if (params?.search) p = p.set('search', params.search);
     if (params?.page) p = p.set('page', params.page.toString());
+    p = p.set('per_page', (params?.per_page ?? 500).toString());
     return this.http.get<{ membros: { data: CanonicalMember[]; current_page: number; last_page: number; total: number }; stats: CanonicalStats }>(`${this.api}/secretaria/membros`, { params: p });
   }
 
@@ -324,15 +378,27 @@ export class SecretariaService {
   }
 
   // 👥 Rol de Sócios / Membros da Sociedade
-  getSociedadeMembros(sociedadeId: number): Observable<{ sociedade_id: number; total: number; efetivos: number; cooperadores: number; data: SociedadeMembro[] }> {
+  getSociedadeMembros(sociedadeId: number): Observable<{ sociedade_id: number; total: number; efetivos: number; cooperadores: number; indicadores: SociedadeIndicadores; data: SociedadeMembro[] }> {
     return this.http.get<any>(`${this.api}/sociedades/${sociedadeId}/membros`);
   }
 
-  addSociedadeMembro(sociedadeId: number, data: any): Observable<SociedadeMembro> {
-    return this.http.post<SociedadeMembro>(`${this.api}/sociedades/${sociedadeId}/membros`, data);
+  getCandidatosArrolamento(sociedadeId: number, params?: any): Observable<CandidatosArrolamentoResponse> {
+    let p = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          p = p.set(key, params[key].toString());
+        }
+      });
+    }
+    return this.http.get<CandidatosArrolamentoResponse>(`${this.api}/sociedades/${sociedadeId}/candidatos-arrolamento`, { params: p });
   }
 
-  arrolarMembrosEmLote(sociedadeId: number, data: { person_ids: number[]; tipo_socio?: string }): Observable<{ message: string; adicionados: number }> {
+  addSociedadeMembro(sociedadeId: number, data: any): Observable<{ membro: SociedadeMembro; elegibilidade: SociedadeElegibilidade; aviso?: string }> {
+    return this.http.post<any>(`${this.api}/sociedades/${sociedadeId}/membros`, data);
+  }
+
+  arrolarMembrosEmLote(sociedadeId: number, data: { person_ids: number[]; tipo_socio?: string; observacoes?: string }): Observable<{ message: string; sociedade: any; resumo: { total_selecionado: number; novos_arrolados: number; ja_arrolados: number; falhas: number } }> {
     return this.http.post<any>(`${this.api}/sociedades/${sociedadeId}/membros/em-lote`, data);
   }
 

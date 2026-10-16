@@ -1,0 +1,1091 @@
+<div class="space-y-6 animate-fadein">
+  <!-- CABEÇALHO EXECUTIVO & FILTROS GLOBAIS -->
+  <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">📊</span>
+        <div>
+          <h1 class="text-2xl font-black text-surface-900 dark:text-surface-0 tracking-tight m-0">
+            Dashboards e Informações da Congregação
+          </h1>
+          <p class="text-xs text-muted-color mt-1 mb-0 font-medium">
+            Painel Executivo, Demográfico e Canônico • Igreja Presbiteriana do Brasil
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Filtros e Ações Globais -->
+    <div class="flex items-center flex-wrap gap-2.5">
+      <div class="flex items-center gap-2 bg-surface-50 dark:bg-surface-800/60 px-3 py-1.5 rounded-xl border border-surface-200 dark:border-surface-700">
+        <label for="anoSelect" class="text-xs font-bold text-muted-color">Exercício:</label>
+        <select
+          id="anoSelect"
+          [ngModel]="selectedYear()"
+          (ngModelChange)="selectedYear.set($event); onYearChange()"
+          class="bg-transparent text-xs font-black text-surface-900 dark:text-surface-0 border-0 outline-none cursor-pointer"
+        >
+          @for (y of availableYears; track y) {
+            <option [value]="y">{{ y }}</option>
+          }
+        </select>
+      </div>
+
+      <button
+        type="button"
+        (click)="toggleConsolidated()"
+        class="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer"
+        [ngClass]="consolidated()
+          ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-800 dark:text-emerald-300'
+          : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300'"
+        title="Alternar entre esta igreja e jurisdição consolidada"
+      >
+        <i class="pi pi-sitemap text-xs"></i>
+        <span>{{ consolidated() ? 'Consolidado (Jurisdição)' : 'Igreja Local' }}</span>
+      </button>
+
+      <!-- Botão Exportar Lista de Membros para Excel -->
+      <button
+        type="button"
+        (click)="exportMembersToExcel()"
+        class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+        title="Exportar Lista Completa de Membros para Planilha Excel (.csv / .xlsx)"
+      >
+        <i class="pi pi-file-excel text-sm"></i>
+        <span>Exportar Membros (Excel)</span>
+      </button>
+
+      <!-- Botão Imprimir / Gerar PDF Estruturado -->
+      <button
+        type="button"
+        (click)="printReport()"
+        class="px-3.5 py-2 rounded-xl text-xs font-bold bg-surface-50 dark:bg-surface-800 hover:bg-surface-100 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700 text-surface-800 dark:text-surface-200 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+        title="Gerar Relatório Executivo e Demográfico em PDF Estruturado"
+      >
+        <i class="pi pi-print text-sm text-primary"></i>
+        <span>Imprimir / Gerar PDF</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="loadCurrentTab()"
+        class="px-3 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-emphasis text-primary-contrast border border-transparent transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+        title="Recarregar Dados"
+      >
+        <i class="pi pi-refresh text-xs" [class.pi-spin]="loading()"></i>
+        <span class="hidden sm:inline">Atualizar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- NAVEGAÇÃO POR ABAS TEMÁTICAS -->
+  <div class="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-surface-200 dark:border-surface-800 scrollbar-none">
+    <button
+      type="button"
+      (click)="setTab('overview')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'overview'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>🏛️</span>
+      <span>Visão Geral</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('members')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'members'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>👥</span>
+      <span>Membros da Congregação</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('demographics')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'demographics'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>📊</span>
+      <span>Demografia</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('movements')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'movements'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>📈</span>
+      <span>Movimentação do Rol</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('ecclesiastical')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'ecclesiastical'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>⛪</span>
+      <span>Vida Eclesiástica</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('families')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'families'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>👨‍👩‍👧‍👦</span>
+      <span>Famílias & Geografia</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('ebd')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'ebd'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>📖</span>
+      <span>Escola Dominical</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('societies')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'societies'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>🤝</span>
+      <span>Sociedades Internas</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('quality')"
+      class="px-4 py-2.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer"
+      [ngClass]="activeTab() === 'quality'
+        ? 'bg-primary text-primary-contrast shadow-sm'
+        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'"
+    >
+      <span>📋</span>
+      <span>Qualidade Cadastral</span>
+    </button>
+  </div>
+
+  <!-- CONTEÚDO DAS ABAS -->
+
+  <!-- ESTADO DE CARREGAMENTO -->
+  @if (loading()) {
+    <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-12 text-center shadow-sm flex flex-col items-center justify-center gap-3 animate-pulse">
+      <i class="pi pi-spin pi-spinner text-3xl text-emerald-600"></i>
+      <span class="text-sm font-bold text-surface-700 dark:text-surface-300">Carregando indicadores eclesiásticos...</span>
+      <span class="text-xs text-muted-color">Consolidando métricas de membros, famílias, EBD e sociedades</span>
+    </div>
+  }
+
+  <!-- ==================== 1. ABA: VISÃO GERAL ==================== -->
+  @if (!loading() && activeTab() === 'overview') {
+    @if (overviewData(); as ov) {
+      <div class="space-y-6">
+        <!-- Grid de Cards Principais -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between text-muted-color mb-1">
+              <span class="text-xs font-bold uppercase tracking-wider">Membros no Rol</span>
+              <span class="text-lg">👤</span>
+            </div>
+            <div class="text-3xl font-black text-surface-900 dark:text-surface-0">{{ ov.kpis.total_membros }}</div>
+            <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+              {{ ov.kpis.total_pessoas }} pessoas cadastradas
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between text-muted-color mb-1">
+              <span class="text-xs font-bold uppercase tracking-wider">Comungantes</span>
+              <span class="text-lg">⛪</span>
+            </div>
+            <div class="text-3xl font-black text-emerald-700 dark:text-emerald-400">{{ ov.kpis.comungantes }}</div>
+            <div class="text-[11px] text-muted-color font-bold mt-1">
+              {{ ov.kpis.total_membros > 0 ? ((ov.kpis.comungantes / ov.kpis.total_membros) * 100).toFixed(1) + '%' : '0%' }} da membresia
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between text-muted-color mb-1">
+              <span class="text-xs font-bold uppercase tracking-wider">Não Comungantes</span>
+              <span class="text-lg">👶</span>
+            </div>
+            <div class="text-3xl font-black text-sky-700 dark:text-sky-400">{{ ov.kpis.nao_comungantes }}</div>
+            <div class="text-[11px] text-muted-color font-bold mt-1">
+              Crianças e menores batizados
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between text-muted-color mb-1">
+              <span class="text-xs font-bold uppercase tracking-wider">Núcleos Familiares</span>
+              <span class="text-lg">🏠</span>
+            </div>
+            <div class="text-3xl font-black text-indigo-700 dark:text-indigo-400">{{ ov.kpis.total_familias }}</div>
+            <div class="text-[11px] text-muted-color font-bold mt-1">
+              Famílias ativas
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid de Cards Secundários -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-3.5 shadow-sm">
+            <div class="text-xs font-bold text-muted-color">Saldo no Ano ({{ ov.ano }})</div>
+            <div class="text-xl font-extrabold mt-0.5" [ngClass]="ov.kpis.crescimento_liquido >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+              {{ ov.kpis.crescimento_liquido >= 0 ? '+' : '' }}{{ ov.kpis.crescimento_liquido }}
+            </div>
+            <div class="text-[10px] text-muted-color">{{ ov.kpis.admissoes_ano }} adm / {{ ov.kpis.saidas_ano }} saídas</div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-3.5 shadow-sm">
+            <div class="text-xs font-bold text-muted-color">Alunos na EBD</div>
+            <div class="text-xl font-extrabold text-surface-900 dark:text-surface-0 mt-0.5">{{ ov.kpis.total_alunos_ebd }}</div>
+            <div class="text-[10px] text-emerald-600">{{ ov.kpis.frequencia_ebd_media }}% freq. média</div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-3.5 shadow-sm">
+            <div class="text-xs font-bold text-muted-color">Idade Média / Mediana</div>
+            <div class="text-xl font-extrabold text-surface-900 dark:text-surface-0 mt-0.5">
+              {{ ov.kpis.media_idade }} / {{ ov.kpis.mediana_idade }} <span class="text-xs font-normal">anos</span>
+            </div>
+            <div class="text-[10px] text-muted-color">Composição geral</div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-3.5 shadow-sm">
+            <div class="text-xs font-bold text-muted-color">Aniversariantes do Mês</div>
+            <div class="text-xl font-extrabold text-amber-600 mt-0.5">{{ ov.kpis.aniversariantes_mes }}</div>
+            <div class="text-[10px] text-muted-color">Celebrações neste mês</div>
+          </div>
+        </div>
+
+        <!-- Gráficos da Visão Geral -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">Composição Canônica da Membresia</h2>
+              <span class="text-xs text-muted-color">Situação no Rol</span>
+            </div>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas #canonicalCanvas></canvas>
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">Distribuição por Faixas Etárias</h2>
+              <span class="text-xs text-muted-color">Crianças a Seniores</span>
+            </div>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas #ageOverviewCanvas></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ==================== 2. ABA: DEMOGRAFIA ==================== -->
+  @if (activeTab() === 'demographics') {
+    @if (demographicsData(); as demo) {
+      <div class="space-y-6">
+        <!-- Indicadores de Idade -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Menor Idade Cadastrada</div>
+            <div class="text-2xl font-black text-sky-600 mt-1">{{ demo.menor_idade }} anos</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Idade Média da Igreja</div>
+            <div class="text-2xl font-black text-emerald-600 mt-1">{{ demo.media_idade }} anos</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Maior Idade Cadastrada</div>
+            <div class="text-2xl font-black text-purple-600 mt-1">{{ demo.maior_idade }} anos</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Histograma Detalhado de Faixas Etárias</h2>
+            <div class="h-72 relative">
+              <canvas #faixasDetalhadasCanvas></canvas>
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Distribuição por Estado Civil</h2>
+            <div class="h-72 relative flex items-center justify-center">
+              <canvas #estadoCivilCanvas></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aniversariantes do Ano -->
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+          <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-2">Distribuição de Aniversários por Mês</h2>
+          <p class="text-xs text-muted-color mb-4">Concentração de nascimentos ao longo do calendário anual</p>
+          <div class="h-64 relative">
+            <canvas #aniversariosCanvas></canvas>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ==================== 3. ABA: MOVIMENTAÇÃO DO ROL ==================== -->
+  @if (activeTab() === 'movements') {
+    @if (movementsData(); as mov) {
+      <div class="space-y-6">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-muted-color">Cartas de Transferência Recebidas</div>
+              <div class="text-2xl font-black text-emerald-600 mt-0.5">{{ mov.cartas.recebidas }}</div>
+            </div>
+            <i class="pi pi-sign-in text-2xl text-emerald-500/40"></i>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-muted-color">Cartas de Transferência Emitidas</div>
+              <div class="text-2xl font-black text-rose-600 mt-0.5">{{ mov.cartas.emitidas }}</div>
+            </div>
+            <i class="pi pi-sign-out text-2xl text-rose-500/40"></i>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+          <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-2">Evolução do Rol (Últimos 5 Anos)</h2>
+          <p class="text-xs text-muted-color mb-4">Comparativo anual de admissões, saídas e saldo líquido acumulado</p>
+          <div class="h-72 relative">
+            <canvas #evolucaoAnualCanvas></canvas>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Admissões por Mês em {{ mov.ano_selecionado }}</h2>
+            <div class="h-64 relative">
+              <canvas #admissoesMesCanvas></canvas>
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Tipos de Recepção Canônica</h2>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas #tiposRecepcaoCanvas></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ==================== 4. ABA: VIDA ECLESIÁSTICA ==================== -->
+  @if (activeTab() === 'ecclesiastical') {
+    @if (ecclesiasticalData(); as ecc) {
+      <div class="space-y-6">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Com Batismo Registrado</div>
+            <div class="text-2xl font-black text-sky-600 mt-1">{{ ecc.totais.com_batismo_registrado }}</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Com Profissão de Fé Registrada</div>
+            <div class="text-2xl font-black text-emerald-600 mt-1">{{ ecc.totais.com_profissao_registrada }}</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Casamentos Cadastrados</div>
+            <div class="text-2xl font-black text-amber-600 mt-1">{{ ecc.totais.com_data_casamento }}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-2">Tempo de Membresia na Igreja</h2>
+            <p class="text-xs text-muted-color mb-4">Distribuição de membros por tempo de permanência</p>
+            <div class="h-72 relative">
+              <canvas #tempoMembresiaCanvas></canvas>
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-2">Batismos vs Profissões de Fé</h2>
+            <p class="text-xs text-muted-color mb-4">Histórico sacramental dos últimos 5 anos</p>
+            <div class="h-72 relative">
+              <canvas #sacramentosCanvas></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ==================== 5. ABA: FAMÍLIAS & GEOGRAFIA ==================== -->
+  @if (activeTab() === 'families') {
+    @if (familiesGeoData(); as fam) {
+      <div class="space-y-6">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Famílias Cadastradas</div>
+            <div class="text-2xl font-black text-indigo-600 mt-1">{{ fam.total_familias }}</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Média de Integrantes</div>
+            <div class="text-2xl font-black text-emerald-600 mt-1">{{ fam.media_por_familia }} por família</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Pessoas com Vínculo Familiar</div>
+            <div class="text-2xl font-black text-purple-600 mt-1">{{ fam.total_pessoas_vinculadas }}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Composição por Tamanho da Família</h2>
+            <div class="h-72 relative flex items-center justify-center">
+              <canvas #tamanhosFamiliaCanvas></canvas>
+            </div>
+          </div>
+
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Concentração por Bairros (Top Bairros)</h2>
+            <div class="h-72 relative">
+              <canvas #topBairrosCanvas></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ==================== 6. ABA: ESCOLA DOMINICAL (EBD) ==================== -->
+  @if (activeTab() === 'ebd') {
+    @if (ebdData(); as ebd) {
+      <div class="space-y-6">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Encontros no Ano</div>
+            <div class="text-2xl font-black text-surface-900 dark:text-surface-0 mt-1">{{ ebd.total_encontros }} domingos</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Bíblias Registradas</div>
+            <div class="text-2xl font-black text-emerald-600 mt-1">{{ ebd.total_biblias }}</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Revistas Registradas</div>
+            <div class="text-2xl font-black text-sky-600 mt-1">{{ ebd.total_revistas }}</div>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+          <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-2">Evolução da Frequência Dominical em {{ ebd.ano }}</h2>
+          <p class="text-xs text-muted-color mb-4">Presença absoluta e taxa percentual média mensal</p>
+          <div class="h-72 relative">
+            <canvas #frequenciaMensalCanvas></canvas>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+          <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Taxa de Presença por Classe</h2>
+          <div class="h-64 relative">
+            <canvas #classesEbdCanvas></canvas>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ==================== 7. ABA: SOCIEDADES INTERNAS ==================== -->
+  @if (activeTab() === 'societies') {
+    @if (societiesData(); as soc) {
+      <div class="space-y-6">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Sociedades Ativas</div>
+            <div class="text-2xl font-black text-surface-900 dark:text-surface-0 mt-1">{{ soc.total_sociedades_ativas }}</div>
+          </div>
+          <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 text-center">
+            <div class="text-xs font-bold text-muted-color">Sócios Vinculados</div>
+            <div class="text-2xl font-black text-emerald-600 mt-1">{{ soc.total_vinculos }}</div>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+          <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-4">Sócios por Sociedade Interna (SAF, UPH, UMP, UPA, UCP)</h2>
+          <div class="h-64 relative">
+            <canvas #sociedadesCanvas></canvas>
+          </div>
+        </div>
+
+        <!-- Tabela detalhada das Sociedades -->
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+          <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 mb-3">Quadro das Sociedades</h2>
+          <p-table [value]="soc.sociedades" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Sigla</th>
+                <th>Nome Oficial</th>
+                <th>Sócios Ativos</th>
+                <th>Liderança com Cargo</th>
+                <th>Idade Média</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-s>
+              <tr>
+                <td class="font-black text-emerald-700 dark:text-emerald-400">{{ s.sigla }}</td>
+                <td class="font-bold text-surface-900 dark:text-surface-0">{{ s.nome }}</td>
+                <td>{{ s.total_membros }}</td>
+                <td>{{ s.com_cargo }}</td>
+                <td>{{ s.media_idade ? s.media_idade + ' anos' : '-' }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ==================== 8. ABA: QUALIDADE CADASTRAL ==================== -->
+  @if (activeTab() === 'members') {
+    <div class="space-y-6">
+      <!-- RESUMO RÁPIDO DO ROL -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">
+            👥
+          </div>
+          <div>
+            <span class="text-xs font-bold text-muted-color uppercase tracking-wider block">Total no Rol</span>
+            <span class="text-2xl font-black text-surface-900 dark:text-surface-0">{{ membersTotal() }}</span>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-lg">
+            ✨
+          </div>
+          <div>
+            <span class="text-xs font-bold text-muted-color uppercase tracking-wider block">Comungantes</span>
+            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+              {{ overviewData()?.kpis?.comungantes ?? '-' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-black text-lg">
+            🌱
+          </div>
+          <div>
+            <span class="text-xs font-bold text-muted-color uppercase tracking-wider block">Não Comungantes</span>
+            <span class="text-2xl font-black text-blue-600 dark:text-blue-400">
+              {{ overviewData()?.kpis?.nao_comungantes ?? '-' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-lg">
+            ⚖️
+          </div>
+          <div>
+            <span class="text-xs font-bold text-muted-color uppercase tracking-wider block">Sob Disciplina</span>
+            <span class="text-2xl font-black text-amber-600 dark:text-amber-400">
+              {{ overviewData()?.kpis?.sob_disciplina ?? '-' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center font-black text-lg">
+            📜
+          </div>
+          <div>
+            <span class="text-xs font-bold text-muted-color uppercase tracking-wider block">Famílias</span>
+            <span class="text-2xl font-black text-purple-600 dark:text-purple-400">
+              {{ overviewData()?.kpis?.total_familias ?? '-' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL DE CONTROLE E FILTROS DO ROL -->
+      <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center flex-wrap gap-2.5 flex-1">
+          <!-- Campo de Busca -->
+          <div class="relative w-full sm:w-72">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-muted-color text-xs"></i>
+            <input
+              type="text"
+              [ngModel]="memberSearchQuery()"
+              (ngModelChange)="memberSearchQuery.set($event); loadMembers()"
+              placeholder="Buscar por nome, ROL, CPF..."
+              class="w-full pl-8 pr-3 py-2 text-xs bg-surface-50 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 outline-none text-surface-900 dark:text-surface-0 focus:border-primary"
+            />
+          </div>
+
+          <!-- Filtro Status Canônico -->
+          <select
+            [ngModel]="memberCanonicalFilter()"
+            (ngModelChange)="memberCanonicalFilter.set($event); loadMembers()"
+            class="px-3 py-2 text-xs font-bold bg-surface-50 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 outline-none text-surface-800 dark:text-surface-200 cursor-pointer"
+          >
+            <option value="">Todos os Status Canônicos</option>
+            <option value="comungante">Comungante</option>
+            <option value="nao_comungante">Não Comungante</option>
+            <option value="sob_disciplina">Sob Disciplina</option>
+            <option value="inativo">Inativo</option>
+          </select>
+
+          <!-- Filtro Ativo/Inativo -->
+          <select
+            [ngModel]="memberActiveFilter()"
+            (ngModelChange)="memberActiveFilter.set($event); loadMembers()"
+            class="px-3 py-2 text-xs font-bold bg-surface-50 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 outline-none text-surface-800 dark:text-surface-200 cursor-pointer"
+          >
+            <option value="all">Todos os Cadastros</option>
+            <option value="active">Apenas Ativos</option>
+            <option value="inactive">Apenas Inativos</option>
+          </select>
+        </div>
+
+        <!-- Ações do Rol -->
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="exportMembersToExcel()"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+            title="Exportar dados filtrados para planilha Excel"
+          >
+            <i class="pi pi-file-excel text-sm"></i>
+            <span>Exportar Excel (.csv)</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="loadMembers()"
+            class="p-2 rounded-xl text-xs font-bold bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 transition-all cursor-pointer"
+            title="Recarregar membros"
+          >
+            <i class="pi pi-refresh" [class.pi-spin]="membersLoading()"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- TABELA OFICIAL DE MEMBROS DA CONGREGAÇÃO -->
+      <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl overflow-hidden shadow-sm">
+        <p-table
+          [value]="membersData()"
+          [loading]="membersLoading()"
+          [paginator]="true"
+          [rows]="15"
+          [rowsPerPageOptions]="[15, 30, 50, 100]"
+          responsiveLayout="scroll"
+          styleClass="p-datatable-sm"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 100px">Nº ROL</th>
+              <th>Nome Completo</th>
+              <th>Status Canônico</th>
+              <th>Situação</th>
+              <th>Idade / Nascimento</th>
+              <th>Contato</th>
+              <th>Admissão</th>
+              <th>Dizimista</th>
+              <th>Família & Sociedades</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-m>
+            <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition">
+              <!-- ROL -->
+              <td>
+                <span class="font-mono text-xs font-black px-2 py-1 bg-surface-100 dark:bg-surface-800 rounded-lg text-surface-800 dark:text-surface-200">
+                  {{ m.roll_number || 'S/N' }}
+                </span>
+              </td>
+
+              <!-- NOME -->
+              <td>
+                <div class="font-bold text-xs text-surface-900 dark:text-surface-0">
+                  {{ m.full_name }}
+                </div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  @if (m.can_teach) {
+                    <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      Professor EBD
+                    </span>
+                  }
+                  @if (m.can_superintend) {
+                    <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                      Superintendente
+                    </span>
+                  }
+                  @if (m.cpf) {
+                    <span class="text-[11px] text-muted-color">CPF: {{ m.cpf }}</span>
+                  }
+                </div>
+              </td>
+
+              <!-- STATUS CANÔNICO -->
+              <td>
+                @if (m.canonical_status === 'comungante') {
+                  <p-tag value="Comungante" severity="success" styleClass="text-[11px] font-bold"></p-tag>
+                } @else if (m.canonical_status === 'nao_comungante') {
+                  <p-tag value="Não Comungante" severity="info" styleClass="text-[11px] font-bold"></p-tag>
+                } @else if (m.canonical_status === 'sob_disciplina') {
+                  <p-tag value="Sob Disciplina" severity="danger" styleClass="text-[11px] font-bold"></p-tag>
+                } @else {
+                  <p-tag [value]="m.canonical_status || 'Outro'" severity="warn" styleClass="text-[11px] font-bold"></p-tag>
+                }
+              </td>
+
+              <!-- SITUAÇÃO -->
+              <td>
+                <span
+                  class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
+                  [ngClass]="m.is_active ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/15 text-rose-700 dark:text-rose-300'"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="m.is_active ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                  {{ m.is_active ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+
+              <!-- IDADE / NASCIMENTO -->
+              <td>
+                <div class="text-xs font-bold text-surface-800 dark:text-surface-200">
+                  {{ m.age ? m.age + ' anos' : 'Idade N/I' }}
+                </div>
+                <div class="text-[11px] text-muted-color">
+                  {{ m.birth_date ? (m.birth_date | date:'dd/MM/yyyy') : 'Sem data' }}
+                </div>
+              </td>
+
+              <!-- CONTATO -->
+              <td>
+                <div class="text-xs text-surface-800 dark:text-surface-200 font-medium">
+                  {{ m.phone || 'Sem telefone' }}
+                </div>
+                <div class="text-[11px] text-muted-color truncate max-w-[150px]">
+                  {{ m.email || 'Sem e-mail' }}
+                </div>
+              </td>
+
+              <!-- ADMISSÃO -->
+              <td>
+                <div class="text-xs font-semibold text-surface-800 dark:text-surface-200">
+                  {{ m.reception_date ? (m.reception_date | date:'dd/MM/yyyy') : 'Não reg.' }}
+                </div>
+                <div class="text-[11px] text-muted-color">
+                  {{ m.reception_type || 'Forma N/I' }}
+                </div>
+              </td>
+
+              <!-- DIZIMISTA -->
+              <td>
+                <span
+                  class="text-xs font-bold px-2 py-0.5 rounded-md"
+                  [ngClass]="m.is_tither ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' : 'text-muted-color'"
+                >
+                  {{ m.is_tither ? '✓ Sim' : 'Não' }}
+                </span>
+              </td>
+
+              <!-- FAMÍLIA & SOCIEDADES -->
+              <td>
+                <div class="text-xs font-bold text-surface-800 dark:text-surface-200">
+                  {{ m.families && m.families.length > 0 ? m.families[0].name : 'Sem família' }}
+                </div>
+                <div class="flex items-center gap-1 mt-0.5">
+                  @for (soc of m.sociedades; track soc) {
+                    <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300">
+                      {{ soc }}
+                    </span>
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="9" class="text-center p-8 text-muted-color text-xs">
+                Nenhum membro encontrado com os filtros selecionados.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== 9. ABA: QUALIDADE CADASTRAL ==================== -->
+  @if (activeTab() === 'quality') {
+    @if (dataQualityData(); as dq) {
+      <div class="space-y-6">
+        <!-- Card de Completude Geral -->
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-6 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-lg font-black text-surface-900 dark:text-surface-0 m-0">Índice Geral de Integridade Cadastral</h2>
+              <p class="text-xs text-muted-color mt-1 mb-0">Avaliação da consistência dos 6 atributos canônicos e documentais centrais</p>
+            </div>
+            <div class="text-3xl font-black" [ngClass]="dq.indice_completude >= 80 ? 'text-emerald-600' : 'text-amber-600'">
+              {{ dq.indice_completude }}%
+            </div>
+          </div>
+          <p-progressBar [value]="dq.indice_completude" [showValue]="false" styleClass="h-3 rounded-full"></p-progressBar>
+        </div>
+
+        <!-- Tabela de Diagnóstico da Secretaria -->
+        <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-bold text-surface-900 dark:text-surface-0 m-0">Diagnóstico de Campos Incompletos</h2>
+              <p class="text-xs text-muted-color mt-0.5 mb-0">Oportunidades de atualização para a Secretaria da Igreja</p>
+            </div>
+          </div>
+
+          <p-table [value]="dq.diagnostico" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Categoria</th>
+                <th>Inconsistência / Campo Ausente</th>
+                <th>Registros Pendentes</th>
+                <th>Percentual</th>
+                <th>Gravidade</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-d>
+              <tr>
+                <td class="font-bold text-surface-700 dark:text-surface-300">{{ d.categoria }}</td>
+                <td class="font-medium text-surface-900 dark:text-surface-0">{{ d.item }}</td>
+                <td class="font-black">{{ d.pendentes }}</td>
+                <td>{{ d.percentual }}%</td>
+                <td>
+                  <p-tag
+                    [value]="d.gravidade"
+                    [severity]="d.gravidade === 'Alta' ? 'danger' : d.gravidade === 'Média' ? 'warn' : 'info'"
+                  ></p-tag>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ========================================================================= -->
+  <!-- MODELO TIMBRADO OFICIAL DE RELATÓRIO EXECUTIVO DA CONGREGAÇÃO (PDF)       -->
+  <!-- Renderizado pelo PdfService com moldura A4 solene e cabeçalho da IPB      -->
+  <!-- ========================================================================= -->
+  <div id="relatorio-congregacao-pdf" style="display: none;">
+    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #0f172a; padding: 10px;">
+      <!-- CABEÇALHO OFICIAL IPB -->
+      <div style="text-align: center; border-bottom: 2px solid #064e3b; padding-bottom: 14px; margin-bottom: 18px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 18px; font-weight: 800; color: #064e3b; letter-spacing: 0.12em; text-transform: uppercase;">
+          Igreja Presbiteriana do Brasil
+        </div>
+        <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 4px; letter-spacing: 0.05em; text-transform: uppercase;">
+          Relatório Executivo, Demográfico e Canônico da Congregação
+        </div>
+        <div style="font-size: 11px; color: #475569; margin-top: 4px;">
+          Exercício de Referência: <strong>{{ selectedYear() }}</strong> •
+          Abrangência: <strong>{{ consolidated() ? 'Jurisdição Consolidada' : 'Congregação / Igreja Local' }}</strong> •
+          Emissão: <strong>{{ selectedYear() }}-10-16</strong>
+        </div>
+      </div>
+
+      <!-- CARDS EXECUTIVOS EM GRID -->
+      <div style="margin-bottom: 20px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+          1. Indicadores Vitais da Congregação
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px;">
+          <tr>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Total de Membros no Rol</div>
+              <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_membros ?? '-' }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Comungantes</div>
+              <div style="font-size: 18px; font-weight: 800; color: #059669; margin-top: 2px;">{{ overviewData()?.kpis?.comungantes ?? '-' }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Não Comungantes</div>
+              <div style="font-size: 18px; font-weight: 800; color: #0284c7; margin-top: 2px;">{{ overviewData()?.kpis?.nao_comungantes ?? '-' }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc; width: 25%;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Sob Disciplina</div>
+              <div style="font-size: 18px; font-weight: 800; color: #d97706; margin-top: 2px;">{{ overviewData()?.kpis?.sob_disciplina ?? '-' }}</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Famílias Vinculadas</div>
+              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_familias ?? '-' }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Alunos Matriculados EBD</div>
+              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_alunos_ebd ?? '-' }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Professores EBD</div>
+              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_professores ?? '-' }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Membros Dizimistas</div>
+              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ overviewData()?.kpis?.total_dizimistas ?? '-' }}</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Admissões no Ano</div>
+              <div style="font-size: 16px; font-weight: 700; color: #059669; margin-top: 2px;">+{{ overviewData()?.kpis?.admissoes_ano ?? 0 }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Exclusões / Saídas</div>
+              <div style="font-size: 16px; font-weight: 700; color: #dc2626; margin-top: 2px;">-{{ overviewData()?.kpis?.saidas_ano ?? 0 }}</div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Crescimento Líquido</div>
+              <div style="font-size: 16px; font-weight: 700; margin-top: 2px;" [style.color]="(overviewData()?.kpis?.crescimento_liquido ?? 0) >= 0 ? '#059669' : '#dc2626'">
+                {{ (overviewData()?.kpis?.crescimento_liquido ?? 0) > 0 ? '+' : '' }}{{ overviewData()?.kpis?.crescimento_liquido ?? 0 }}
+              </div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f8fafc;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Idade Média / Mediana</div>
+              <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">
+                {{ overviewData()?.kpis?.media_idade ?? '-' }} / {{ overviewData()?.kpis?.mediana_idade ?? '-' }} anos
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- QUADRO DEMOGRÁFICO E FAIXAS ETÁRIAS -->
+      <div style="margin-bottom: 20px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+          2. Perfil Etário e Distribuição por Sociedades Internas
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <thead>
+            <tr style="background: #064e3b; color: #ffffff;">
+              <th style="padding: 6px 10px; text-align: left; border: 1px solid #064e3b;">Segmento Eclesiástico / Faixa Etária</th>
+              <th style="padding: 6px 10px; text-align: center; border: 1px solid #064e3b;">Público Alvo</th>
+              <th style="padding: 6px 10px; text-align: right; border: 1px solid #064e3b;">Total Membros</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Crianças (0 a 11 anos)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">União de Crianças Presbiterianas (UCP)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.infantil ?? 0 }}</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Adolescentes (12 a 17 anos)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">União Presbiteriana de Adolescentes (UPA)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.adolescentes ?? 0 }}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Jovens (18 a 35 anos)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">União de Mocidade Presbiteriana (UMP)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.jovens ?? 0 }}</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Adultos (36 a 59 anos)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">Sociedade Auxiliadora Feminina (SAF) / UPH</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.adultos ?? 0 }}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600;">Melhor Idade (60 anos ou mais)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">Terceira Idade (UPI / SAF / UPH)</td>
+              <td style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">{{ overviewData()?.age_distribution?.melhor_idade ?? 0 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- QUADRO DE ESCOLA DOMINICAL & PARTICIPAÇÃO -->
+      <div style="margin-bottom: 25px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #064e3b; padding-left: 6px;">
+          3. Desempenho da Escola Bíblica Dominical (EBD)
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <tr>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Frequência Média Geral</div>
+              <div style="font-size: 16px; font-weight: 800; color: #059669; margin-top: 2px;">
+                {{ overviewData()?.kpis?.frequencia_ebd_media ?? 0 }}%
+              </div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Corpo Docente Ativo</div>
+              <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 2px;">
+                {{ overviewData()?.kpis?.total_professores ?? 0 }} Professores
+              </div>
+            </td>
+            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #ffffff; width: 33%;">
+              <div style="color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: 700;">Superintendência</div>
+              <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 2px;">
+                {{ overviewData()?.kpis?.total_superintendentes ?? 0 }} Oficiais
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- TERMO DE ENCERRAMENTO E ASSINATURAS DO CONSELHO -->
+      <div style="border-top: 1px solid #cbd5e1; padding-top: 24px; margin-top: 30px;">
+        <p style="font-size: 10px; color: #64748b; text-align: justify; line-height: 1.4; margin-bottom: 30px;">
+          Certifico que o presente Relatório Executivo e Demográfico foi extraído fidedignamente a partir do Rol de Membros, Atas do Conselho e livros de registros eclesiásticos da Igreja Presbiteriana do Brasil, em cumprimento às diretrizes constitucionais da denominação.
+        </p>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <tr>
+            <td style="width: 48%; text-align: center; vertical-align: bottom;">
+              <div style="border-top: 1.5px solid #0f172a; width: 85%; margin: 0 auto; padding-top: 6px;">
+                <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Pastor Titular / Presidente do Conselho</div>
+                <div style="font-size: 9px; color: #64748b;">Igreja Presbiteriana do Brasil</div>
+              </div>
+            </td>
+            <td style="width: 4%;"></td>
+            <td style="width: 48%; text-align: center; vertical-align: bottom;">
+              <div style="border-top: 1.5px solid #0f172a; width: 85%; margin: 0 auto; padding-top: 6px;">
+                <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Secretário(a) do Conselho</div>
+                <div style="font-size: 9px; color: #64748b;">Secretaria Eclesiástica</div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

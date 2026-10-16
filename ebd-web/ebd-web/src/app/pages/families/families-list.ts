@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -7,6 +8,9 @@ import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { AuthService } from '../../core/auth.service';
 import { FamiliesService } from '../../core/families.service';
 import { PeopleService } from '../../core/people.service';
@@ -16,7 +20,21 @@ type MemberDraft = Pick<FamilyMember, 'id' | 'full_name' | 'birth_date' | 'age' 
 
 @Component({
   selector: 'app-families-list',
-  imports: [FormsModule, ButtonModule, DialogModule, InputTextModule, TagModule, CheckboxModule, TextareaModule, MessageModule],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    DialogModule,
+    InputTextModule,
+    TagModule,
+    CheckboxModule,
+    TextareaModule,
+    MessageModule,
+    TooltipModule,
+    IconFieldModule,
+    InputIconModule,
+  ],
   templateUrl: './families-list.html',
 })
 export class FamiliesListPage implements OnInit {
@@ -37,10 +55,23 @@ export class FamiliesListPage implements OnInit {
   members = signal<MemberDraft[]>([]);
   canManage = computed(() => this.auth.can('family.manage'));
 
+  // Métricas de Núcleos Familiares
+  totalFamilias = computed(() => this.families().length);
+  totalPessoasVinculadas = computed(() =>
+    this.families().reduce((acc, f) => acc + (f.members_count || f.members?.length || 0), 0)
+  );
+  mediaPorFamilia = computed(() =>
+    this.totalFamilias() > 0 ? (this.totalPessoasVinculadas() / this.totalFamilias()).toFixed(1) : '0'
+  );
+  familiasAtivas = computed(() => this.families().filter((f) => f.is_active).length);
+
   relationships: { value: FamilyRelationship; label: string }[] = [
-    { value: 'responsavel', label: 'Responsável' }, { value: 'conjuge', label: 'Cônjuge' },
-    { value: 'filho', label: 'Filho' }, { value: 'filha', label: 'Filha' },
-    { value: 'dependente', label: 'Dependente' }, { value: 'outro', label: 'Outro' },
+    { value: 'responsavel', label: 'Responsável' },
+    { value: 'conjuge', label: 'Cônjuge' },
+    { value: 'filho', label: 'Filho' },
+    { value: 'filha', label: 'Filha' },
+    { value: 'dependente', label: 'Dependente' },
+    { value: 'outro', label: 'Outro' },
   ];
 
   async ngOnInit() { await Promise.all([this.load(), this.loadPeople()]); }
@@ -100,5 +131,36 @@ export class FamiliesListPage implements OnInit {
 
   address(family: Family): string {
     return [family.street, family.number, family.district, family.city, family.state].filter(Boolean).join(', ');
+  }
+
+  abrirWhatsApp(telefone?: string | null) {
+    if (!telefone) return;
+    const clean = telefone.replace(/\D/g, '');
+    const num = clean.length <= 11 ? '55' + clean : clean;
+    window.open(`https://wa.me/${num}`, '_blank');
+  }
+
+  getRelationshipSeverity(relationship?: string, isHead?: boolean): 'success' | 'info' | 'warn' | 'secondary' | 'contrast' {
+    if (isHead) return 'success';
+    switch (relationship) {
+      case 'conjuge': return 'info';
+      case 'filho':
+      case 'filha': return 'warn';
+      case 'responsavel': return 'success';
+      default: return 'secondary';
+    }
+  }
+
+  getRelationshipLabel(relationship?: string, isHead?: boolean): string {
+    if (isHead) return 'Responsável';
+    switch (relationship) {
+      case 'conjuge': return 'Cônjuge';
+      case 'filho': return 'Filho';
+      case 'filha': return 'Filha';
+      case 'dependente': return 'Dependente';
+      case 'responsavel': return 'Responsável';
+      case 'outro': return 'Outro';
+      default: return relationship || 'Membro';
+    }
   }
 }

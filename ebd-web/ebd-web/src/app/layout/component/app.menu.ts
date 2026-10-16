@@ -175,6 +175,15 @@ export class AppMenu implements OnInit {
                 visible: this.can('person.view'),
                 keywords: ['inicio', 'home', 'painel', 'resumo', 'indicadores', 'metricas', 'live', 'ebd'],
             },
+            {
+                label: 'Dashboards e Informações da Congregação',
+                icon: 'pi pi-fw pi-chart-bar',
+                routerLink: ['/inteligencia'],
+                visible: this.can('person.view'),
+                badge: 'NOVO',
+                badgeClass: 'badge-info',
+                keywords: ['dashboard', 'congregacao', 'informacoes', 'membros', 'inteligencia', 'indicadores', 'demografia', 'estatisticas', 'graficos', 'rol'],
+            },
 
             // 2. Educação Cristã (Categoria sanfona / accordion)
             {
@@ -245,11 +254,11 @@ export class AppMenu implements OnInit {
                         keywords: ['membros', 'pessoas', 'contatos', 'cadastro', 'telefones', 'enderecos'],
                     },
                     {
-                        label: 'Famílias',
-                        icon: 'pi pi-fw pi-heart',
+                        label: 'Núcleos Familiares',
+                        icon: 'pi pi-fw pi-users',
                         routerLink: ['/familias'],
                         visible: this.isScreenVisible('familias', 'family.view'),
-                        keywords: ['familias', 'lares', 'casais', 'filhos', 'parentesco'],
+                        keywords: ['familias', 'nucleos familiares', 'lares', 'casais', 'filhos', 'parentesco'],
                     },
                     {
                         label: 'Rol de Membros',

@@ -16,6 +16,7 @@ import 'login_screen.dart';
 import 'secretaria/boletim_screen.dart';
 import 'secretaria/pessoas_screen.dart';
 import 'secretaria/rol_membros_screen.dart';
+import 'intelligence_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -380,6 +381,21 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
               children: [
+                _buildKpiCard(
+                  label: 'INTELIGÊNCIA',
+                  value: 'IPB',
+                  valueExtra: 'Analytics',
+                  subtext: 'Central de Indicadores',
+                  icon: Icons.analytics_rounded,
+                  color: const Color(0xFF047857),
+                  lightColor: const Color(0xFFECFDF5),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const IntelligenceScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(width: 10),
                 if (ApiService.instance.isScreenEnabled('dizimos')) ...[
                   _buildKpiCard(
                     label: 'ÚLTIMO CULTO',

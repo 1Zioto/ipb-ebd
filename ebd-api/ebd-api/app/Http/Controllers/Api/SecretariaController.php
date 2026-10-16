@@ -32,7 +32,7 @@ class SecretariaController extends Controller
             });
         }
 
-        $perPage = (int) $request->query('per_page', 20);
+        $perPage = min((int) $request->query('per_page', 20), 1000);
         $membros = $query->orderBy('full_name')->paginate($perPage);
 
         $statsBase = $this->peopleForCurrentInstitution($request);
@@ -65,6 +65,8 @@ class SecretariaController extends Controller
         $this->ensureCurrentInstitution($request, $person->institution_id);
         $validated = $request->validate([
             'canonical_status' => 'required|string|in:comungante,nao_comungante,sob_disciplina,jurisdicao_especial,falecido',
+            'full_name' => 'nullable|string|max:150',
+            'birth_date' => 'nullable|date',
             'roll_number' => 'nullable|string|max:50',
             'reception_type' => 'nullable|string|max:60',
             'reception_date' => 'nullable|date',

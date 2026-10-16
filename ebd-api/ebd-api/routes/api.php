@@ -37,6 +37,7 @@ use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SociedadesController;
 use App\Http\Controllers\Api\ScreenConfigController;
 use App\Http\Controllers\Api\SystemAdminController;
+use App\Http\Controllers\Api\EcclesiasticalIntelligenceController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -52,6 +53,20 @@ Route::prefix('v1')->group(function () {
 
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+
+        // ---- 📊 Dashboards e Informações da Congregação ----
+        Route::prefix('intelligence')->group(function () {
+            Route::get('overview', [EcclesiasticalIntelligenceController::class, 'overview']);
+            Route::get('demographics', [EcclesiasticalIntelligenceController::class, 'demographics']);
+            Route::get('movements', [EcclesiasticalIntelligenceController::class, 'movements']);
+            Route::get('ecclesiastical-life', [EcclesiasticalIntelligenceController::class, 'ecclesiasticalLife']);
+            Route::get('families-geo', [EcclesiasticalIntelligenceController::class, 'familiesGeo']);
+            Route::get('ebd-analytics', [EcclesiasticalIntelligenceController::class, 'ebdAnalytics']);
+            Route::get('societies-analytics', [EcclesiasticalIntelligenceController::class, 'societiesAnalytics']);
+            Route::get('data-quality', [EcclesiasticalIntelligenceController::class, 'dataQuality']);
+            Route::get('members-list', [EcclesiasticalIntelligenceController::class, 'membersList']);
+            Route::get('export-members', [EcclesiasticalIntelligenceController::class, 'exportMembers']);
+        });
 
         // ---- Sincronização e Auditoria de Lotes Offline de Coletas (Dízimos & Ofertas) ----
         Route::prefix('dizimos/conferencias')->group(function () {
@@ -296,6 +311,7 @@ Route::prefix('v1')->group(function () {
             Route::post('{sociedade}/atividades', [SociedadesController::class, 'storeAtividade']);
 
             // Membros / Rol de Sócios
+            Route::get('{sociedade}/candidatos-arrolamento', [SociedadesController::class, 'candidatosArrolamento']);
             Route::get('{sociedade}/membros', [SociedadesController::class, 'getMembros']);
             Route::post('{sociedade}/membros', [SociedadesController::class, 'storeMembro']);
             Route::post('{sociedade}/membros/em-lote', [SociedadesController::class, 'arrolarEmLote']);
