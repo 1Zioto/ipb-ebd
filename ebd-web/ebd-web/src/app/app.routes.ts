@@ -14,6 +14,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {
         path: 'dashboard',
+        canActivate: [screenGuard('dashboard')],
         loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.EbdDashboardPage),
       },
       // ---- PAINEL SUPER ADMIN (LIBERAÇÃO DE TELAS & TODAS AS IGREJAS) ----
@@ -75,6 +76,7 @@ export const routes: Routes = [
       },
       {
         path: 'inteligencia',
+        canActivate: [screenGuard('inteligencia')],
         loadComponent: () => import('./pages/intelligence/intelligence').then((m) => m.IntelligencePage),
       },
       {

@@ -61,6 +61,24 @@ export interface ScreenModuleDef {
 
 export const SYSTEM_SCREENS: ScreenModuleDef[] = [
   {
+    key: 'dashboard',
+    label: 'Tela de Boas-vindas',
+    icon: 'pi pi-home',
+    group: 'Visão Geral',
+    description: 'Página inicial com boas-vindas, resumo do dia, versículo e atalhos operacionais rápidos.',
+    route: '/dashboard',
+    defaultEnabled: true,
+  },
+  {
+    key: 'inteligencia',
+    label: 'Dashboards e Informações da Congregação',
+    icon: 'pi pi-chart-bar',
+    group: 'Visão Geral',
+    description: 'Painel executivo, demográfico, pastoral, estatísticas vitais, gráficos analíticos e exportação da membresia.',
+    route: '/inteligencia',
+    defaultEnabled: true,
+  },
+  {
     key: 'sociedades',
     label: 'Sociedades Internas (SAF, UPH, UMP, UPA, UCP)',
     icon: 'pi pi-id-card',

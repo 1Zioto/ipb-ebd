@@ -167,19 +167,19 @@ export class AppMenu implements OnInit {
         const pendingOS = this.pendingIndicators.getPendingOS();
 
         const rawStructure: AppMenuItemConfig[] = [
-            // 1. Dashboard (Item direto na raiz, sem cabeçalho duplicado)
+            // 1. Visão Geral (Itens diretos na raiz, configuráveis pelo Super Admin)
             {
-                label: 'Dashboard',
+                label: 'Tela de Boas-vindas',
                 icon: 'pi pi-fw pi-home',
                 routerLink: ['/dashboard'],
-                visible: this.can('person.view'),
-                keywords: ['inicio', 'home', 'painel', 'resumo', 'indicadores', 'metricas', 'live', 'ebd'],
+                visible: this.isScreenVisible('dashboard', 'person.view'),
+                keywords: ['inicio', 'home', 'painel', 'resumo', 'indicadores', 'metricas', 'live', 'ebd', 'boas vindas', 'tela de boas vindas'],
             },
             {
                 label: 'Dashboards e Informações da Congregação',
                 icon: 'pi pi-fw pi-chart-bar',
                 routerLink: ['/inteligencia'],
-                visible: this.can('person.view'),
+                visible: this.isScreenVisible('inteligencia', 'person.view'),
                 badge: 'NOVO',
                 badgeClass: 'badge-info',
                 keywords: ['dashboard', 'congregacao', 'informacoes', 'membros', 'inteligencia', 'indicadores', 'demografia', 'estatisticas', 'graficos', 'rol'],
