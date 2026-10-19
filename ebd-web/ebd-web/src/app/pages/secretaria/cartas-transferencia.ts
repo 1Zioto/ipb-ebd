@@ -8,7 +8,8 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { SecretariaService, CartaTransferencia, CanonicalMember } from '../../core/secretaria.service';
+import { SecretariaService, CartaTransferencia, MembroRol } from '../../core/secretaria.service';
+import { PdfService } from '../../core/pdf.service';
 
 @Component({
   selector: 'app-cartas-transferencia',
@@ -29,9 +30,10 @@ import { SecretariaService, CartaTransferencia, CanonicalMember } from '../../co
 export class CartasTransferenciaPage implements OnInit {
   private secService = inject(SecretariaService);
   private msg = inject(MessageService);
+  private pdfSvc = inject(PdfService);
 
   cartas = signal<CartaTransferencia[]>([]);
-  membros = signal<CanonicalMember[]>([]);
+  membros = signal<MembroRol[]>([]);
   loading = signal<boolean>(true);
 
   tipoFilter = '';
@@ -137,6 +139,11 @@ export class CartasTransferenciaPage implements OnInit {
   }
 
   imprimir(): void {
-    window.print();
+    const num = (this.selectedCarta?.numero_carta || 'carta').replace(/[^a-zA-Z0-9-]/g, '_');
+    this.pdfSvc.gerarPdfEmNovaAba(
+      'cartaTransferenciaSheet',
+      `carta-transferencia-${num.toLowerCase()}`,
+      `Carta de Transferência Nº ${this.selectedCarta?.numero_carta || ''} — IPB`
+    );
   }
 }

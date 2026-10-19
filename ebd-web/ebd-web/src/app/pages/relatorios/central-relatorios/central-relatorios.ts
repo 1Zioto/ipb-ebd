@@ -13,6 +13,7 @@ import { MessageService } from 'primeng/api';
 import { FALLBACK_MEMBERS_LIST } from '../../../core/members-fallback.data';
 import { CongregationMember } from '../../../core/intelligence.service';
 import { ModelosCartasService } from '../../../core/modelos-cartas.service';
+import { PdfService } from '../../../core/pdf.service';
 
 export type ReportTabType = 'aniversariantes' | 'demografico' | 'financeiro' | 'patrimonio' | 'membros' | 'ebd';
 
@@ -55,6 +56,7 @@ export class CentralRelatoriosPage implements OnInit {
   private router = inject(Router);
   private msg = inject(MessageService);
   private letterheadService = inject(ModelosCartasService);
+  private pdfSvc = inject(PdfService);
 
   readonly churchConfig = this.letterheadService.config;
 
@@ -324,10 +326,21 @@ export class CentralRelatoriosPage implements OnInit {
     window.open(url, '_blank');
   }
 
-  // Imprimir relatório corrente
+  // Emissão do relatório timbrado oficial em folha A4 com PdfService
   imprimirRelatorio(titulo: string): void {
     this.printReportTitle.set(titulo);
-    window.print();
+    setTimeout(() => {
+      const slug = titulo
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '-');
+      this.pdfSvc.gerarPdfEmNovaAba(
+        'central-relatorios-print-sheet',
+        `relatorio-${slug}`,
+        `${titulo} — IPB`
+      );
+    }, 120);
   }
 
   // Voltar para o painel principal

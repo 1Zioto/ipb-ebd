@@ -8,14 +8,14 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { SecretariaService, CanonicalMember, CanonicalStats, FichaMinisterial } from '../../core/secretaria.service';
+import { SecretariaService, MembroRol, RolMembrosStats, FichaMinisterial } from '../../core/secretaria.service';
 import { PastorInfo } from '../../core/models';
 import { PdfService } from '../../core/pdf.service';
 
 import { StatCardComponent } from '../../shared/components/stat-card';
 
 @Component({
-  selector: 'app-membros-canonico',
+  selector: 'app-membros-rol',
   standalone: true,
   imports: [
     CommonModule,
@@ -31,13 +31,13 @@ import { StatCardComponent } from '../../shared/components/stat-card';
   providers: [MessageService],
   templateUrl: './membros-canonico.html',
 })
-export class MembrosCanonicoPage implements OnInit {
+export class MembrosRolPage implements OnInit {
   private secService = inject(SecretariaService);
   private msg = inject(MessageService);
   private pdfSvc = inject(PdfService);
 
-  membros = signal<CanonicalMember[]>([]);
-  stats = signal<CanonicalStats>({
+  membros = signal<MembroRol[]>([]);
+  stats = signal<RolMembrosStats>({
     total: 0,
     comungantes: 0,
     nao_comungantes: 0,
@@ -62,7 +62,7 @@ export class MembrosCanonicoPage implements OnInit {
 
   // Modal Edição de Membro
   editDialog = false;
-  selectedMembro: Partial<CanonicalMember> = {};
+  selectedMembro: Partial<MembroRol> = {};
 
   // Modal Ficha Ministerial
   fichaDialog = false;
@@ -104,7 +104,7 @@ export class MembrosCanonicoPage implements OnInit {
     this.carregarMembros();
   }
 
-  abrirEdicao(membro: CanonicalMember): void {
+  abrirEdicao(membro: MembroRol): void {
     this.selectedMembro = { ...membro };
     this.editDialog = true;
   }
@@ -131,7 +131,7 @@ export class MembrosCanonicoPage implements OnInit {
     });
   }
 
-  abrirFichaMinisterial(membro: CanonicalMember): void {
+  abrirFichaMinisterial(membro: MembroRol): void {
     this.fichaDialog = true;
     this.fichaLoading.set(true);
     this.secService.getFichaMinisterial(membro.id, this.selectedPastorId() || undefined).subscribe({
@@ -239,3 +239,9 @@ export class MembrosCanonicoPage implements OnInit {
     }
   }
 }
+
+/**
+ * Exportação de compatibilidade: MembrosCanonicoPage -> MembrosRolPage
+ */
+export { MembrosRolPage as MembrosCanonicoPage };
+

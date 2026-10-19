@@ -4,7 +4,10 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PastorInfo } from './models';
 
-export interface CanonicalStats {
+/**
+ * Estatísticas oficiais do Rol de Membros (Manual Presbiteriano da IPB).
+ */
+export interface RolMembrosStats {
   total: number;
   comungantes: number;
   nao_comungantes: number;
@@ -12,8 +15,12 @@ export interface CanonicalStats {
   jurisdicao_especial: number;
   falecidos: number;
 }
+export type CanonicalStats = RolMembrosStats;
 
-export interface CanonicalMember {
+/**
+ * Registro individual no Rol de Membros da Igreja Presbiteriana do Brasil.
+ */
+export interface MembroRol {
   id: number;
   full_name: string;
   birth_date?: string;
@@ -28,6 +35,7 @@ export interface CanonicalMember {
   is_tither?: boolean;
   envelope_number?: string;
   canonical_status: 'comungante' | 'nao_comungante' | 'sob_disciplina' | 'jurisdicao_especial' | 'falecido';
+  condicao_eclesiastica?: 'comungante' | 'nao_comungante' | 'sob_disciplina' | 'jurisdicao_especial' | 'falecido';
   roll_number?: string;
   reception_type?: string;
   reception_date?: string;
@@ -41,6 +49,7 @@ export interface CanonicalMember {
   notes?: string;
   families?: { id: number; name: string }[];
 }
+export type CanonicalMember = MembroRol;
 
 export interface EstatisticaPresbiterio {
   ano: number;

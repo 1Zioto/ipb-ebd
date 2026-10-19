@@ -146,7 +146,7 @@ export interface ParecerExameContas {
 @Injectable({
   providedIn: 'root',
 })
-export class CanonicExtraService {
+export class EclesiasticoExtraService {
   private http = inject(HttpClient);
   private api = environment.apiUrl;
 
@@ -294,3 +294,9 @@ export class CanonicExtraService {
     return this.http.put<ParecerExameContas>(`${this.api}/exame-contas/pareceres/${id}`, data);
   }
 }
+
+/**
+ * Alias retrocompatível: CanonicExtraService -> EclesiasticoExtraService
+ */
+export { EclesiasticoExtraService as CanonicExtraService };
+

@@ -406,10 +406,10 @@
         <button
           pButton
           type="button"
-          icon="pi pi-print"
-          label="Imprimir / Gerar PDF"
-          class="p-button-sm p-button-primary"
-          (click)="openPreview(); imprimirDocumento()"
+          icon="pi pi-file-pdf"
+          label="Gerar PDF Oficial"
+          class="p-button-sm p-button-success"
+          (click)="gerarPdfOficial()"
         ></button>
       </div>
     </div>
@@ -433,12 +433,13 @@
     </div>
     <div class="flex items-center gap-2">
       <button pButton icon="pi pi-copy" label="Copiar Texto" class="p-button-outlined p-button-sm" (click)="copiarTexto()"></button>
-      <button pButton icon="pi pi-print" label="Imprimir / Gerar PDF" class="p-button-sm p-button-primary" (click)="imprimirDocumento()"></button>
+      <button pButton icon="pi pi-file-pdf" label="Visualizar / Baixar PDF" class="p-button-sm p-button-success" (click)="gerarPdfOficial()"></button>
+      <button pButton icon="pi pi-print" label="Imprimir" class="p-button-sm p-button-primary" (click)="imprimirDocumento()"></button>
     </div>
   </div>
 
   <!-- FOLHA A4 TIMBRADA OFICIAL -->
-  <div class="sheet-a4-preview">
+  <div class="sheet-a4-preview" id="sheet-a4-preview-content">
     <!-- Cabeçalho Oficial IPB com Sarça Ardente -->
     <div class="letterhead-header">
       <!-- Símbolo da Sarça Ardente em SVG Vetorial Nítido -->

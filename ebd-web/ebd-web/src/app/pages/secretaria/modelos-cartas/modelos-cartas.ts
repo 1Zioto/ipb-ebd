@@ -20,6 +20,7 @@ import {
 } from '../../../core/modelos-cartas.service';
 import { FALLBACK_MEMBERS_LIST } from '../../../core/members-fallback.data';
 import { CongregationMember } from '../../../core/intelligence.service';
+import { PdfService } from '../../../core/pdf.service';
 
 @Component({
   selector: 'app-modelos-cartas',
@@ -44,6 +45,7 @@ export class ModelosCartasPage implements OnInit {
   private service = inject(ModelosCartasService);
   private msg = inject(MessageService);
   private router = inject(Router);
+  private pdfSvc = inject(PdfService);
 
   // Lista dos 10 modelos disponíveis
   readonly models = this.service.availableModels;
@@ -247,10 +249,31 @@ export class ModelosCartasPage implements OnInit {
     this.previewDialog.set(true);
   }
 
-  // Imprimir diretamente
-  imprimirDocumento(): void {
+  // Emissão de PDF oficial em nova aba via PdfService (folha A4 timbrada de alta definição)
+  gerarPdfOficial(): void {
     this.salvarRegistroHistorico(false);
-    window.print();
+    const model = this.selectedModel();
+    const titulo = model?.title || 'Documento Oficial';
+    const codigo = (this.formDocumentNumber() || 'doc').replace(/[^a-zA-Z0-9-]/g, '_');
+
+    this.regenerateBodyText();
+
+    if (!this.previewDialog()) {
+      this.previewDialog.set(true);
+    }
+
+    setTimeout(() => {
+      this.pdfSvc.gerarPdfEmNovaAba(
+        'sheet-a4-preview-content',
+        `chancelaria-ipb-${codigo.toLowerCase()}`,
+        `${titulo} — Chancelaria IPB`
+      );
+    }, 150);
+  }
+
+  // Imprimir diretamente (abre o visualizador solene com disparo de impressão nativa)
+  imprimirDocumento(): void {
+    this.gerarPdfOficial();
   }
 
   // Copiar texto para o clipboard

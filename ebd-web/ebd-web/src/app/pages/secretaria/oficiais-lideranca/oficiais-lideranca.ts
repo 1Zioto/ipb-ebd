@@ -11,8 +11,9 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
-import { SecretariaService, CanonicalMember } from '../../../core/secretaria.service';
+import { SecretariaService, MembroRol } from '../../../core/secretaria.service';
 import { AuthService } from '../../../core/auth.service';
+import { PdfService } from '../../../core/pdf.service';
 
 export interface TeamMember {
   name: string;
@@ -93,15 +94,16 @@ export interface ProfessorItem {
 export class OficiaisLiderancaPage implements OnInit {
   private secService = inject(SecretariaService);
   private msg = inject(MessageService);
+  private pdfSvc = inject(PdfService);
   auth = inject(AuthService);
 
   activeTab: 'secretarias' | 'sociedades' | 'oficiais' | 'professores' = 'secretarias';
   loading = signal<boolean>(false);
 
   // --- MEMBROS REGISTRADOS NA IGREJA (PARA BUSCA AUTOMÁTICA) ---
-  membrosCadastrados = signal<CanonicalMember[]>([]);
+  membrosCadastrados = signal<MembroRol[]>([]);
   searchMemberQuery = '';
-  selectedMember: CanonicalMember | null = null;
+  selectedMember: MembroRol | null = null;
   memberRole = '';
   memberPhone = '';
 
@@ -425,7 +427,7 @@ export class OficiaisLiderancaPage implements OnInit {
     this.manageTeamDialog = true;
   }
 
-  selectMemberForTeam(m: CanonicalMember): void {
+  selectMemberForTeam(m: MembroRol): void {
     this.selectedMember = m;
     this.searchMemberQuery = `${m.full_name} (ROL nº ${m.roll_number || 'S/N'})`;
     this.memberPhone = m.phone || '';
@@ -613,8 +615,16 @@ export class OficiaisLiderancaPage implements OnInit {
     return roles;
   }
 
+  // Emissão de PDF oficial da Ficha Cadastral do Membro/Oficial
   imprimirFicha(): void {
-    window.print();
+    const nome = this.selectedFichaMember?.full_name
+      ? this.selectedFichaMember.full_name.trim().toLowerCase().replace(/\s+/g, '-')
+      : 'membro-oficial';
+    this.pdfSvc.gerarPdfEmNovaAba(
+      'fichaCadastralSheet',
+      `ficha-cadastral-${nome}`,
+      `Ficha Cadastral Oficial — ${this.selectedFichaMember?.full_name || 'IPB'}`
+    );
   }
 
   // --- DETALHES DE SOCIEDADE ---
