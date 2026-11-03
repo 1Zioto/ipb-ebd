@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../core/api_service.dart';
 import '../models/models.dart';
 import '../widgets/app_drawer.dart';
@@ -17,6 +17,9 @@ import 'secretaria/boletim_screen.dart';
 import 'secretaria/pessoas_screen.dart';
 import 'secretaria/rol_membros_screen.dart';
 import 'intelligence_screen.dart';
+import '../core/context_controller.dart';
+import '../core/theme_controller.dart';
+import 'personal/personal_shell_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -165,7 +168,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Igreja Presbiteriana',
+                    'Concilia-IPB',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -188,6 +191,31 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Alternar Tema',
+            icon: Icon(ThemeController.instance.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+            onPressed: () => ThemeController.instance.toggleTheme(),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ActionChip(
+              backgroundColor: const Color(0xFFEFF6FF),
+              side: const BorderSide(color: Color(0xFFBFDBFE)),
+              avatar: const Icon(Icons.person_rounded, size: 16, color: Color(0xFF2563EB)),
+              label: const Text(
+                'Área Pessoal',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF1E40AF)),
+              ),
+              onPressed: () async {
+                await ContextController.instance.switchContext('personal');
+                if (!context.mounted) return;
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const PersonalShellScreen()),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 4),
           // Botão Logout
           IconButton(
             tooltip: 'Sair',
@@ -428,7 +456,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 if (ApiService.instance.isScreenEnabled('pessoas') || ApiService.instance.isScreenEnabled('membros')) ...[
                   _buildKpiCard(
                     label: 'ROL MEMBROS',
-                    value: '${_members.isNotEmpty ? _members.length : 342}',
+                    value: '${_members.isNotEmpty ? _members.length : 76}',
                     valueExtra: 'ativos',
                     subtext: 'Rol de Membros Atualizado',
                     icon: Icons.people_alt_rounded,
@@ -436,7 +464,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     lightColor: const Color(0xFFF5F3FF),
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const PessoasScreen()),
+                        MaterialPageRoute(builder: (_) => const RolMembrosScreen()),
                       );
                     },
                   ),
@@ -534,7 +562,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     iconColor: const Color(0xFF7C3AED),
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const PessoasScreen()),
+                        MaterialPageRoute(builder: (_) => const RolMembrosScreen()),
                       );
                     },
                   ),
@@ -1248,7 +1276,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 label: 'Membros',
               ),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PessoasScreen()),
+                MaterialPageRoute(builder: (_) => const RolMembrosScreen()),
               ),
             ),
           _NavDestinationItem(

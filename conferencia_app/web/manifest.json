@@ -1,11 +1,11 @@
-{
-    "name": "ipb_conferencia",
-    "short_name": "ipb_conferencia",
+﻿{
+    "name": "Concilia-IPB",
+    "short_name": "Concilia-IPB",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Concilia-IPB - Gestão Eclesiástica e EBD da Igreja Presbiteriana do Brasil",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

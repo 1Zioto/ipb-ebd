@@ -5,6 +5,14 @@
   "framework": "angular",
   "rewrites": [
     {
+      "source": "/mobile",
+      "destination": "/mobile/index.html"
+    },
+    {
+      "source": "/mobile/:path((?!.*\\.).*)",
+      "destination": "/mobile/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

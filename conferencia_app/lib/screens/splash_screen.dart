@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'main_menu_screen.dart';
 
 class SplashScreen extends StatefulWidget {

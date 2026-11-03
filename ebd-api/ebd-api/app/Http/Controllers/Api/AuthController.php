@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\AuditLog;
 use App\Models\Institution;
@@ -11,6 +10,7 @@ use App\Models\InstitutionHistory;
 use App\Models\InstitutionLinkRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserDevice;
 use App\Support\Audit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,7 +25,11 @@ class AuthController extends Controller
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
+            'device_name' => 'nullable|string|max:120',
+            'platform' => 'nullable|string|max:50',
+            'client_version' => 'nullable|string|max:30',
         ]);
+
         try {
             $login = $request->username;
             $user = User::where('username', $login)->orWhere('email', $login)->first();
@@ -43,9 +47,27 @@ class AuthController extends Controller
             }
 
             $user->forceFill(['last_login_at' => now()])->save();
-            $user->load('roles.permissions');
+            $user->load('roles.permissions', 'institution', 'person');
 
             $token = $user->createToken('api')->plainTextToken;
+            $tokenId = $user->tokens()->latest('id')->first()?->id;
+
+            // Registra ou atualiza o dispositivo da sessão
+            try {
+                UserDevice::create([
+                    'user_id' => $user->id,
+                    'token_id' => $tokenId,
+                    'device_name' => $request->device_name ?? 'Navegador Web / Dispositivo',
+                    'platform' => $request->platform ?? 'web',
+                    'client_version' => $request->client_version ?? '1.1.3',
+                    'ip_address' => $request->ip(),
+                    'user_agent' => substr((string) $request->userAgent(), 0, 255),
+                    'last_active_at' => now(),
+                    'is_revoked' => false,
+                ]);
+            } catch (\Throwable $e) {
+                // ignora falha em registro de dispositivo secundário
+            }
 
             try {
                 AuditLog::create([
@@ -84,74 +106,80 @@ class AuthController extends Controller
             'state' => 'nullable|string|max:50',
             'superior_code' => 'nullable|string|max:30',
             'admin_name' => 'required|string|max:150',
+            'admin_email' => 'required|email|max:150|unique:users,email',
             'admin_username' => 'required|string|max:50|unique:users,username',
-            'admin_email' => 'nullable|email|max:180',
-            'password' => 'required|string|min:6',
+            'admin_password' => 'required|string|min:6',
         ]);
 
         try {
             return DB::transaction(function () use ($validated, $request) {
-                $type = $validated['type'] ?? 'igreja';
+                $type = $validated['type'] ?? 'igreja_local';
 
-                // 1. Criar a nova instituição
+                $parentInstitution = null;
+                if (! empty($validated['superior_code'])) {
+                    $parentInstitution = Institution::where('code', $validated['superior_code'])->first();
+                }
+
                 $institution = Institution::create([
                     'name' => $validated['church_name'],
                     'short_name' => $validated['short_name'],
                     'type' => $type,
-                    'status' => 'ativa',
                     'city' => $validated['city'] ?? null,
                     'state' => $validated['state'] ?? null,
+                    'parent_institution_id' => $parentInstitution?->id,
+                    'status' => 'active',
                 ]);
 
-                // 2. Se informou código de instituição superior, solicitar vínculo
-                if (! empty($validated['superior_code'])) {
-                    $superior = Institution::where('code', strtoupper(trim($validated['superior_code'])))->first();
-                    if ($superior && $superior->id !== $institution->id) {
-                        InstitutionLinkRequest::create([
-                            'requester_institution_id' => $institution->id,
-                            'target_institution_id' => $superior->id,
-                            'type' => 'vinculo_superior',
-                            'status' => 'pendente',
-                            'reason' => 'Solicitação de vínculo enviada durante o cadastro da igreja.',
-                        ]);
-                    }
+                if ($parentInstitution) {
+                    InstitutionHistory::create([
+                        'institution_id' => $institution->id,
+                        'event_type' => 'criacao',
+                        'description' => "Cadastrada com vínculo superior à instituição [{$parentInstitution->name}]",
+                        'registered_by' => 'Auto-registro',
+                    ]);
+
+                    InstitutionLinkRequest::create([
+                        'requester_institution_id' => $institution->id,
+                        'target_institution_id' => $parentInstitution->id,
+                        'status' => 'pending',
+                        'message' => 'Solicitação automática gerada no cadastro da igreja/congregação.',
+                    ]);
+                } else {
+                    InstitutionHistory::create([
+                        'institution_id' => $institution->id,
+                        'event_type' => 'criacao',
+                        'description' => 'Cadastrada no sistema de forma autônoma.',
+                        'registered_by' => 'Auto-registro',
+                    ]);
                 }
 
-                // 3. Criar usuário administrador para a igreja
+                $adminRole = Role::firstOrCreate(
+                    ['slug' => 'admin'],
+                    ['name' => 'Administrador Geral', 'description' => 'Acesso total']
+                );
+
                 $user = User::create([
                     'name' => $validated['admin_name'],
+                    'email' => $validated['admin_email'],
                     'username' => $validated['admin_username'],
-                    'email' => $validated['admin_email'] ?? null,
-                    'password' => $validated['password'],
+                    'password' => Hash::make($validated['admin_password']),
                     'institution_id' => $institution->id,
                     'is_active' => true,
+                    'last_login_at' => now(),
                 ]);
 
-                // 4. Atribuir papel de superintendência por padrão para gestão total da EBD/igreja
-                $role = Role::where('slug', 'superintendencia')->orWhere('name', 'superintendencia')->first();
-                if ($role) {
-                    $user->roles()->attach($role->id);
-                }
-
-                InstitutionHistory::create([
-                    'institution_id' => $institution->id,
-                    'event_type' => 'criacao',
-                    'title' => 'Nova Igreja Cadastrada via Tela de Login',
-                    'description' => "Igreja [{$institution->name}] cadastrada com sucesso. Código gerado: {$institution->code}.",
-                    'user_id' => $user->id,
-                ]);
+                $user->roles()->attach($adminRole->id);
 
                 AuditLog::create([
                     'user_id' => $user->id,
-                    'action' => 'auth.register_church',
-                    'entity_type' => 'Institution',
+                    'action' => 'institution.self_registered',
+                    'entity_type' => 'institution',
                     'entity_id' => $institution->id,
-                    'new_values' => ['institution_name' => $institution->name, 'username' => $user->username],
                     'ip' => $request->ip(),
                     'user_agent' => substr((string) $request->userAgent(), 0, 255),
                 ]);
 
-                $user->load('roles.permissions');
+                $user->load('roles.permissions', 'institution');
                 $token = $user->createToken('api')->plainTextToken;
 
                 return response()->json([
@@ -174,14 +202,60 @@ class AuthController extends Controller
 
     public function me(Request $request): UserResource
     {
-        $request->user()->load('roles.permissions');
+        $request->user()->load('roles.permissions', 'institution', 'person');
         return new UserResource($request->user());
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $tokenId = $request->user()->currentAccessToken()?->id;
+        if ($tokenId) {
+            UserDevice::where('token_id', $tokenId)->update(['is_revoked' => true]);
+            $request->user()->currentAccessToken()->delete();
+        }
         Audit::log('auth.logout', 'user', $request->user()->id);
-        return response()->json(['message' => 'Sessão encerrada.']);
+        return response()->json(['message' => 'Sessão encerrada com sucesso.']);
+    }
+
+    /**
+     * Alterna entre os contextos: 'personal' (Área Pessoal) e 'management' (Gestão).
+     */
+    public function switchContext(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'context' => 'required|string|in:personal,management',
+        ]);
+
+        $user = $request->user();
+        $roles = $user->roles->pluck('slug')->all();
+        $permissions = $user->permissionSlugs();
+
+        $managementRoles = [
+            'admin', 'pastor', 'presbitero', 'diacono', 'superintendente',
+            'professor', 'tesoureiro', 'secretario', 'conselho', 'diretoria',
+        ];
+        $hasManagementAccess = count(array_intersect($roles, $managementRoles)) > 0
+            || count($permissions) > 0
+            || $user->isProgrammer();
+
+        if ($validated['context'] === 'management' && ! $hasManagementAccess) {
+            return response()->json([
+                'message' => 'Acesso negado ao contexto de Gestão. O usuário possui apenas acesso à Área Pessoal.',
+            ], 403);
+        }
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'auth.switch_context',
+            'entity_type' => 'user',
+            'entity_id' => $user->id,
+            'ip' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+        ]);
+
+        return response()->json([
+            'active_context' => $validated['context'],
+            'message' => 'Contexto alternado com sucesso para: ' . ($validated['context'] === 'management' ? 'Gestão Eclesiástica' : 'Área Pessoal'),
+        ]);
     }
 }

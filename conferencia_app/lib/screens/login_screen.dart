@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../core/api_service.dart';
 import 'main_menu_screen.dart';
 
@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'IPB • Conferência',
+                    'Concilia-IPB',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,

@@ -10,7 +10,42 @@ class EbdService {
   final List<EbdClassModel> _classes = [];
   final Map<int, EbdSessionDetailsModel> _sessions = {};
 
+  static String getTodayFormatted({bool includeYear = false}) {
+    final now = DateTime.now();
+    const weekdays = [
+      'Segunda-feira',
+      'Terça-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
+      'Sábado',
+      'Domingo'
+    ];
+    const months = [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro'
+    ];
+    final weekday = weekdays[now.weekday - 1];
+    final day = now.day.toString().padLeft(2, '0');
+    final month = months[now.month - 1];
+    if (includeYear) {
+      return '$day de $month de ${now.year}';
+    }
+    return '$weekday, $day de $month';
+  }
+
   void _initializeMockData() {
+    final todayFormatted = getTodayFormatted();
     _classes.addAll([
       EbdClassModel(
         id: 1,
@@ -109,7 +144,7 @@ class EbdService {
       sessionId: 101,
       classId: 1,
       className: 'Classe dos Jovens — Bereanos',
-      eventDate: 'Domingo, 13 de Outubro',
+      eventDate: todayFormatted,
       teacherName: 'Prof. Marcos Vinícius',
       teacherPersonId: 10,
       status: 'pendente',
@@ -146,7 +181,7 @@ class EbdService {
         sessionId: 100 + c.id,
         classId: c.id,
         className: c.name,
-        eventDate: 'Domingo, 13 de Outubro',
+        eventDate: todayFormatted,
         teacherName: c.teacherName,
         teacherPersonId: c.teacherId,
         status: c.status,
@@ -195,25 +230,25 @@ class EbdService {
     final aniversariantes = [
       const BirthdayModel(
         name: 'Gabriel Henrique Braga',
-        dateFormatted: 'Hoje (13/10)',
+        dateFormatted: 'Hoje (01/11)',
         className: 'Jovens (Bereanos)',
         isToday: true,
       ),
       const BirthdayModel(
         name: 'Beatriz Vasconcelos',
-        dateFormatted: 'Terça (15/10)',
+        dateFormatted: 'Terça (03/11)',
         className: 'Jovens (Bereanos)',
         isToday: false,
       ),
       const BirthdayModel(
         name: 'Presb. Paulo Roberto',
-        dateFormatted: 'Quinta (17/10)',
+        dateFormatted: 'Quinta (05/11)',
         className: 'Adultos (Bereia)',
         isToday: false,
       ),
       const BirthdayModel(
         name: 'Mariana Lima',
-        dateFormatted: 'Sábado (19/10)',
+        dateFormatted: 'Sábado (07/11)',
         className: 'Cordeirinhos de Cristo',
         isToday: false,
       ),
@@ -227,7 +262,7 @@ class EbdService {
       totalBiblias: totalBiblias,
       totalRevistas: totalRevistas,
       totalOfertas: totalOfertas,
-      dataDomingo: '13 de Outubro de 2026',
+      dataDomingo: getTodayFormatted(includeYear: true),
       aniversariantes: aniversariantes,
     );
   }

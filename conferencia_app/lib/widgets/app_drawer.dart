@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../core/api_service.dart';
 import '../screens/conferencias_list_screen.dart';
 import '../screens/ebd/ebd_dashboard_screen.dart';
@@ -14,6 +14,8 @@ import '../screens/admin/auditoria_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/main_menu_screen.dart';
 import '../screens/intelligence_screen.dart';
+import '../core/context_controller.dart';
+import '../screens/personal/personal_shell_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final String currentRoute;
@@ -67,7 +69,7 @@ class AppDrawer extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'IPB • Gestão Integrada',
+                              'Concilia-IPB',
                               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
                             ),
                             Text(
@@ -97,6 +99,32 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+
+                        Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.person_rounded, color: Color(0xFF2563EB)),
+                title: const Text(
+                  'Ir para Área Pessoal',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E40AF)),
+                ),
+                subtitle: const Text('Devocionais, Bíblia, dízimos e igreja', style: TextStyle(fontSize: 10)),
+                trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF2563EB), size: 18),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await ContextController.instance.switchContext('personal');
+                  if (!context.mounted) return;
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const PersonalShellScreen()),
+                  );
+                },
               ),
             ),
 

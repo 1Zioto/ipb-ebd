@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AnnualReportController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DeviceController;
+use App\Http\Controllers\Api\MemberActivationController;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\ClassTeacherController;
@@ -45,6 +47,8 @@ Route::prefix('v1')->group(function () {
     // ---- Público ----
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/register-church', [AuthController::class, 'registerChurch']);
+    Route::post('auth/activate/verify', [MemberActivationController::class, 'verify']);
+    Route::post('auth/activate/confirm', [MemberActivationController::class, 'confirm']);
     Route::get('screen-configs', [ScreenConfigController::class, 'index']);
     Route::post('screen-configs', [ScreenConfigController::class, 'store']);
 
@@ -53,6 +57,10 @@ Route::prefix('v1')->group(function () {
 
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::post('auth/switch-context', [AuthController::class, 'switchContext']);
+        Route::get('auth/devices', [DeviceController::class, 'index']);
+        Route::post('auth/devices/{id}/revoke', [DeviceController::class, 'revoke']);
+        Route::post('auth/devices/revoke-others', [DeviceController::class, 'revokeOthers']);
 
         // ---- 📊 Dashboards e Informações da Congregação ----
         Route::prefix('intelligence')->group(function () {

@@ -26,6 +26,13 @@ class UserModel {
   final String role;
   final int? institutionId;
   final bool isOffline;
+  final bool hasManagementAccess;
+  final List<String> availableContexts;
+  final String churchName;
+  final String? churchLogo;
+  final String? primaryColorHex;
+  final String? secondaryColorHex;
+  final String? accentColorHex;
 
   const UserModel({
     this.id,
@@ -34,23 +41,48 @@ class UserModel {
     this.role = 'Membro / Oficial',
     this.institutionId,
     this.isOffline = false,
+    this.hasManagementAccess = true,
+    this.availableContexts = const ['personal', 'management'],
+    this.churchName = 'Igreja Presbiteriana do Brasil',
+    this.churchLogo,
+    this.primaryColorHex,
+    this.secondaryColorHex,
+    this.accentColorHex,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final inst = json['institution'] is Map<String, dynamic>
+        ? json['institution'] as Map<String, dynamic>
+        : null;
+
+    final rolesList = json['roles'] is List ? (json['roles'] as List) : null;
+    final mgmtAccess = json['has_management_access'] == true ||
+        (rolesList != null && rolesList.any((r) => r.toString() != 'membro')) ||
+        (json['role'] != null && json['role'].toString() != 'membro');
+
+    final contexts = json['available_contexts'] is List
+        ? (json['available_contexts'] as List).map((e) => e.toString()).toList()
+        : (mgmtAccess ? const ['personal', 'management'] : const ['personal']);
+
     return UserModel(
       id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString() ?? 'Usuário IPB',
       email: json['email']?.toString(),
-      role:
-          json['role']?.toString() ??
-          json['roles']?.toString() ??
-          'Oficial / Membro',
+      role: json['role']?.toString() ??
+          (rolesList != null && rolesList.isNotEmpty ? rolesList.first.toString() : 'Oficial / Membro'),
       institutionId: json['institution_id'] is int
           ? json['institution_id']
           : int.tryParse(json['institution_id']?.toString() ?? ''),
-      isOffline: false,
+      isOffline: json['is_offline'] == true,
+      hasManagementAccess: mgmtAccess,
+      availableContexts: contexts,
+      churchName: inst?['name']?.toString() ?? json['church_name']?.toString() ?? 'Igreja Presbiteriana do Brasil',
+      churchLogo: inst?['logo']?.toString() ?? json['church_logo']?.toString(),
+      primaryColorHex: inst?['primary_color']?.toString() ?? json['primary_color']?.toString() ?? '#047857',
+      secondaryColorHex: inst?['secondary_color']?.toString() ?? json['secondary_color']?.toString() ?? '#065F46',
+      accentColorHex: inst?['accent_color']?.toString() ?? json['accent_color']?.toString() ?? '#10B981',
     );
   }
 
@@ -61,6 +93,13 @@ class UserModel {
     'role': role,
     'institution_id': institutionId,
     'is_offline': isOffline,
+    'has_management_access': hasManagementAccess,
+    'available_contexts': availableContexts,
+    'church_name': churchName,
+    'church_logo': churchLogo,
+    'primary_color': primaryColorHex,
+    'secondary_color': secondaryColorHex,
+    'accent_color': accentColorHex,
   };
 }
 

@@ -312,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'IPB • Conferência',
+                  'Concilia-IPB',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
