@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\AuditLog;
 use App\Models\Institution;
+use App\Models\Person;
+use Carbon\Carbon;
 use App\Models\InstitutionHistory;
 use App\Models\InstitutionLinkRequest;
 use App\Models\Role;
@@ -24,19 +26,127 @@ class AuthController extends Controller
     {
         $request->validate([
             'username' => 'required|string',
-            'password' => 'required|string',
+            'password' => 'nullable|string',
+            'birth_date' => 'nullable|string',
             'device_name' => 'nullable|string|max:120',
             'platform' => 'nullable|string|max:50',
             'client_version' => 'nullable|string|max:30',
         ]);
 
-        try {
-            $login = $request->username;
-            $user = User::where('username', $login)->orWhere('email', $login)->first();
+        $credential = $request->password ?? $request->birth_date;
+        if (empty($credential)) {
+            throw ValidationException::withMessages([
+                'password' => ['Informe a senha ou a data de aniversário (dd/mm/aaaa).'],
+            ]);
+        }
 
-            if (! $user || ! Hash::check($request->password, $user->password)) {
+        try {
+            $login = trim($request->username);
+            $cleanDigits = preg_replace('/\D/', '', $login);
+            $user = null;
+
+            // 1. Tenta autenticação tradicional de User (por username ou email)
+            $directUser = User::where('username', $login)->orWhere('email', $login)->first();
+            if ($directUser && Hash::check($credential, $directUser->password)) {
+                $user = $directUser;
+            }
+
+            // 2. Se não autenticou diretamente, tenta busca por Membro (CPF ou Telefone)
+            if (! $user) {
+                $person = null;
+
+                if (! empty($cleanDigits)) {
+                    $person = Person::query()
+                        ->where(function ($q) use ($cleanDigits, $login) {
+                            $q->whereRaw("REGEXP_REPLACE(COALESCE(cpf, ''), '[^0-9]', '', 'g') = ?", [$cleanDigits])
+                              ->orWhereRaw("REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = ?", [$cleanDigits])
+                              ->orWhere('cpf', $login)
+                              ->orWhere('phone', $login);
+                        })
+                        ->first();
+                }
+
+                if (! $person) {
+                    $person = Person::where('email', $login)->first();
+                }
+
+                if ($person) {
+                    $authenticated = false;
+
+                    // Interpreta credencial como data de nascimento (dd/mm/aaaa, dd-mm-aaaa, ddMMyyyy ou aaaa-mm-dd)
+                    $parsedBirth = null;
+                    $cleanDateDigits = preg_replace('/\D/', '', $credential);
+
+                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $credential, $m)) {
+                        $parsedBirth = sprintf('%04d-%02d-%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+                    } elseif (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $credential, $m)) {
+                        $parsedBirth = sprintf('%04d-%02d-%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+                    } elseif (strlen($cleanDateDigits) === 8) {
+                        $d = substr($cleanDateDigits, 0, 2);
+                        $m = substr($cleanDateDigits, 2, 2);
+                        $y = substr($cleanDateDigits, 4, 4);
+                        if ((int) $y > 1900 && (int) $m >= 1 && (int) $m <= 12 && (int) $d >= 1 && (int) $d <= 31) {
+                            $parsedBirth = sprintf('%04d-%02d-%02d', (int) $y, (int) $m, (int) $d);
+                        }
+                    } elseif (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $credential, $m)) {
+                        $parsedBirth = sprintf('%04d-%02d-%02d', (int) $m[1], (int) $m[2], (int) $m[3]);
+                    }
+
+                    if ($parsedBirth && $person->birth_date) {
+                        $personDate = Carbon::parse($person->birth_date)->format('Y-m-d');
+                        if ($personDate === $parsedBirth) {
+                            $authenticated = true;
+                        }
+                    }
+
+                    // Se não for a data de aniversário, verifica se o usuário do membro possui essa senha
+                    $personUser = User::where('person_id', $person->id)->first();
+                    if (! $authenticated && $personUser && ! empty($personUser->password)) {
+                        if (Hash::check($credential, $personUser->password)) {
+                            $authenticated = true;
+                        }
+                    }
+
+                    if ($authenticated) {
+                        if (! $personUser) {
+                            $username = ! empty($cleanDigits) ? $cleanDigits : ('membro_' . $person->id);
+                            $existingWithUsername = User::where('username', $username)->first();
+                            if ($existingWithUsername) {
+                                $username = 'membro_' . $person->id;
+                            }
+
+                            $personUser = User::create([
+                                'username' => $username,
+                                'email' => $person->email ?: ($username . '@membro.ipb.local'),
+                                'name' => $person->full_name,
+                                'person_id' => $person->id,
+                                'institution_id' => $person->institution_id,
+                                'is_active' => true,
+                                'password' => Hash::make($credential),
+                            ]);
+                        } else {
+                            $personUser->is_active = true;
+                            if (! $personUser->institution_id && $person->institution_id) {
+                                $personUser->institution_id = $person->institution_id;
+                            }
+                            $personUser->save();
+                        }
+
+                        // Garante o perfil de membro
+                        $membroRole = Role::firstOrCreate(
+                            ['slug' => 'membro'],
+                            ['name' => 'Membro Comungante', 'description' => 'Acesso pessoal de membro da igreja']
+                        );
+                        $personUser->roles()->syncWithoutDetaching([$membroRole->id]);
+
+                        $user = $personUser;
+                    }
+                }
+            }
+
+            if (! $user) {
                 throw ValidationException::withMessages([
-                    'username' => ['Credenciais inválidas.'],
+                    'username' => ['Credenciais inválidas. Para membros, informe CPF ou telefone e sua data de nascimento (dd/mm/aaaa).'],
                 ]);
             }
 

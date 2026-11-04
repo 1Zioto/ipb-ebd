@@ -52,6 +52,7 @@ class UserResource extends JsonResource
             'titulo_pastoral' => $this->titulo_pastoral,
             'cargo_pastoral' => $this->cargo_pastoral,
             'is_pastor_titular' => (bool) $this->is_pastor_titular,
+            'role' => $roles[0] ?? 'membro',
             'roles' => $roles,
             'role_ids' => $this->roles->pluck('id'),
             'permissions' => $permissions,

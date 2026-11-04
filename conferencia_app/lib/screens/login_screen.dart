@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      setState(() => _errorMessage = 'Informe o usuário e a senha.');
+      setState(() => _errorMessage = 'Informe o CPF, telefone ou usuário, e a data de aniversário (dd/mm/aaaa) ou senha.');
       return;
     }
 
@@ -60,8 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '').replaceFirst('ApiException: ', '');
       setState(() {
-        _errorMessage = 'Sem conexão com o servidor ou credenciais incorretas.\nVocê pode entrar em Modo Offline.';
+        _errorMessage = msg;
         _loading = false;
       });
     }
@@ -183,14 +184,37 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 16),
                           ],
 
+                          // Dica explicativa para Membros e Oficiais
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.info_outline_rounded, color: Color(0xFF047857), size: 16),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Membros: acesse com CPF ou Celular e Data de Nascimento (dd/mm/aaaa).',
+                                    style: TextStyle(fontSize: 11, color: Color(0xFF065F46), fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
                           // Campo Usuário
                           TextField(
                             controller: _usernameController,
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
-                              labelText: 'Usuário ou CPF',
-                              hintText: 'Digite seu usuário ou CPF',
-                              prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF047857)),
+                              labelText: 'CPF, Telefone ou Usuário',
+                              hintText: 'Ex: 27981416770 ou seu CPF',
+                              prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFF047857)),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -210,9 +234,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             textInputAction: TextInputAction.done,
                             onSubmitted: (_) => _handleLogin(),
                             decoration: InputDecoration(
-                              labelText: 'Senha',
-                              hintText: '••••••••',
-                              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF047857)),
+                              labelText: 'Data de Aniversário ou Senha',
+                              hintText: 'Ex: 21/08/1993 ou sua senha',
+                              prefixIcon: const Icon(Icons.cake_outlined, color: Color(0xFF047857)),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
