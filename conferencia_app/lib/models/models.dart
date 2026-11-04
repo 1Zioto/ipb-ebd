@@ -56,9 +56,21 @@ class UserModel {
         : null;
 
     final rolesList = json['roles'] is List ? (json['roles'] as List) : null;
-    final mgmtAccess = json['has_management_access'] == true ||
-        (rolesList != null && rolesList.any((r) => r.toString() != 'membro')) ||
-        (json['role'] != null && json['role'].toString() != 'membro');
+    bool mgmtAccess = false;
+    if (json['has_management_access'] is bool) {
+      mgmtAccess = json['has_management_access'] as bool;
+    } else {
+      const adminRoles = [
+        'admin', 'programador', 'pastor', 'presbitero', 'diacono',
+        'superintendente', 'superintendencia', 'professor', 'tesoureiro',
+        'secretario', 'conselho', 'diretoria', 'presbiterio',
+      ];
+      final rList = rolesList?.map((e) => e.toString().toLowerCase()).toList() ?? [];
+      final roleLower = (json['role']?.toString() ?? '').toLowerCase();
+      mgmtAccess = rList.any((r) => adminRoles.contains(r)) ||
+          adminRoles.any((r) => roleLower.contains(r)) ||
+          json['is_offline'] == true;
+    }
 
     final contexts = json['available_contexts'] is List
         ? (json['available_contexts'] as List).map((e) => e.toString()).toList()

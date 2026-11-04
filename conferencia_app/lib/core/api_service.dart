@@ -223,7 +223,7 @@ class ApiService {
       body: jsonEncode({
         'cpf': cpf,
         'birth_date': birthDate,
-        if (institutionId != null) 'institution_id': institutionId,
+        if (institutionId != null) ...{'institution_id': institutionId},
       }),
     );
     final data = jsonDecode(res.body);

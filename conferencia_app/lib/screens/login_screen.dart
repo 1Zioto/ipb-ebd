@@ -1,6 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../core/api_service.dart';
 import 'main_menu_screen.dart';
+import 'personal/member_activation_screen.dart';
+import 'personal/personal_shell_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      setState(() => _errorMessage = 'Por favor, preencha o usuário/e-mail e a senha.');
+      setState(() => _errorMessage = 'Informe o usuário e a senha.');
       return;
     }
 
@@ -46,8 +48,15 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: const Color(0xFF047857),
         ),
       );
+
+      // Se for administrador/oficial, acessa a gestão (o app original).
+      // Se for membro comungante, acessa exclusivamente a visualização de membro.
+      final Widget nextScreen = user.hasManagementAccess
+          ? const MainMenuScreen()
+          : const PersonalShellScreen();
+
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+        MaterialPageRoute(builder: (_) => nextScreen),
       );
     } catch (e) {
       if (!mounted) return;
@@ -90,23 +99,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     width: 100,
                     height: 100,
-                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
+                      shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
                       ],
                     ),
+                    padding: const EdgeInsets.all(16),
                     child: Image.asset(
                       'assets/images/ipb-logo.png',
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Icon(
-                        Icons.church,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.church_rounded,
                         size: 54,
                         color: Color(0xFF047857),
                       ),
@@ -131,100 +140,101 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Color(0xFF64748B),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
-                  if (_errorMessage != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFFECACA)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF991B1B),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Card de Formulário
+                  // Card de Login
                   Card(
                     elevation: 3,
+                    shadowColor: Colors.black.withValues(alpha: 0.08),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'USUÁRIO OU E-MAIL',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF475569),
-                              letterSpacing: 0.5,
+                          if (_errorMessage != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFFCA5A5)),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(
+                                        color: Color(0xFFB91C1C),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Campo Usuário
                           TextField(
                             controller: _usernameController,
+                            textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
-                              hintText: 'Digite seu usuário ou e-mail',
+                              labelText: 'Usuário ou CPF',
+                              hintText: 'Digite seu usuário ou CPF',
                               prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF047857)),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFF047857), width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'SENHA',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF475569),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
+
+                          // Campo Senha
                           TextField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _handleLogin(),
                             decoration: InputDecoration(
-                              hintText: 'Digite sua senha',
+                              labelText: 'Senha',
+                              hintText: '••••••••',
                               prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF047857)),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                  _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                                   color: const Color(0xFF64748B),
                                 ),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                onPressed: () {
+                                  setState(() => _obscurePassword = !_obscurePassword);
+                                },
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Color(0xFF047857), width: 2),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             ),
                           ),
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 24),
+
+                          // Botão Entrar
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF047857),
@@ -266,6 +276,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Color(0xFF047857),
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 14),
+                          TextButton.icon(
+                            icon: const Icon(Icons.person_add_alt_1_rounded, size: 16, color: Color(0xFF047857)),
+                            label: const Text(
+                              'Primeiro Acesso? Ativar Conta de Membro',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF047857)),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const MemberActivationScreen()),
+                              );
+                            },
                           ),
                         ],
                       ),
