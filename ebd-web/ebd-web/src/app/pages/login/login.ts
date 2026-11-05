@@ -35,6 +35,7 @@ export class LoginPage {
   private router = inject(Router);
 
   isRegisterMode = signal(false);
+  loginProfile = signal<'diretoria' | 'membro'>('diretoria');
   username = signal('');
   password = signal('');
   churchName = signal('');
@@ -67,6 +68,13 @@ export class LoginPage {
     this.successMsg.set(null);
   }
 
+  switchLoginProfile(profile: 'diretoria' | 'membro'): void {
+    this.loginProfile.set(profile);
+    this.error.set(null);
+    this.username.set('');
+    this.password.set('');
+  }
+
   async submitLogin() {
     this.error.set(null);
     this.loading.set(true);
@@ -74,7 +82,7 @@ export class LoginPage {
       await this.auth.login(this.username(), this.password());
       this.router.navigate(['/']);
     } catch (e: any) {
-      const msg = e?.error?.errors?.username?.[0] || e?.error?.message || 'Falha no login.';
+      const msg = e?.error?.errors?.password?.[0] || e?.error?.errors?.username?.[0] || e?.error?.message || 'Falha no login.';
       this.error.set(msg);
     } finally {
       this.loading.set(false);

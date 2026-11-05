@@ -67,61 +67,149 @@
 
       <!-- MODO: LOGIN -->
       @if (!isRegisterMode()) {
-        <form (ngSubmit)="submitLogin()" class="flex flex-col gap-5">
-          <div>
-            <label for="username" class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-2">
-              Usuário de Acesso
-            </label>
-            <p-iconfield styleClass="w-full">
-              <p-inputicon styleClass="pi pi-user text-muted-color" />
-              <input
-                pInputText
-                id="username"
-                type="text"
-                placeholder="Ex: pastor.joao ou maria.ebd"
-                class="w-full !py-3"
-                [ngModel]="username()"
-                (ngModelChange)="username.set($event)"
-                name="username"
-                autocomplete="username"
+        <!-- Seletor de Perfil: Diretoria vs Membro -->
+        <div class="grid grid-cols-2 gap-1.5 p-1 mb-5 rounded-xl bg-surface-ground border border-surface">
+          <button
+            type="button"
+            (click)="switchLoginProfile('diretoria')"
+            class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            [ngClass]="{
+              'bg-primary text-primary-contrast shadow-sm': loginProfile() === 'diretoria',
+              'text-muted-color hover:text-surface-900 dark:hover:text-surface-0': loginProfile() !== 'diretoria'
+            }"
+          >
+            <i class="pi pi-shield text-xs"></i>
+            <span>Diretoria & Gestão</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="switchLoginProfile('membro')"
+            class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            [ngClass]="{
+              'bg-primary text-primary-contrast shadow-sm': loginProfile() === 'membro',
+              'text-muted-color hover:text-surface-900 dark:hover:text-surface-0': loginProfile() !== 'membro'
+            }"
+          >
+            <i class="pi pi-user text-xs"></i>
+            <span>Área do Membro</span>
+          </button>
+        </div>
+
+        <form (ngSubmit)="submitLogin()" class="flex flex-col gap-4">
+          @if (loginProfile() === 'diretoria') {
+            <!-- LOGIN DA DIRETORIA (E-MAIL + SENHA) -->
+            <div>
+              <label for="username" class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-2">
+                E-mail da Diretoria
+              </label>
+              <p-iconfield styleClass="w-full">
+                <p-inputicon styleClass="pi pi-envelope text-muted-color" />
+                <input
+                  pInputText
+                  id="username"
+                  type="email"
+                  placeholder="Ex: pastor@ipb.org.br ou seu.email@exemplo.com"
+                  class="w-full !py-3"
+                  [ngModel]="username()"
+                  (ngModelChange)="username.set($event)"
+                  name="username"
+                  autocomplete="email"
+                  required
+                />
+              </p-iconfield>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label for="password" class="block text-xs font-bold uppercase tracking-wider text-muted-color">
+                  Senha de Acesso
+                </label>
+              </div>
+              <p-password
+                id="password"
+                [ngModel]="password()"
+                (ngModelChange)="password.set($event)"
+                name="password"
+                placeholder="Digite sua senha de acesso"
+                [toggleMask]="true"
+                [fluid]="true"
+                [feedback]="false"
+                autocomplete="current-password"
                 required
               />
-            </p-iconfield>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <label for="password" class="block text-xs font-bold uppercase tracking-wider text-muted-color">
-                Senha
-              </label>
             </div>
-            <p-password
-              id="password"
-              [ngModel]="password()"
-              (ngModelChange)="password.set($event)"
-              name="password"
-              placeholder="Digite sua senha de acesso"
-              [toggleMask]="true"
-              [fluid]="true"
-              [feedback]="false"
-              autocomplete="current-password"
-              required
-            />
-          </div>
+
+            <div class="text-[11px] text-muted-color flex items-center gap-1.5 p-2.5 rounded-xl bg-surface-ground border border-surface">
+              <i class="pi pi-shield text-primary shrink-0"></i>
+              <span>Acesso para pastores, presbíteros, diáconos, diretoria, superintendentes e administradores.</span>
+            </div>
+          } @else {
+            <!-- LOGIN DO MEMBRO (CPF OU TELEFONE + DATA DE NASCIMENTO) -->
+            <div>
+              <label for="username" class="block text-xs font-bold uppercase tracking-wider text-muted-color mb-2">
+                CPF ou Telefone (WhatsApp)
+              </label>
+              <p-iconfield styleClass="w-full">
+                <p-inputicon styleClass="pi pi-id-card text-muted-color" />
+                <input
+                  pInputText
+                  id="username"
+                  type="text"
+                  placeholder="Ex: 335.347.850-11 ou 27981416770"
+                  class="w-full !py-3"
+                  [ngModel]="username()"
+                  (ngModelChange)="username.set($event)"
+                  name="username"
+                  autocomplete="username"
+                  required
+                />
+              </p-iconfield>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label for="password" class="block text-xs font-bold uppercase tracking-wider text-muted-color">
+                  Data de Nascimento
+                </label>
+                <span class="text-[11px] text-muted-color font-normal">Padrão: dd/mm/aaaa</span>
+              </div>
+              <p-iconfield styleClass="w-full">
+                <p-inputicon styleClass="pi pi-calendar text-muted-color" />
+                <input
+                  pInputText
+                  id="password"
+                  type="text"
+                  placeholder="Ex: 21/08/1993"
+                  class="w-full !py-3"
+                  [ngModel]="password()"
+                  (ngModelChange)="password.set($event)"
+                  name="password"
+                  autocomplete="bday"
+                  required
+                />
+              </p-iconfield>
+            </div>
+
+            <div class="text-[11px] text-muted-color flex items-center gap-1.5 p-2.5 rounded-xl bg-surface-ground border border-surface">
+              <i class="pi pi-user text-primary shrink-0"></i>
+              <span>Sua senha inicial de membro é sua data de nascimento (ex: 21/08/1993).</span>
+            </div>
+          }
 
           <p-button
             type="submit"
-            label="Acessar Sistema"
-            icon="pi pi-arrow-right"
+            [label]="loading() ? 'Verificando...' : (loginProfile() === 'diretoria' ? 'Acessar Gestão' : 'Acessar Área do Membro')"
+            [icon]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-arrow-right'"
             iconPos="right"
-            styleClass="w-full !py-3 font-bold"
+            styleClass="w-full !py-3 font-bold !rounded-xl shadow-md"
             [loading]="loading()"
             [disabled]="loading() || !username().trim() || !password()"
           />
 
           <div class="text-center pt-2">
             <span class="text-xs text-muted-color">
-              Primeiro acesso ou esqueceu sua senha? Entre em contato com o conselho ou secretaria de sua igreja.
+              Primeiro acesso ou precisa de auxílio? Procure o conselho ou a secretaria da igreja.
             </span>
           </div>
         </form>
