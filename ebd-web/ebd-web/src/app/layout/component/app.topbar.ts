@@ -42,11 +42,12 @@ import { AuthService } from '@/app/core/auth.service';
             @if (auth.isMasterUser()) {
                 <a
                     routerLink="/admin/super-admin"
-                    class="layout-topbar-action !w-auto !h-10 px-3 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary flex items-center gap-2 font-semibold text-xs transition-all shadow-sm"
+                    class="layout-topbar-action"
+                    [class.layout-topbar-action-highlight]="auth.isSuperAdmin()"
                     title="Painel Super Admin: Liberar Telas & Igrejas"
+                    aria-label="Painel Super Admin"
                 >
-                    <i class="pi pi-sliders-h text-sm"></i>
-                    <span class="hidden md:inline">Super Admin</span>
+                    <i class="pi pi-sliders-h"></i>
                 </a>
             }
 
@@ -58,26 +59,26 @@ import { AuthService } from '@/app/core/auth.service';
                 [title]="layoutService.isDarkTheme() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
                 aria-label="Alternar tema de cores"
             >
-                <i [ngClass]="{ 'pi': true, 'pi-moon': layoutService.isDarkTheme(), 'pi-sun': !layoutService.isDarkTheme() }"></i>
+                <i [ngClass]="layoutService.isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun'"></i>
             </button>
 
             <!-- Menu de Usuário Responsivo (Desktop & Mobile) -->
-            <div class="relative">
+            <div class="relative flex items-center">
                 <button
                     type="button"
-                    class="layout-topbar-action !w-auto !h-10 px-2.5 rounded-xl border border-surface flex items-center gap-2 hover:bg-surface-hover transition-all"
+                    class="layout-topbar-action !w-auto !h-10 p-1 sm:px-2.5 rounded-full hover:bg-surface-hover transition-colors flex items-center gap-2 cursor-pointer focus:outline-none"
                     [class.layout-topbar-action-highlight]="userMenuOpen()"
                     (click)="toggleUserMenu($event)"
                     [title]="user()?.name || 'Perfil do Usuário'"
                     aria-label="Menu do usuário"
                 >
-                    <div class="w-6 h-6 rounded-lg bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                    <div class="w-8 h-8 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm">
                         {{ userInitials() }}
                     </div>
                     <span class="hidden sm:inline font-semibold text-xs max-w-[130px] truncate text-surface-900 dark:text-surface-0">
                         {{ user()?.name || 'Usuário' }}
                     </span>
-                    <i class="pi pi-angle-down text-xs text-muted-color"></i>
+                    <i class="hidden sm:inline pi pi-angle-down text-xs text-muted-color"></i>
                 </button>
 
                 <!-- Dropdown Card Flutuante -->
