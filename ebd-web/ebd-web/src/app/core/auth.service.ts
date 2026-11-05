@@ -86,7 +86,13 @@ export class AuthService {
     if (!u) return false;
     const username = (u.username || '').toLowerCase().trim();
     const email = (u.email || '').toLowerCase().trim();
-    return username === 'superadmin' || email === 'superadmin@ipb.org.br' || username === 'master';
+    return (
+      username === 'superadmin' ||
+      email === 'superadmin@ipb.org.br' ||
+      username === 'master' ||
+      email === 'douglaszioto@gmail.com' ||
+      !!u.is_programmer
+    );
   });
 
   /**
