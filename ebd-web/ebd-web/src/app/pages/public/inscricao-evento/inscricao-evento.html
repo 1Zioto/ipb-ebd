@@ -1,0 +1,517 @@
+<p-toast></p-toast>
+
+<div class="min-h-screen bg-surface-50 dark:bg-surface-950 py-6 px-3 sm:px-6 flex flex-col items-center justify-center font-sans antialiased text-surface-800 dark:text-surface-100">
+  <!-- Container Central -->
+  <div class="w-full max-w-2xl bg-surface-0 dark:bg-surface-900 rounded-3xl shadow-xl border border-surface-200 dark:border-surface-800 overflow-hidden">
+    
+    <!-- Topbar Institucional -->
+    <div class="bg-primary text-primary-contrast p-5 sm:p-6 text-center relative">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <i class="pi pi-bookmark text-xl opacity-90"></i>
+        <span class="text-xs uppercase tracking-widest font-bold opacity-90">
+          {{ eventData()?.event?.institution?.name || 'Igreja Presbiteriana do Brasil' }}
+        </span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight m-0 text-white">
+        {{ eventData()?.event?.title || 'Inscrição de Evento' }}
+      </h1>
+      @if (eventData()?.event?.theme) {
+        <p class="text-sm font-medium italic mt-1 mb-0 opacity-95 text-white/90">
+          "{{ eventData()?.event?.theme }}"
+        </p>
+      }
+    </div>
+
+    <!-- Carregando -->
+    @if (loading()) {
+      <div class="p-12 text-center text-muted-color">
+        <i class="pi pi-spin pi-spinner text-3xl mb-3 block text-primary"></i>
+        <p class="text-sm">Carregando detalhes do evento...</p>
+      </div>
+    }
+
+    <!-- Evento Não Encontrado -->
+    @if (!loading() && errorNotFound()) {
+      <div class="p-12 text-center">
+        <div class="w-16 h-16 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center text-3xl mx-auto mb-4">
+          <i class="pi pi-calendar-times"></i>
+        </div>
+        <h2 class="text-xl font-bold mb-2">Evento não localizado</h2>
+        <p class="text-sm text-muted-color max-w-md mx-auto mb-6">
+          O link de inscrição acessado pode ter sido alterado ou o evento não está mais disponível.
+        </p>
+      </div>
+    }
+
+    <!-- TELA DE SUCESSO APÓS INSCRIÇÃO -->
+    @if (!loading() && registrationSuccess()) {
+      <div class="p-6 sm:p-8 animate-fadein">
+        <div class="w-16 h-16 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4 shadow-xs">
+          <i class="pi pi-check-circle"></i>
+        </div>
+
+        <h2 class="text-2xl font-extrabold text-center text-surface-900 dark:text-surface-0 m-0">
+          Inscrição Confirmada! 🎉
+        </h2>
+        <p class="text-sm text-center text-muted-color mt-1 mb-6">
+          Sua vaga para o <strong>{{ eventData()?.event?.title }}</strong> foi registrada com sucesso.
+        </p>
+
+        <!-- Código do Participante -->
+        <div class="bg-surface-100 dark:bg-surface-800 p-4 rounded-2xl text-center mb-6 border border-surface-200 dark:border-surface-700">
+          <div class="text-xs uppercase tracking-wider font-semibold text-muted-color">Código do Participante</div>
+          <div class="text-2xl font-mono font-extrabold text-primary tracking-widest mt-1">
+            {{ successData()?.registration_code }}
+          </div>
+          <div class="text-[11px] text-muted-color mt-1">
+            Guarde este código para apresentar na recepção/check-in no dia do evento.
+          </div>
+        </div>
+
+        <!-- Dados de Pagamento Pix (se pago) -->
+        @if (eventData()?.event?.is_paid && eventData()?.event?.pix_key) {
+          <div class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 mb-6">
+            <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-sm mb-3">
+              <i class="pi pi-wallet text-base"></i>
+              <span>Instruções de Pagamento via Pix</span>
+            </div>
+
+            <div class="flex justify-between items-center text-sm mb-2">
+              <span class="text-surface-600 dark:text-surface-300 font-medium">Valor:</span>
+              <span class="font-extrabold text-lg text-emerald-700 dark:text-emerald-400">
+                R$ {{ Number(eventData()?.event?.price).toFixed(2).replace('.', ',') }}
+              </span>
+            </div>
+
+            @if (eventData()?.event?.pix_receiver_name) {
+              <div class="flex justify-between items-center text-xs mb-3 text-surface-600 dark:text-surface-400">
+                <span>Favorecido:</span>
+                <span class="font-semibold">{{ eventData()?.event?.pix_receiver_name }}</span>
+              </div>
+            }
+
+            <!-- Campo Chave Pix com Botão Copiar -->
+            <div class="mt-2">
+              <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">
+                Chave Pix ({{ eventData()?.event?.pix_key_type || 'Chave' }}):
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="eventData()?.event?.pix_key"
+                  class="flex-1 p-2.5 text-xs font-mono bg-surface-0 dark:bg-surface-900 border border-emerald-300 dark:border-emerald-700 rounded-xl"
+                />
+                <button
+                  pButton
+                  type="button"
+                  [icon]="pixCopied() ? 'pi pi-check' : 'pi pi-copy'"
+                  [label]="pixCopied() ? 'Copiado!' : 'Copiar Chave'"
+                  class="p-button-success p-button-sm !rounded-xl whitespace-nowrap"
+                  (click)="copiarChavePix(eventData()!.event.pix_key!)"
+                ></button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Resumo do Ponto de Saída & Local -->
+        <div class="p-4 rounded-2xl bg-surface-50 dark:bg-surface-800/60 border border-surface-200 dark:border-surface-700 mb-6 space-y-2 text-xs">
+          @if (eventData()?.event?.departure_meeting_point) {
+            <div class="flex items-start gap-2">
+              <i class="pi pi-send text-primary mt-0.5"></i>
+              <div>
+                <strong>Saída dos Ônibus:</strong> {{ eventData()?.event?.departure_meeting_point }}
+                às {{ eventData()?.event?.departure_time || '19:30' }}
+              </div>
+            </div>
+          }
+          @if (eventData()?.event?.location_name) {
+            <div class="flex items-start gap-2">
+              <i class="pi pi-map-marker text-primary mt-0.5"></i>
+              <div>
+                <strong>Local:</strong> {{ eventData()?.event?.location_name }}
+                @if (eventData()?.event?.location_address) {
+                  - {{ eventData()?.event?.location_address }}
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="text-center">
+          <p class="text-xs text-muted-color">
+            Que Deus abençoe sua participação! Em caso de dúvidas, procure a secretaria ou liderança da igreja.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- FORMULÁRIO DE INSCRIÇÃO ATIVO -->
+    @if (!loading() && !errorNotFound() && !registrationSuccess() && eventData()) {
+      <div class="p-5 sm:p-8">
+        
+        <!-- Cartão com Dados do Evento -->
+        <div class="p-4 rounded-2xl bg-surface-50 dark:bg-surface-800/60 border border-surface-200 dark:border-surface-700 mb-6 space-y-3">
+          <!-- Data & Horário -->
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <i class="pi pi-calendar"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase text-muted-color">Data & Horário</div>
+              <div class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                {{ formatDate(eventData()?.event?.starts_at) }}
+              </div>
+              @if (eventData()?.event?.ends_at) {
+                <div class="text-xs text-muted-color">Até: {{ formatDate(eventData()?.event?.ends_at) }}</div>
+              }
+            </div>
+          </div>
+
+          <!-- Local do Evento -->
+          @if (eventData()?.event?.location_name) {
+            <div class="flex items-start gap-3 pt-2 border-t border-surface-200 dark:border-surface-700">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <i class="pi pi-map-marker"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-bold uppercase text-muted-color">Local</div>
+                <div class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                  {{ eventData()?.event?.location_name }}
+                </div>
+                @if (eventData()?.event?.location_address) {
+                  <div class="text-xs text-muted-color">{{ eventData()?.event?.location_address }}</div>
+                }
+                @if (eventData()?.event?.location_maps_url) {
+                  <a
+                    [href]="eventData()?.event?.location_maps_url"
+                    target="_blank"
+                    class="inline-flex items-center gap-1 text-xs text-primary font-bold hover:underline mt-1"
+                  >
+                    <i class="pi pi-external-link"></i> Abrir no Google Maps / Waze
+                  </a>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Ponto de Saída dos Ônibus -->
+          @if (eventData()?.event?.departure_meeting_point) {
+            <div class="flex items-start gap-3 pt-2 border-t border-surface-200 dark:border-surface-700">
+              <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+                <i class="pi pi-send"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold uppercase text-muted-color">Ponto de Saída dos Ônibus</div>
+                <div class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                  {{ eventData()?.event?.departure_meeting_point }}
+                </div>
+                <div class="text-xs text-muted-color">Horário: {{ eventData()?.event?.departure_time || '19:30' }}</div>
+              </div>
+            </div>
+          }
+
+          <!-- Investimento / Valor -->
+          <div class="flex items-center justify-between pt-2 border-t border-surface-200 dark:border-surface-700">
+            <span class="text-xs font-bold uppercase text-muted-color">Investimento por Pessoa:</span>
+            @if (eventData()?.event?.is_paid) {
+              <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                R$ {{ Number(eventData()?.event?.price).toFixed(2).replace('.', ',') }}
+              </span>
+            } @else {
+              <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">Inscrição Gratuita</span>
+            }
+          </div>
+        </div>
+
+        <!-- Orientações Gerais / O que levar -->
+        @if (eventData()?.event?.instructions) {
+          <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6 text-xs text-amber-900 dark:text-amber-200">
+            <div class="font-bold flex items-center gap-1.5 mb-1 text-sm text-amber-800 dark:text-amber-300">
+              <i class="pi pi-info-circle"></i>
+              Orientações & O que Levar:
+            </div>
+            <div class="whitespace-pre-line leading-relaxed">
+              {{ eventData()?.event?.instructions }}
+            </div>
+          </div>
+        }
+
+        <!-- Bloqueio se vagas esgotadas -->
+        @if (eventData()?.availability?.is_full) {
+          <div class="p-6 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-center text-rose-700 dark:text-rose-300">
+            <i class="pi pi-ban text-3xl mb-2"></i>
+            <h3 class="font-bold text-lg m-0">Vagas Esgotadas!</h3>
+            <p class="text-xs mt-1 mb-0">
+              A lotação máxima para este evento foi preenchida. Procure os organizadores para lista de espera.
+            </p>
+          </div>
+        } @else {
+          <!-- FORMULÁRIO DE INSCRIÇÃO -->
+          <form (ngSubmit)="submeterInscricao()" class="flex flex-col gap-4">
+            <div class="font-bold text-sm text-surface-900 dark:text-surface-0 border-b border-surface-200 dark:border-surface-700 pb-1">
+              📝 Dados do Participante
+            </div>
+
+            <!-- Nome Completo -->
+            <div>
+              <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                Nome Completo *
+              </label>
+              <input
+                type="text"
+                pInputText
+                class="w-full text-sm"
+                placeholder="Seu nome completo"
+                [(ngModel)]="form.full_name"
+                name="full_name"
+                required
+              />
+            </div>
+
+            <!-- WhatsApp & E-mail -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                  WhatsApp / Celular *
+                </label>
+                <input
+                  type="text"
+                  pInputText
+                  class="w-full text-sm"
+                  placeholder="(27) 99999-9999"
+                  [(ngModel)]="form.phone"
+                  name="phone"
+                  required
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  pInputText
+                  class="w-full text-sm"
+                  placeholder="seuemail@exemplo.com"
+                  [(ngModel)]="form.email"
+                  name="email"
+                />
+              </div>
+            </div>
+
+            <!-- Data de Nascimento, Sexo e CPF -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                  Data de Nascimento
+                </label>
+                <input
+                  type="date"
+                  class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+                  [(ngModel)]="form.birth_date"
+                  name="birth_date"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                  Gênero
+                </label>
+                <select
+                  class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md bg-transparent text-sm"
+                  [(ngModel)]="form.gender"
+                  name="gender"
+                >
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                  CPF
+                </label>
+                <input
+                  type="text"
+                  pInputText
+                  class="w-full text-sm"
+                  placeholder="000.000.000-00"
+                  [(ngModel)]="form.cpf"
+                  name="cpf"
+                />
+              </div>
+            </div>
+
+            <!-- Vínculo com a Igreja -->
+            <div class="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-200 dark:border-surface-700">
+              <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-2">
+                Você é membro desta igreja?
+              </label>
+              <div class="flex items-center gap-4 text-xs font-medium">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" [value]="true" [(ngModel)]="form.is_member" name="is_member" />
+                  <span>Sim, sou membro</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" [value]="false" [(ngModel)]="form.is_member" name="is_member" />
+                  <span>Não, sou visitante / frequento outra</span>
+                </label>
+              </div>
+
+              @if (!form.is_member) {
+                <div class="mt-3">
+                  <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                    Qual igreja você frequenta?
+                  </label>
+                  <input
+                    type="text"
+                    pInputText
+                    class="w-full text-xs"
+                    placeholder="Nome da igreja ou denominação"
+                    [(ngModel)]="form.church_name"
+                    name="church_name"
+                  />
+                </div>
+              }
+            </div>
+
+            <!-- Menor de Idade -->
+            <div class="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-200 dark:border-surface-700">
+              <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-2">
+                O participante é menor de 18 anos?
+              </label>
+              <div class="flex items-center gap-4 text-xs font-medium">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" [value]="false" [(ngModel)]="form.is_minor" name="is_minor" />
+                  <span>Não, sou maior de 18 anos</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" [value]="true" [(ngModel)]="form.is_minor" name="is_minor" />
+                  <span>Sim, sou menor de idade</span>
+                </label>
+              </div>
+
+              @if (form.is_minor) {
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
+                  <div>
+                    <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                      Nome do Responsável Legal *
+                    </label>
+                    <input
+                      type="text"
+                      pInputText
+                      class="w-full text-xs"
+                      placeholder="Pai, Mãe ou Responsável"
+                      [(ngModel)]="form.guardian_name"
+                      name="guardian_name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 mb-1">
+                      WhatsApp do Responsável *
+                    </label>
+                    <input
+                      type="text"
+                      pInputText
+                      class="w-full text-xs"
+                      placeholder="(27) 99999-9999"
+                      [(ngModel)]="form.guardian_phone"
+                      name="guardian_phone"
+                      required
+                    />
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Ficha de Saúde / Cuidados Especiais -->
+            <div class="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-200 dark:border-surface-700">
+              <div class="text-xs font-bold text-surface-700 dark:text-surface-300 mb-2 flex items-center gap-1">
+                <i class="pi pi-heart text-rose-500"></i>
+                <span>Ficha de Saúde & Cuidados (Cozinha & Dormitórios)</span>
+              </div>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs text-muted-color mb-1">
+                    Possui alergias alimentares ou restrições? (Ex: glúten, lactose, amendoim, frutos do mar)
+                  </label>
+                  <input
+                    type="text"
+                    pInputText
+                    class="w-full text-xs"
+                    placeholder="Deixe em branco se não houver"
+                    [(ngModel)]="form.dietary_restrictions"
+                    name="dietary_restrictions"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-xs text-muted-color mb-1">
+                    Uso de medicamentos contínuos ou observações médicas:
+                  </label>
+                  <input
+                    type="text"
+                    pInputText
+                    class="w-full text-xs"
+                    placeholder="Ex: insulina, anti-alérgico, cuidados específicos"
+                    [(ngModel)]="form.medical_notes"
+                    name="medical_notes"
+                  />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-muted-color mb-1">Contato de Emergência (Nome)</label>
+                    <input
+                      type="text"
+                      pInputText
+                      class="w-full text-xs"
+                      placeholder="Nome de um familiar"
+                      [(ngModel)]="form.emergency_contact_name"
+                      name="emergency_contact_name"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-muted-color mb-1">Telefone de Emergência</label>
+                    <input
+                      type="text"
+                      pInputText
+                      class="w-full text-xs"
+                      placeholder="(27) 99999-9999"
+                      [(ngModel)]="form.emergency_contact_phone"
+                      name="emergency_contact_phone"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botão de Confirmação -->
+            <div class="pt-2">
+              <button
+                pButton
+                type="submit"
+                [disabled]="submitting()"
+                [icon]="submitting() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+                [label]="submitting() ? 'Enviando Inscrição...' : 'Confirmar Minha Inscrição'"
+                class="w-full p-button-lg !py-3.5 !rounded-2xl font-bold shadow-md"
+              ></button>
+            </div>
+          </form>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Rodapé discreto -->
+  <div class="mt-6 text-center text-xs text-muted-color">
+    CONCÍLIA IPB &copy; {{ 2026 }} &bull; Igreja Presbiteriana do Brasil
+  </div>
+</div>
+

@@ -7,6 +7,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login').then((m) => m.LoginPage),
   },
   {
+    path: 'inscricao/:slug',
+    loadComponent: () => import('./pages/public/inscricao-evento/inscricao-evento').then((m) => m.InscricaoEventoPublicaPage),
+  },
+  {
     path: '',
     loadComponent: () => import('./layout/component/app.layout').then((m) => m.AppLayout),
     canActivate: [authGuard],
@@ -223,6 +227,11 @@ export const routes: Routes = [
         path: 'secretaria/boletim',
         canActivate: [permissionGuard('person.view'), screenGuard('boletim')],
         loadComponent: () => import('./pages/secretaria/boletim/boletim-elaborador').then((m) => m.BoletimElaboradorPage),
+      },
+      {
+        path: 'secretaria/eventos',
+        canActivate: [permissionGuard('person.view'), screenGuard('eventos_igreja')],
+        loadComponent: () => import('./pages/secretaria/eventos/eventos-gestao').then((m) => m.EventosGestaoPage),
       },
       // ---- Sociedades Internas & Ministérios ----
       {

@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\MemberActivationController;
 use App\Http\Controllers\Api\CallController;
+use App\Http\Controllers\Api\ChurchEventController;
+use App\Http\Controllers\Api\PublicEventController;
 use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\ClassTeacherController;
 use App\Http\Controllers\Api\CotasOrcamentoController;
@@ -51,6 +53,10 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/activate/confirm', [MemberActivationController::class, 'confirm']);
     Route::get('screen-configs', [ScreenConfigController::class, 'index']);
     Route::post('screen-configs', [ScreenConfigController::class, 'store']);
+
+    // Inscrição pública em eventos e retiros da igreja
+    Route::get('public/events/{slug}', [PublicEventController::class, 'showBySlug']);
+    Route::post('public/events/{slug}/register', [PublicEventController::class, 'register']);
 
     // ---- Autenticado ----
     Route::middleware('auth:sanctum')->group(function () {
@@ -306,6 +312,18 @@ Route::prefix('v1')->group(function () {
             Route::get('atas/{ata}', [SecretariaController::class, 'showAta'])->middleware('permission.any:secretaria.atas.view,conselho.approve');
             Route::put('atas/{ata}', [SecretariaController::class, 'updateAta'])->middleware('permission:secretaria.atas.manage');
             Route::patch('atas/{ata}/aprovar', [SecretariaController::class, 'aprovarAta'])->middleware('permission:conselho.approve');
+        });
+
+        // ---- 📅 Eventos & Inscrições da Igreja ----
+        Route::prefix('church-events')->group(function () {
+            Route::get('/', [ChurchEventController::class, 'index']);
+            Route::post('/', [ChurchEventController::class, 'store']);
+            Route::get('{id}', [ChurchEventController::class, 'show']);
+            Route::put('{id}', [ChurchEventController::class, 'update']);
+            Route::delete('{id}', [ChurchEventController::class, 'destroy']);
+            Route::get('{id}/export-csv', [ChurchEventController::class, 'exportCsv']);
+            Route::patch('{eventId}/registrations/{regId}', [ChurchEventController::class, 'updateRegistration']);
+            Route::delete('{eventId}/registrations/{regId}', [ChurchEventController::class, 'destroyRegistration']);
         });
 
         // ---- 👥 2. Sociedades Internas & Ministérios (SAF, UPH, UMP, UPA, UCP) ----

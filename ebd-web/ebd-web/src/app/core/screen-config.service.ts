@@ -133,6 +133,15 @@ export const SYSTEM_SCREENS: ScreenModuleDef[] = [
     defaultEnabled: true,
   },
   {
+    key: 'eventos_igreja',
+    label: 'Eventos & Inscrições',
+    icon: 'pi pi-calendar-plus',
+    group: 'Secretaria & Membresia',
+    description: 'Criação de retiros, acampamentos, links de inscrição com compartilhamento no WhatsApp e controle de vagas e pagamentos.',
+    route: '/secretaria/eventos',
+    defaultEnabled: true,
+  },
+  {
     key: 'classes',
     label: 'Classes EBD & Chamada Dominical',
     icon: 'pi pi-book',

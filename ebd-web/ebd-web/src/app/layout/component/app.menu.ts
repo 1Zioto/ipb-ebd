@@ -266,6 +266,13 @@ export class AppMenu implements OnInit {
                         keywords: ['familias', 'nucleos familiares', 'lares', 'casais', 'filhos', 'parentesco'],
                     },
                     {
+                        label: 'Eventos & Inscrições',
+                        icon: 'pi pi-fw pi-calendar-plus',
+                        routerLink: ['/secretaria/eventos'],
+                        visible: this.isScreenVisible('eventos_igreja', 'person.view'),
+                        keywords: ['eventos', 'inscricoes', 'retiros', 'acampamentos', 'conferencias', 'vagas', 'pix', 'participantes', 'link'],
+                    },
+                    {
                         label: 'Rol de Membros',
                         icon: 'pi pi-fw pi-id-card',
                         routerLink: ['/secretaria/membros'],
