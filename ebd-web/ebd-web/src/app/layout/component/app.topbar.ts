@@ -42,12 +42,14 @@ import { AuthService } from '@/app/core/auth.service';
             @if (auth.isMasterUser()) {
                 <a
                     routerLink="/admin/super-admin"
-                    class="layout-topbar-action"
-                    [class.layout-topbar-action-highlight]="auth.isSuperAdmin()"
+                    class="layout-topbar-action relative"
                     title="Painel Super Admin: Liberar Telas & Igrejas"
                     aria-label="Painel Super Admin"
                 >
                     <i class="pi pi-sliders-h"></i>
+                    @if (auth.isSuperAdmin()) {
+                        <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface-0 dark:ring-surface-900"></span>
+                    }
                 </a>
             }
 
@@ -66,25 +68,25 @@ import { AuthService } from '@/app/core/auth.service';
             <div class="relative flex items-center">
                 <button
                     type="button"
-                    class="layout-topbar-action !w-auto !h-10 p-1 sm:px-2.5 rounded-full hover:bg-surface-hover transition-colors flex items-center gap-2 cursor-pointer focus:outline-none"
-                    [class.layout-topbar-action-highlight]="userMenuOpen()"
+                    class="layout-topbar-action !p-0 cursor-pointer focus:outline-none"
                     (click)="toggleUserMenu($event)"
                     [title]="user()?.name || 'Perfil do Usuário'"
                     aria-label="Menu do usuário"
                 >
-                    <div class="w-8 h-8 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                    <div 
+                        class="w-9 h-9 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm transition-all"
+                        [class.ring-2]="userMenuOpen()"
+                        [class.ring-primary]="userMenuOpen()"
+                        [class.ring-offset-2]="userMenuOpen()"
+                    >
                         {{ userInitials() }}
                     </div>
-                    <span class="hidden sm:inline font-semibold text-xs max-w-[130px] truncate text-surface-900 dark:text-surface-0">
-                        {{ user()?.name || 'Usuário' }}
-                    </span>
-                    <i class="hidden sm:inline pi pi-angle-down text-xs text-muted-color"></i>
                 </button>
 
                 <!-- Dropdown Card Flutuante -->
                 @if (userMenuOpen()) {
                     <div
-                        class="absolute right-0 top-12 w-64 p-3 rounded-2xl shadow-2xl flex flex-col gap-2 animate-scalein"
+                        class="absolute right-0 top-14 w-64 p-3 rounded-2xl shadow-2xl flex flex-col gap-2 animate-scalein"
                         style="background-color: var(--surface-overlay, #ffffff); border: 1px solid var(--surface-border, #e2e8f0); z-index: 1050;"
                         (click)="$event.stopPropagation()"
                     >
