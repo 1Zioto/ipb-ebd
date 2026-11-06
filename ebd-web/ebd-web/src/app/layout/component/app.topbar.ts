@@ -68,13 +68,13 @@ import { AuthService } from '@/app/core/auth.service';
             <div class="relative flex items-center">
                 <button
                     type="button"
-                    class="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all border-0 bg-transparent hover:opacity-90 focus:outline-none p-0"
+                    class="layout-topbar-action cursor-pointer border-0 bg-transparent p-0 focus:outline-none"
                     (click)="toggleUserMenu($event)"
                     [title]="user()?.name || 'Perfil do Usuário'"
                     aria-label="Menu do usuário"
                 >
                     <div 
-                        class="w-9 h-9 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm transition-all select-none"
+                        class="w-8 h-8 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm transition-all select-none"
                         [class.ring-2]="userMenuOpen()"
                         [class.ring-primary]="userMenuOpen()"
                         [class.ring-offset-2]="userMenuOpen()"
