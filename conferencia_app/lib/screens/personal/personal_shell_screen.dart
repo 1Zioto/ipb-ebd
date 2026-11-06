@@ -417,6 +417,177 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
     );
   }
 
+  void _mostrarVidaCristaModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.75),
+          child: ListView(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Vida Cristã & Devocionais', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const Text('Recursos espirituais para comunhão diária com Deus', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 16),
+
+              Card(
+                color: const Color(0xFFEFF6FF),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Plano de Leitura Bíblica Anual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E40AF))),
+                      SizedBox(height: 4),
+                      Text('Leitura de hoje: Salmos 119:105-128 e Romanos 8:28-39', style: TextStyle(fontSize: 12, color: Color(0xFF1E3A8A))),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+              const Text('Devocionais Reformados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 8),
+
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFECFDF5),
+                  child: Icon(Icons.book_rounded, color: Color(0xFF047857), size: 20),
+                ),
+                title: const Text('Mananciais no Deserto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: const Text('Meditação matinal para edificação da fé', style: TextStyle(fontSize: 11)),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Devocional do dia aberto no Início.')),
+                  );
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFEF3C7),
+                  child: Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFB45309), size: 20),
+                ),
+                title: const Text('Dia a Dia com Spurgeon', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: const Text('Reflexões bíblicas profundas e práticas', style: TextStyle(fontSize: 11)),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.pop(ctx),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _mostrarBibliotecaModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.75),
+          child: ListView(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Biblioteca & Documentos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const Text('Símbolos de Fé da IPB e materiais da Escola Bíblica', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 16),
+
+              _buildBibliotecaItem('Confissão de Fé de Westminster', 'Padrão doutrinário oficial adotado pela IPB', Icons.verified_user_rounded),
+              _buildBibliotecaItem('Breve Catecismo de Westminster', 'Fundamentos bíblicos em perguntas e respostas', Icons.quiz_rounded),
+              _buildBibliotecaItem('Catecismo Maior de Westminster', 'Exposição teológica aprofundada dos mandamentos', Icons.menu_book_rounded),
+              _buildBibliotecaItem('Revista da EBD do Trimestre', 'Lições sistemáticas para todas as faixas etárias', Icons.school_rounded),
+              _buildBibliotecaItem('Manual Presbiteriano da IPB', 'Constituição, Código de Disciplina e Princípios de Liturgia', Icons.gavel_rounded),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static Widget _buildBibliotecaItem(String titulo, String subtitulo, IconData icon) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF047857)),
+        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        subtitle: Text(subtitulo, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        trailing: const Icon(Icons.file_download_outlined, size: 20),
+        onTap: () {},
+      ),
+    );
+  }
+
+  void _mostrarContatosIgrejaModal(BuildContext context) {
+    final user = ApiService.instance.currentUser;
+    final churchName = user?.churchName ?? 'Igreja Presbiteriana do Brasil';
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Contatos da Igreja', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              Text(churchName, style: const TextStyle(fontSize: 12, color: Color(0xFF047857), fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+
+              const ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.phone_rounded, color: Color(0xFF047857)),
+                title: Text('Secretaria da Igreja', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: Text('(27) 3345-1200 • Horário de Atendimento: Terça a Sexta 13h às 17h', style: TextStyle(fontSize: 11)),
+              ),
+              const ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF047857)),
+                title: Text('WhatsApp Institucional', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: Text('(27) 99876-5432 • Avisos e comunicados oficiais', style: TextStyle(fontSize: 11)),
+              ),
+              const ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.location_on_outlined, color: Color(0xFF047857)),
+                title: Text('Templo Principal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: Text('Cultos: Domingos às 09h (EBD) e 19h (Culto Solene). Quartas às 19h30.', style: TextStyle(fontSize: 11)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _mostrarPrestacaoContasModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -489,21 +660,66 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         // CABEÇALHO DO MEMBRO
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const CircleAvatar(
-            radius: 24,
-            backgroundColor: Color(0xFF047857),
-            foregroundColor: Colors.white,
-            child: Icon(Icons.person, size: 28),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          title: Text(user?.name ?? 'Membro IPB', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          subtitle: Text(user?.role ?? 'Membro Comungante', style: const TextStyle(fontSize: 12)),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: const Color(0xFF047857),
+                foregroundColor: Colors.white,
+                child: Text(
+                  (user?.name != null && user!.name.isNotEmpty) ? user.name[0].toUpperCase() : 'M',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.name ?? 'Membro da Igreja',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user?.role ?? 'Membro Comungante',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF047857), fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      user?.churchName ?? 'Igreja Presbiteriana do Brasil',
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
 
-        const Divider(height: 24),
+        const SizedBox(height: 18),
 
-        // ITENS DO MENU COMPLEMENTAR DA ÁREA PESSOAL
+        // SEÇÃO: VIDA DA IGREJA
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          child: Text(
+            'VIDA DA IGREJA',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+          ),
+        ),
         _buildMenuItem(
           icon: Icons.church_rounded,
           title: 'Minha Igreja',
@@ -511,40 +727,86 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalIgrejaScreen())),
         ),
         _buildMenuItem(
-          icon: Icons.badge_rounded,
-          title: 'Carteirinha Digital',
-          subtitle: 'Identificação simples de membro',
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalCarteirinhaScreen())),
-        ),
-        _buildMenuItem(
-          icon: Icons.music_note_rounded,
-          title: 'Novo Cântico (Hinário)',
-          subtitle: 'Letras e hinos da IPB offline',
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalHinarioScreen())),
-        ),
-        _buildMenuItem(
-          icon: Icons.pie_chart_rounded,
-          title: 'Prestação de Contas (Exame Anual)',
-          subtitle: 'Demonstrativo anual homologado pelo Conselho',
-          onTap: () => _mostrarPrestacaoContasModal(context),
-        ),
-        _buildMenuItem(
-          icon: Icons.payments_rounded,
-          title: 'Dízimos & Ofertas',
-          subtitle: 'Chave Pix oficial e extrato validado',
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalDizimosScreen())),
-        ),
-        _buildMenuItem(
-          icon: Icons.assignment_rounded,
-          title: 'Solicitações à Secretaria',
-          subtitle: 'Certidões e atualizações cadastrais',
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalSolicitacoesScreen())),
+          icon: Icons.newspaper_rounded,
+          title: 'Avisos & Boletim Semanal',
+          subtitle: 'Liturgia dominical, avisos pastorais e escala',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BoletimScreen())),
         ),
         _buildMenuItem(
           icon: Icons.cake_rounded,
           title: 'Aniversariantes do Mês',
-          subtitle: 'Irmãos que celebram aniversário',
+          subtitle: 'Irmãos da membresia que celebram aniversário',
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalAniversariantesScreen())),
+        ),
+        _buildMenuItem(
+          icon: Icons.contact_phone_rounded,
+          title: 'Contatos da Igreja & Secretaria',
+          subtitle: 'Telefones, WhatsApp e horários de atendimento',
+          onTap: () => _mostrarContatosIgrejaModal(context),
+        ),
+
+        const SizedBox(height: 14),
+
+        // SEÇÃO: CRESCIMENTO ESPIRITUAL
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          child: Text(
+            'CRESCIMENTO ESPIRITUAL',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+          ),
+        ),
+        _buildMenuItem(
+          icon: Icons.auto_stories_rounded,
+          title: 'Vida Cristã & Devocionais',
+          subtitle: 'Plano de leitura bíblica anual e edificação pessoal',
+          onTap: () => _mostrarVidaCristaModal(context),
+        ),
+        _buildMenuItem(
+          icon: Icons.local_library_rounded,
+          title: 'Biblioteca & Estudos',
+          subtitle: 'Símbolos de Fé de Westminster e revistas da EBD',
+          onTap: () => _mostrarBibliotecaModal(context),
+        ),
+        _buildMenuItem(
+          icon: Icons.music_note_rounded,
+          title: 'Novo Cântico (Hinário)',
+          subtitle: 'Letras e hinos históricos da IPB',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalHinarioScreen())),
+        ),
+
+        const SizedBox(height: 14),
+
+        // SEÇÃO: DADOS ECLESIÁSTICOS & CONTRIBUIÇÃO
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          child: Text(
+            'DADOS ECLESIÁSTICOS & CONTRIBUIÇÃO',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+          ),
+        ),
+        _buildMenuItem(
+          icon: Icons.badge_rounded,
+          title: 'Carteirinha Digital do Membro',
+          subtitle: 'Identificação eclesiástica oficial da IPB',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalCarteirinhaScreen())),
+        ),
+        _buildMenuItem(
+          icon: Icons.pix_rounded,
+          title: 'Dízimos & Ofertas',
+          subtitle: 'Chave Pix oficial e extrato individual de doações',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalDizimosScreen())),
+        ),
+        _buildMenuItem(
+          icon: Icons.pie_chart_rounded,
+          title: 'Prestação de Contas Anual',
+          subtitle: 'Demonstrativo anual homologado pelo Conselho',
+          onTap: () => _mostrarPrestacaoContasModal(context),
+        ),
+        _buildMenuItem(
+          icon: Icons.assignment_rounded,
+          title: 'Solicitações à Secretaria',
+          subtitle: 'Certidões de batismo, casamento e declarações',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalSolicitacoesScreen())),
         ),
         _buildMenuItem(
           icon: Icons.devices_rounded,
@@ -553,12 +815,15 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalDispositivosScreen())),
         ),
 
-        const Divider(height: 24),
+        const SizedBox(height: 16),
+        const Divider(),
 
         // SAIR DO APLICATIVO
         ListTile(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           leading: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626)),
           title: const Text('Sair do Aplicativo', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+          subtitle: const Text('Encerrar sessão no aparelho com segurança', style: TextStyle(fontSize: 11)),
           onTap: () async {
             await ApiService.instance.logout();
             if (!context.mounted) return;
@@ -567,6 +832,7 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
             );
           },
         ),
+        const SizedBox(height: 20),
       ],
     );
   }
