@@ -72,3 +72,4 @@ class ChurchMemberApplication extends Model
         return $this->belongsTo(Person::class, 'approved_person_id');
     }
 }
+

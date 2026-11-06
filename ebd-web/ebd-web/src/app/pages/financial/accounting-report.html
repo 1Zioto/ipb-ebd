@@ -47,6 +47,15 @@
         <i class="pi pi-print"></i> Imprimir Balancete
       </button>
 
+      <!-- Fechamento de Exercício Anual & Prestação de Contas -->
+      <button
+        type="button"
+        (click)="abrirModalExercicios()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl bg-primary text-primary-contrast shadow-sm hover:opacity-90 transition"
+      >
+        <i class="pi pi-calendar-times"></i> Fechamento Anual & Prestação de Contas
+      </button>
+
       <!-- Fechar / Reabrir Mês -->
       @if (auth.can('financial.accounting.close')) {
         @if (ledger()?.closing_status === 'fechado') {
@@ -458,6 +467,129 @@
           Confirmar Fechamento
         }
       </button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Modal: Gerenciamento dos Fechamentos de Exercício Anual -->
+<p-dialog [(visible)]="modalExerciciosAnuais" [modal]="true" [style]="{ width: '850px' }"
+  header="Fechamento de Exercício Financeiro & Prestação de Contas Anual">
+  <div class="space-y-4 pt-2">
+    <div class="flex justify-between items-center">
+      <p class="text-xs text-surface-500 m-0">
+        Histórico dos exercícios encerrados com snapshots contábeis consolidados e pareceres do Conselho da Igreja.
+      </p>
+      <button pButton label="Fechar Novo Exercício" icon="pi pi-plus" class="p-button-sm p-button-primary" (click)="abrirModalNovoFechamento()"></button>
+    </div>
+
+    <div class="border rounded-xl overflow-hidden">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 uppercase font-bold">
+          <tr>
+            <th class="p-2.5">Exercício</th>
+            <th class="p-2.5">Data Fechamento</th>
+            <th class="p-2.5 text-right">Receitas</th>
+            <th class="p-2.5 text-right">Despesas</th>
+            <th class="p-2.5 text-right">Saldo Final</th>
+            <th class="p-2.5 text-center">Status</th>
+            <th class="p-2.5 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-200 dark:divide-surface-800">
+          @for (ex of exerciciosFechados(); track ex.id) {
+            <tr class="hover:bg-surface-hover/70 transition">
+              <td class="p-2.5 font-bold font-mono text-sm text-primary">
+                {{ ex.year }}
+              </td>
+              <td class="p-2.5 text-surface-500">
+                {{ ex.closing_date | date: 'dd/MM/yyyy' }}
+              </td>
+              <td class="p-2.5 text-right font-mono text-emerald-600 font-semibold">
+                {{ ex.total_revenues | currency: 'BRL': 'symbol': '1.2-2': 'pt-BR' }}
+              </td>
+              <td class="p-2.5 text-right font-mono text-rose-600 font-semibold">
+                {{ ex.total_expenses | currency: 'BRL': 'symbol': '1.2-2': 'pt-BR' }}
+              </td>
+              <td class="p-2.5 text-right font-mono font-bold text-surface-900 dark:text-surface-0">
+                {{ ex.final_balance | currency: 'BRL': 'symbol': '1.2-2': 'pt-BR' }}
+              </td>
+              <td class="p-2.5 text-center">
+                @if (ex.status === 'em_analise') {
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Em Análise</span>
+                } @else if (ex.status === 'aprovado_conselho') {
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Aprovado Conselho</span>
+                } @else {
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Publicado Membros</span>
+                }
+              </td>
+              <td class="p-2.5 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  @if (ex.status === 'em_analise') {
+                    <button pButton icon="pi pi-check-square" class="p-button-text p-button-sm p-button-info"
+                      pTooltip="Aprovação do Conselho" (click)="abrirModalParecer(ex)"></button>
+                  }
+                  @if (ex.status === 'aprovado_conselho') {
+                    <button pButton icon="pi pi-send" class="p-button-text p-button-sm p-button-success"
+                      pTooltip="Publicar para Membros" (click)="publicarParaMembros(ex)"></button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+          @if (exerciciosFechados().length === 0) {
+            <tr>
+              <td colspan="7" class="p-6 text-center text-surface-400">
+                Nenhum exercício anual fechado ainda. Clique em "Fechar Novo Exercício" para gerar o demonstrativo consolidado.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Modal: Fechar Novo Exercício Anual -->
+<p-dialog [(visible)]="modalFecharExercicio" [modal]="true" [style]="{ width: '450px' }"
+  header="Fechar Exercício Financeiro">
+  <div class="space-y-4 pt-2">
+    <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+      <strong>Atenção:</strong> O fechamento do exercício consolida todas as receitas e despesas do ano selecionado, gerando um snapshot imutável para a auditoria do Conselho e prestação de contas aos membros.
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Ano do Exercício</label>
+      <input type="number" pInputText [(ngModel)]="anoFechamento" class="w-full text-sm font-mono font-bold" min="2000" max="2100" />
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Data Oficial de Fechamento</label>
+      <input type="date" pInputText [(ngModel)]="dataFechamento" class="w-full text-sm" />
+    </div>
+
+    <div class="flex justify-end gap-2 pt-3 border-t">
+      <button pButton label="Cancelar" [text]="true" (click)="modalFecharExercicio = false"></button>
+      <button pButton label="Gerar Fechamento" icon="pi pi-lock" [loading]="loadingFechamento()" (click)="executarFechamento()"></button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Modal: Parecer do Conselho da Igreja -->
+<p-dialog [(visible)]="modalParecer" [modal]="true" [style]="{ width: '500px' }"
+  header="Parecer do Conselho / Comissão de Exame de Contas">
+  <div class="space-y-4 pt-2">
+    <p class="text-xs text-surface-500 m-0">
+      Registre o parecer formal aprovado em reunião do Conselho para o exercício de <strong>{{ exercicioSelecionado?.year }}</strong>:
+    </p>
+
+    <div>
+      <textarea rows="4" [(ngModel)]="parecerTexto" class="w-full text-sm p-2.5 border rounded-xl"
+        placeholder="Ex: O Conselho da Igreja e a Comissão de Exame de Contas examinaram os livros, extratos e comprovantes do exercício, achando-os em perfeita ordem e exatidão, recomendando sua aprovação sem ressalvas."></textarea>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2 border-t">
+      <button pButton label="Cancelar" [text]="true" (click)="modalParecer = false"></button>
+      <button pButton label="Aprovar Exercício" icon="pi pi-check" severity="success" (click)="salvarParecer()"></button>
     </div>
   </div>
 </p-dialog>

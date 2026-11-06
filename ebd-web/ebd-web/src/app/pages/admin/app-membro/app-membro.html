@@ -1,0 +1,88 @@
+<p-toast></p-toast>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-0 m-0 flex items-center gap-2">
+      <i class="pi pi-mobile text-primary"></i>
+      Aplicativo do Membro — Configurações por Igreja
+    </h1>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+      Ative ou desative individualmente os módulos disponíveis para os membros da sua igreja em tempo real
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <p-button 
+      label="Salvar Alterações" 
+      icon="pi pi-check" 
+      [loading]="saving()" 
+      [disabled]="loading() || saving()"
+      (onClick)="salvar()"
+    ></p-button>
+  </div>
+</div>
+
+<div class="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-xs text-primary-900 dark:text-primary-100 flex items-start gap-3 mb-6">
+  <i class="pi pi-info-circle text-primary text-base mt-0.5"></i>
+  <div>
+    <strong>Controle Dinâmico sem Recompilação:</strong>
+    Quando um módulo é desabilitado aqui, ele desaparece imediatamente do aplicativo e da Área do Membro da sua igreja, sem apagar nenhum dado histórico. Ao reativá-lo, o acesso é restaurado instantaneamente.
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="card p-12 text-center rounded-2xl border shadow-sm">
+    <i class="pi pi-spin pi-spinner text-3xl text-primary mb-3"></i>
+    <p class="text-sm text-surface-600 dark:text-surface-300">Carregando módulos da igreja...</p>
+  </div>
+}
+
+@if (!loading()) {
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    @for (mod of modules(); track mod.key) {
+      <div 
+        class="card p-5 rounded-2xl border transition-all flex flex-col justify-between shadow-sm hover:shadow-md"
+        [ngClass]="mod.enabled ? 'border-primary/30 bg-surface-0 dark:bg-surface-900' : 'border-surface-200 dark:border-surface-800 bg-surface-50/50 dark:bg-surface-950/40 opacity-70'"
+      >
+        <div>
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                 [ngClass]="mod.enabled ? 'bg-primary/10 text-primary' : 'bg-surface-200 text-surface-400'">
+              <i [class]="mod.icon"></i>
+            </div>
+            <p-toggleswitch [(ngModel)]="mod.enabled"></p-toggleswitch>
+          </div>
+
+          <div class="text-[10px] font-bold uppercase tracking-wider text-muted-color mb-1">
+            {{ mod.category }}
+          </div>
+          <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 m-0 mb-1.5">
+            {{ mod.name }}
+          </h3>
+          <p class="text-xs text-surface-500 dark:text-surface-400 leading-relaxed m-0">
+            {{ mod.description }}
+          </p>
+        </div>
+
+        <div class="pt-3 mt-3 border-t border-surface-100 dark:border-surface-800 flex items-center justify-between text-[11px]">
+          <span class="font-medium" [ngClass]="mod.enabled ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-surface-400'">
+            {{ mod.enabled ? '● Ativo no App do Membro' : '○ Desativado' }}
+          </span>
+          <span class="font-mono text-surface-400 text-[10px]">
+            key: {{ mod.key }}
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="mt-6 flex justify-end">
+    <p-button 
+      label="Salvar Alterações dos Módulos" 
+      icon="pi pi-check" 
+      [loading]="saving()" 
+      [disabled]="loading() || saving()"
+      (onClick)="salvar()"
+      styleClass="px-6 py-3 font-bold !rounded-xl"
+    ></p-button>
+  </div>
+}

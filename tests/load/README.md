@@ -30,3 +30,4 @@ Ou diretamente:
 ```bash
 k6 run k6-concilia-1000-users.js
 ```
+

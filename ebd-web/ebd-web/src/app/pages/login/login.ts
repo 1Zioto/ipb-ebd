@@ -35,7 +35,7 @@ export class LoginPage {
   private router = inject(Router);
 
   isRegisterMode = signal(false);
-  loginProfile = signal<'diretoria' | 'membro'>('diretoria');
+  loginProfile = signal<'membro' | 'diretoria'>('membro');
   username = signal('');
   password = signal('');
   churchName = signal('');

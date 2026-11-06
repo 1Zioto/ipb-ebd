@@ -301,3 +301,4 @@ class ChurchMemberApplicationController extends Controller
             ->first();
     }
 }
+

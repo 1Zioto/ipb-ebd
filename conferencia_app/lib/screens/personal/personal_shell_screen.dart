@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/api_service.dart';
 import '../../core/context_controller.dart';
 import '../../core/theme_controller.dart';
@@ -32,9 +32,9 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
 
     final pages = [
       _buildHomeTab(context, user, isDark),
-      _buildAgendaTab(context, isDark),
+      _buildEbdTab(context, isDark),
       const PersonalBibliaScreen(),
-      const PersonalIgrejaScreen(),
+      _buildAgendaTab(context, isDark),
       _buildMenuTab(context, user, isDark),
     ];
 
@@ -121,9 +121,9 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
             label: 'Início',
           ),
           NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month_rounded),
-            label: 'Agenda',
+            icon: Icon(Icons.school_outlined),
+            selectedIcon: Icon(Icons.school_rounded),
+            label: 'EBD',
           ),
           NavigationDestination(
             icon: Icon(Icons.menu_book_outlined),
@@ -131,14 +131,14 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
             label: 'Bíblia',
           ),
           NavigationDestination(
-            icon: Icon(Icons.church_outlined),
-            selectedIcon: Icon(Icons.church_rounded),
-            label: 'Igreja',
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month_rounded),
+            label: 'Agenda',
           ),
           NavigationDestination(
             icon: Icon(Icons.grid_view_outlined),
             selectedIcon: Icon(Icons.grid_view_rounded),
-            label: 'Menu',
+            label: 'Mais',
           ),
         ],
       ),
@@ -302,6 +302,188 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
     );
   }
 
+  Widget _buildEbdTab(BuildContext context, bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Escola Bíblica Dominical',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Aluno Matriculado',
+                style: TextStyle(color: Color(0xFF047857), fontWeight: FontWeight.bold, fontSize: 10),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // CARD DA MINHA CLASSE
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    CircleAvatar(
+                      backgroundColor: Color(0xFFEFF6FF),
+                      foregroundColor: Color(0xFF2563EB),
+                      radius: 18,
+                      child: Icon(Icons.school_rounded, size: 20),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Minha Classe: Adultos & Família',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Professor(a): Presb. Responsável da Turma\nHorário: Todos os Domingos às 09:00h • Sala 02',
+                  style: TextStyle(fontSize: 12, height: 1.5, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // LIÇÃO DO PRÓXIMO DOMINGO
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text('LIÇÃO DO DOMINGO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF2563EB))),
+                ),
+                const SizedBox(height: 8),
+                const Text('A Soberania de Deus na Providência', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 4),
+                const Text(
+                  'Texto Básico: Romanos 8:28-39\nEstudo sobre a preservação e o governo soberano de Deus sobre todas as coisas.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // MURAL DA CLASSE
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text('Mural da Minha Turma', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                SizedBox(height: 6),
+                Text(
+                  '“Amados irmãos, lembrem-se de trazer suas Bíblias e revistas no próximo domingo. Teremos confraternização especial ao final da aula!”',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _mostrarPrestacaoContasModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.75),
+          child: ListView(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Prestação de Contas Anual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const Text('Exercício Financeiro — Demonstrativo Consolidado', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 16),
+
+              Card(
+                color: const Color(0xFFECFDF5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Text(
+                    'Parecer da Comissão de Exame de Contas:\n“Livros, extratos e comprovantes examinados e aprovados sem ressalvas pelo Conselho da Igreja.”',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF065F46), fontWeight: FontWeight.w600, height: 1.4),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildResumoFinanceiroItem('Receitas Totais', 'Dízimos, ofertas e doações', '+ R\$ 248.520,00', const Color(0xFF047857)),
+              _buildResumoFinanceiroItem('Despesas Operacionais', 'Manutenção, pessoal, missões', '- R\$ 198.310,00', const Color(0xFFDC2626)),
+              const Divider(height: 20),
+              _buildResumoFinanceiroItem('Superávit / Saldo Acumulado', 'Saldo final em contas bancárias', 'R\$ 50.210,00', const Color(0xFF1E293B)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static Widget _buildResumoFinanceiroItem(String titulo, String subtitulo, String valor, Color cor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(subtitulo, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              ],
+            ),
+          ),
+          Text(valor, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: cor)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMenuTab(BuildContext context, dynamic user, bool isDark) {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -323,6 +505,12 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
 
         // ITENS DO MENU COMPLEMENTAR DA ÁREA PESSOAL
         _buildMenuItem(
+          icon: Icons.church_rounded,
+          title: 'Minha Igreja',
+          subtitle: 'História, liderança pastoral e congregações',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalIgrejaScreen())),
+        ),
+        _buildMenuItem(
           icon: Icons.badge_rounded,
           title: 'Carteirinha Digital',
           subtitle: 'Identificação simples de membro',
@@ -333,6 +521,12 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
           title: 'Novo Cântico (Hinário)',
           subtitle: 'Letras e hinos da IPB offline',
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalHinarioScreen())),
+        ),
+        _buildMenuItem(
+          icon: Icons.pie_chart_rounded,
+          title: 'Prestação de Contas (Exame Anual)',
+          subtitle: 'Demonstrativo anual homologado pelo Conselho',
+          onTap: () => _mostrarPrestacaoContasModal(context),
         ),
         _buildMenuItem(
           icon: Icons.payments_rounded,

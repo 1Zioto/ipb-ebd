@@ -483,6 +483,13 @@ export class AppMenu implements OnInit {
                         keywords: ['super admin', 'master', 'telas', 'modulos', 'igrejas ativas'],
                     },
                     {
+                        label: 'Aplicativo do Membro',
+                        icon: 'pi pi-fw pi-mobile',
+                        routerLink: ['/admin/app-membro'],
+                        visible: this.isScreenVisible('instituicoes', 'institution.manage') || this.auth.isSuperAdmin(),
+                        keywords: ['aplicativo do membro', 'app', 'modulos', 'ativar', 'desativar', 'celular', 'membros'],
+                    },
+                    {
                         label: 'Gestão de Usuários',
                         icon: 'pi pi-fw pi-user-edit',
                         routerLink: ['/admin/usuarios'],

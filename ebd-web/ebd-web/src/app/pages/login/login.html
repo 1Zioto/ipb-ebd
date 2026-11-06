@@ -67,21 +67,8 @@
 
       <!-- MODO: LOGIN -->
       @if (!isRegisterMode()) {
-        <!-- Seletor de Perfil: Diretoria vs Membro -->
+        <!-- Seletor de Perfil: Área do Membro vs Administração -->
         <div class="grid grid-cols-2 gap-1.5 p-1 mb-5 rounded-xl bg-surface-ground border border-surface">
-          <button
-            type="button"
-            (click)="switchLoginProfile('diretoria')"
-            class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer"
-            [ngClass]="{
-              'bg-primary text-primary-contrast shadow-sm': loginProfile() === 'diretoria',
-              'text-muted-color hover:text-surface-900 dark:hover:text-surface-0': loginProfile() !== 'diretoria'
-            }"
-          >
-            <i class="pi pi-shield text-xs"></i>
-            <span>Diretoria & Gestão</span>
-          </button>
-
           <button
             type="button"
             (click)="switchLoginProfile('membro')"
@@ -93,6 +80,19 @@
           >
             <i class="pi pi-user text-xs"></i>
             <span>Área do Membro</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="switchLoginProfile('diretoria')"
+            class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            [ngClass]="{
+              'bg-primary text-primary-contrast shadow-sm': loginProfile() === 'diretoria',
+              'text-muted-color hover:text-surface-900 dark:hover:text-surface-0': loginProfile() !== 'diretoria'
+            }"
+          >
+            <i class="pi pi-shield text-xs"></i>
+            <span>Administração</span>
           </button>
         </div>
 
@@ -172,7 +172,7 @@
                 <label for="password" class="block text-xs font-bold uppercase tracking-wider text-muted-color">
                   Data de Nascimento
                 </label>
-                <span class="text-[11px] text-muted-color font-normal">Padrão: dd/mm/aaaa</span>
+                <span class="text-[11px] text-muted-color font-normal">Formato: DDMMAAAA</span>
               </div>
               <p-iconfield styleClass="w-full">
                 <p-inputicon styleClass="pi pi-calendar text-muted-color" />
@@ -180,7 +180,7 @@
                   pInputText
                   id="password"
                   type="text"
-                  placeholder="Ex: 21/08/1993"
+                  placeholder="Ex: 15081990"
                   class="w-full !py-3"
                   [ngModel]="password()"
                   (ngModelChange)="password.set($event)"
@@ -193,7 +193,7 @@
 
             <div class="text-[11px] text-muted-color flex items-center gap-1.5 p-2.5 rounded-xl bg-surface-ground border border-surface">
               <i class="pi pi-user text-primary shrink-0"></i>
-              <span>Sua senha inicial de membro é sua data de nascimento (ex: 21/08/1993).</span>
+              <span>Digite sua data de nascimento com 8 dígitos sem barras ou traços (ex: 15081990).</span>
             </div>
           }
 

@@ -43,3 +43,4 @@ class ChurchAppConfig extends Model
         return $this->belongsTo(Institution::class);
     }
 }
+

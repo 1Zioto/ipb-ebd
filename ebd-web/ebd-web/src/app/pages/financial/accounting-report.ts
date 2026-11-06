@@ -2,11 +2,17 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { TextareaModule } from 'primeng/textarea';
+import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { environment } from '@/environments/environment';
 import { FinancialService } from '../../core/financial.service';
 import { AuthService } from '../../core/auth.service';
 import {
@@ -25,11 +31,17 @@ import {
     TableModule,
     DialogModule,
     TextareaModule,
+    InputTextModule,
+    TooltipModule,
     TagModule,
+    ToastModule,
   ],
+  providers: [MessageService],
   templateUrl: './accounting-report.html',
 })
 export class AccountingReportPage implements OnInit {
+  private http = inject(HttpClient);
+  private msg = inject(MessageService);
   private financialService = inject(FinancialService);
   auth = inject(AuthService);
 
@@ -65,8 +77,123 @@ export class AccountingReportPage implements OnInit {
   showCloseModal = signal<boolean>(false);
   closeNotes = '';
 
+  // Fechamento de Exercício Anual & Prestação de Contas
+  exerciciosFechados = signal<any[]>([]);
+  modalExerciciosAnuais = false;
+  modalFecharExercicio = false;
+  modalParecer = false;
+  anoFechamento = new Date().getFullYear() - 1;
+  dataFechamento = new Date().toISOString().split('T')[0];
+  loadingFechamento = signal<boolean>(false);
+  parecerTexto = '';
+  exercicioSelecionado: any = null;
+
   ngOnInit(): void {
     this.loadData();
+    this.carregarExercicios();
+  }
+
+  carregarExercicios(): void {
+    this.http.get<any[]>(`${environment.apiUrl}/financial/annual-closings`).subscribe({
+      next: (res) => this.exerciciosFechados.set(res || []),
+      error: () => {},
+    });
+  }
+
+  abrirModalExercicios(): void {
+    this.carregarExercicios();
+    this.modalExerciciosAnuais = true;
+  }
+
+  abrirModalNovoFechamento(): void {
+    this.modalFecharExercicio = true;
+  }
+
+  executarFechamento(): void {
+    this.loadingFechamento.set(true);
+    const payload = {
+      year: this.anoFechamento,
+      closing_date: this.dataFechamento,
+    };
+
+    this.http.post<any>(`${environment.apiUrl}/financial/annual-closings/fechar-exercicio`, payload).subscribe({
+      next: (res) => {
+        this.loadingFechamento.set(false);
+        this.modalFecharExercicio = false;
+        this.msg.add({
+          severity: 'success',
+          summary: 'Exercício Fechado',
+          detail: res.message || 'Snapshot anual gerado com sucesso.',
+        });
+        this.carregarExercicios();
+      },
+      error: (err) => {
+        this.loadingFechamento.set(false);
+        this.msg.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: err.error?.message || 'Falha ao encerrar exercício.',
+        });
+      },
+    });
+  }
+
+  abrirModalParecer(ex: any): void {
+    this.exercicioSelecionado = ex;
+    this.parecerTexto = ex.conselho_parecer || '';
+    this.modalParecer = true;
+  }
+
+  salvarParecer(): void {
+    if (!this.exercicioSelecionado || !this.parecerTexto.trim()) {
+      this.msg.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Digite o parecer oficial do Conselho / Exame de Contas.',
+      });
+      return;
+    }
+
+    const id = this.exercicioSelecionado.id;
+    this.http.post<any>(`${environment.apiUrl}/financial/annual-closings/${id}/aprovar-conselho`, { parecer: this.parecerTexto }).subscribe({
+      next: () => {
+        this.msg.add({
+          severity: 'success',
+          summary: 'Parecer Registrado',
+          detail: 'Exercício aprovado pelo Conselho da Igreja.',
+        });
+        this.modalParecer = false;
+        this.carregarExercicios();
+      },
+      error: (err) => {
+        this.msg.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: err.error?.message || 'Falha ao registrar parecer.',
+        });
+      },
+    });
+  }
+
+  publicarParaMembros(ex: any): void {
+    if (!ex || !ex.id) return;
+    this.http.post<any>(`${environment.apiUrl}/financial/annual-closings/${ex.id}/publicar-membros`, {}).subscribe({
+      next: () => {
+        this.msg.add({
+          severity: 'success',
+          summary: 'Publicado!',
+          detail: `Prestação de Contas de ${ex.year} agora está visível para os membros da igreja.`,
+        });
+        this.carregarExercicios();
+      },
+      error: (err) => {
+        this.msg.add({
+          severity: 'error',
+          summary: 'Erro ao Publicar',
+          detail: err.error?.message || 'Falha ao publicar prestação de contas.',
+        });
+      },
+    });
   }
 
   loadData(): void {

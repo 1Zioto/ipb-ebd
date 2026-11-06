@@ -28,3 +28,4 @@ if (-not $k6Installed) {
 $scriptPath = Join-Path $PSScriptRoot "k6-concilia-1000-users.js"
 Write-Host "Iniciando simulação de 1.000 usuários ativos..." -ForegroundColor Green
 k6 run --env TARGET_URL=$TargetUrl $scriptPath
+

@@ -134,3 +134,4 @@ export default function () {
   // Pausa realista entre ações (tempo de leitura e clique do usuário)
   sleep(Math.random() * 2 + 1);
 }
+

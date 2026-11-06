@@ -152,7 +152,7 @@ class AuthController extends Controller
 
                 if (! $authenticated) {
                     throw ValidationException::withMessages([
-                        'password' => ['Data de nascimento incorreta. Para membros, informe sua data no padrão dd/mm/aaaa.'],
+                        'password' => ['Data de nascimento incorreta. Para membros, informe sua data no padrão DDMMAAAA sem barras ou traços (ex: 15081990).'],
                     ]);
                 }
 

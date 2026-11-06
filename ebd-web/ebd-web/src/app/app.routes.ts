@@ -35,6 +35,12 @@ export const routes: Routes = [
         canActivate: [superAdminGuard],
         loadComponent: () => import('./pages/admin/super-admin/super-admin').then((m) => m.SuperAdminPage),
       },
+      // ---- CONFIGURAÇÃO DO APLICATIVO DO MEMBRO POR IGREJA ----
+      {
+        path: 'admin/app-membro',
+        canActivate: [permissionGuard('institution.manage')],
+        loadComponent: () => import('./pages/admin/app-membro/app-membro').then((m) => m.AppMembroConfigPage),
+      },
       // ---- Módulo de Instituições & Estrutura Hierárquica ----
       {
         path: 'instituicoes',
