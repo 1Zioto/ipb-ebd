@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_service.dart';
 import '../../core/context_controller.dart';
 import '../../core/theme_controller.dart';
+import '../../widgets/app_drawer.dart';
 import '../login_screen.dart';
 import '../main_menu_screen.dart';
 import '../secretaria/boletim_screen.dart';
@@ -15,14 +16,21 @@ import 'personal_igreja_screen.dart';
 import 'personal_solicitacoes_screen.dart';
 
 class PersonalShellScreen extends StatefulWidget {
-  const PersonalShellScreen({super.key});
+  final int initialIndex;
+  const PersonalShellScreen({super.key, this.initialIndex = 0});
 
   @override
   State<PersonalShellScreen> createState() => _PersonalShellScreenState();
 }
 
 class _PersonalShellScreenState extends State<PersonalShellScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +47,7 @@ class _PersonalShellScreenState extends State<PersonalShellScreen> {
     ];
 
     return Scaffold(
+      drawer: const AppDrawer(currentRoute: 'personal'),
       appBar: AppBar(
         titleSpacing: 12,
         title: Row(

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../core/api_service.dart';
 import '../models/models.dart';
 import '../widgets/app_drawer.dart';
@@ -35,6 +35,28 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   @override
   void initState() {
     super.initState();
+    // Guarda de segurança: Membros ou não-autenticados nunca devem acessar o painel de gestão
+    final user = ApiService.instance.currentUser;
+    final isAuth = ApiService.instance.isAuthenticated;
+    if (!isAuth || user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      });
+      return;
+    }
+    if (ContextController.instance.isPersonal || !user.hasManagementAccess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const PersonalShellScreen()),
+        );
+      });
+      return;
+    }
+
     _loadMembers();
     _syncScreens();
   }

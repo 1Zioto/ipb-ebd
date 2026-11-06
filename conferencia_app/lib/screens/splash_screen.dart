@@ -1,7 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'main_menu_screen.dart';
 import '../core/api_service.dart';
+import '../core/context_controller.dart';
 import 'personal/personal_shell_screen.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool skipWelcome;
@@ -69,9 +71,17 @@ class _SplashScreenState extends State<SplashScreen>
     if (_navigated || !mounted) return;
     _navigated = true;
 
-    // Abre diretamente o Menu Principal (Hub Organizador) após o splash
     final user = ApiService.instance.currentUser;
-    final Widget nextScreen = (user != null && !user.hasManagementAccess) ? const PersonalShellScreen() : const MainMenuScreen();
+    final isAuth = ApiService.instance.isAuthenticated;
+    final Widget nextScreen;
+
+    if (!isAuth || user == null) {
+      nextScreen = const LoginScreen();
+    } else if (ContextController.instance.isManagement && user.hasManagementAccess) {
+      nextScreen = const MainMenuScreen();
+    } else {
+      nextScreen = const PersonalShellScreen();
+    }
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/api_service.dart';
+import '../core/context_controller.dart';
 import 'main_menu_screen.dart';
 import 'personal/member_activation_screen.dart';
 import 'personal/personal_shell_screen.dart';
@@ -73,6 +74,15 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final user = await ApiService.instance.login(username, password);
       if (!mounted) return;
+
+      // Define contexto ativo com base no perfil escolhido no login
+      if (_selectedProfile == LoginProfile.membro) {
+        await ContextController.instance.switchContext('personal');
+      } else {
+        await ContextController.instance.switchContext('management');
+      }
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Acesso autorizado: ${user.name}! (${user.role})'),
