@@ -68,43 +68,48 @@ import { AuthService } from '@/app/core/auth.service';
             <div class="relative flex items-center">
                 <button
                     type="button"
-                    class="layout-topbar-action cursor-pointer border-0 bg-transparent p-0 focus:outline-none"
+                    class="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 hover:border-primary focus:outline-none p-0 shadow-xs"
+                    [class.ring-2]="userMenuOpen()"
+                    [class.ring-primary]="userMenuOpen()"
+                    [class.ring-offset-2]="userMenuOpen()"
                     (click)="toggleUserMenu($event)"
                     [title]="user()?.name || 'Perfil do Usuário'"
                     aria-label="Menu do usuário"
                 >
-                    <div 
-                        class="w-8 h-8 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm transition-all select-none"
-                        [class.ring-2]="userMenuOpen()"
-                        [class.ring-primary]="userMenuOpen()"
-                        [class.ring-offset-2]="userMenuOpen()"
-                    >
+                    <div class="w-8 h-8 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-xs uppercase shadow-sm select-none">
                         {{ userInitials() }}
                     </div>
                 </button>
 
-                <!-- Dropdown Card Flutuante -->
+                <!-- Dropdown Card Flutuante Premium -->
                 @if (userMenuOpen()) {
                     <div
-                        class="absolute right-0 top-14 w-64 p-3 rounded-2xl shadow-2xl flex flex-col gap-2 animate-scalein"
+                        class="absolute right-0 top-12 mt-2 w-72 sm:w-80 p-3 rounded-2xl shadow-2xl flex flex-col gap-2 animate-scalein"
                         style="background-color: var(--surface-overlay, #ffffff); border: 1px solid var(--surface-border, #e2e8f0); z-index: 1050;"
                         (click)="$event.stopPropagation()"
                     >
                         <!-- Identificação do Usuário -->
                         <div 
-                            class="flex items-center gap-3 p-2.5 rounded-xl border"
+                            class="flex items-center gap-3 p-3 rounded-xl border"
                             style="background-color: var(--surface-ground, #f8fafc); border-color: var(--surface-border, #e2e8f0);"
                         >
-                            <div class="w-10 h-10 rounded-xl bg-primary text-primary-contrast flex items-center justify-center font-bold text-sm shadow-sm">
+                            <div class="w-11 h-11 rounded-full bg-primary text-primary-contrast flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-primary/20 shrink-0">
                                 {{ userInitials() }}
                             </div>
                             <div class="min-w-0 flex-1">
-                                <div class="font-bold text-sm text-surface-900 dark:text-surface-0 truncate">
+                                <div class="font-bold text-sm text-surface-900 dark:text-surface-0 truncate leading-snug" [title]="user()?.name">
                                     {{ user()?.name || 'Usuário' }}
                                 </div>
                                 <div class="text-xs text-muted-color truncate">
                                     &#64;{{ user()?.username || 'usuario' }}
                                 </div>
+                                @if (auth.isMasterUser()) {
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                                            Super Administrador
+                                        </span>
+                                    </div>
+                                }
                             </div>
                         </div>
 
@@ -118,49 +123,68 @@ import { AuthService } from '@/app/core/auth.service';
                                 <a
                                     routerLink="/admin/super-admin"
                                     (click)="userMenuOpen.set(false)"
-                                    class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                                    class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-surface-800 dark:text-surface-100 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer group"
                                 >
-                                    <i class="pi pi-sliders-h"></i>
-                                    <span>Painel Super Admin</span>
+                                    <span class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center transition-colors group-hover:bg-primary group-hover:text-primary-contrast">
+                                            <i class="pi pi-sliders-h text-xs"></i>
+                                        </div>
+                                        <span class="text-xs font-semibold">Painel Super Admin</span>
+                                    </span>
+                                    <i class="pi pi-chevron-right text-[10px] text-muted-color group-hover:text-primary transition-colors"></i>
                                 </a>
 
                                 <!-- Alternador Modo Super Admin -->
                                 <button
                                     type="button"
                                     (click)="toggleSuperAdminMode()"
-                                    class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-surface-700 dark:text-surface-300 hover:bg-surface-hover transition-colors"
+                                    class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-surface-800 dark:text-surface-100 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer group"
                                 >
-                                    <span class="flex items-center gap-2">
-                                        <i class="pi pi-shield"></i>
-                                        <span>Modo Super Admin</span>
+                                    <span class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-surface-200/70 dark:bg-surface-700 text-surface-700 dark:text-surface-300 flex items-center justify-center">
+                                            <i class="pi pi-shield text-xs"></i>
+                                        </div>
+                                        <span class="text-xs font-medium">Modo Super Admin</span>
                                     </span>
                                     <span
-                                        class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
-                                        [ngClass]="auth.isSuperAdmin() ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-surface-200 dark:bg-surface-700 text-muted-color'"
+                                        class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-all"
+                                        [ngClass]="auth.isSuperAdmin() ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-surface-200 dark:bg-surface-700 text-muted-color'"
                                     >
-                                        {{ auth.isSuperAdmin() ? 'Ativo' : 'Ativar' }}
+                                        {{ auth.isSuperAdmin() ? 'Ativo' : 'Inativo' }}
                                     </span>
                                 </button>
                             }
 
+                            <!-- Alternador de Tema Claro/Escuro -->
                             <button
                                 type="button"
                                 (click)="toggleDarkMode()"
-                                class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-surface-700 dark:text-surface-300 hover:bg-surface-hover transition-colors"
+                                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-surface-800 dark:text-surface-100 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer group"
                             >
-                                <span class="flex items-center gap-2">
-                                    <i [ngClass]="layoutService.isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun'"></i>
-                                    {{ layoutService.isDarkTheme() ? 'Tema Escuro' : 'Tema Claro' }}
+                                <span class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-surface-200/70 dark:bg-surface-700 text-surface-700 dark:text-surface-300 flex items-center justify-center">
+                                        <i [ngClass]="layoutService.isDarkTheme() ? 'pi pi-moon text-xs' : 'pi pi-sun text-xs'"></i>
+                                    </div>
+                                    <span class="text-xs font-medium">Tema Visual</span>
                                 </span>
-                                <span class="text-[10px] uppercase font-bold text-muted-color">Alternar</span>
+                                <span class="flex items-center gap-1.5 text-[11px] font-semibold text-muted-color group-hover:text-surface-900 dark:group-hover:text-surface-0 transition-colors">
+                                    <i [ngClass]="layoutService.isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun'" class="text-[10px]"></i>
+                                    <span>{{ layoutService.isDarkTheme() ? 'Escuro' : 'Claro' }}</span>
+                                </span>
                             </button>
 
+                            <!-- Divisor Sutil -->
+                            <div class="h-px my-1" style="background-color: var(--surface-border, #e2e8f0);"></div>
+
+                            <!-- Botão de Sair do Sistema -->
                             <button
                                 type="button"
                                 (click)="logout()"
-                                class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer group"
                             >
-                                <i class="pi pi-sign-out"></i>
+                                <div class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                                    <i class="pi pi-sign-out text-xs"></i>
+                                </div>
                                 <span>Sair do Sistema</span>
                             </button>
                         </div>
