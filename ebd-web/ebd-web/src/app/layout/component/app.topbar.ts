@@ -12,7 +12,7 @@
  */
 
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LayoutService } from '@/app/layout/service/layout.service';
 import { AuthService } from '@/app/core/auth.service';
@@ -38,8 +38,24 @@ import { AuthService } from '@/app/core/auth.service';
         </div>
 
         <div class="layout-topbar-actions">
-            <!-- Botão de Acesso Rápido Super Admin (Exclusivo Usuário Master) -->
-            @if (auth.isMasterUser()) {
+            <!-- Alternador de Contexto (Área do Membro x Gestão Administrativa) -->
+            @if (auth.hasManagementAccess()) {
+                <button
+                    type="button"
+                    (click)="toggleContext()"
+                    class="h-9 px-3 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 select-none"
+                    [ngClass]="auth.isMemberContext() 
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20' 
+                        : 'bg-surface-100 dark:bg-surface-800 border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-200 hover:bg-surface-hover'"
+                    [title]="auth.isMemberContext() ? 'Clique para alternar para Gestão Administrativa' : 'Clique para alternar para Área do Membro'"
+                >
+                    <i [ngClass]="auth.isMemberContext() ? 'pi pi-user' : 'pi pi-shield'" class="text-xs"></i>
+                    <span class="hidden sm:inline">{{ auth.isMemberContext() ? 'Área do Membro' : 'Gestão Oficial' }}</span>
+                </button>
+            }
+
+            <!-- Botão de Acesso Rápido Super Admin (Exclusivo Usuário Master no modo Gestão) -->
+            @if (auth.isMasterUser() && !auth.isMemberContext()) {
                 <a
                     routerLink="/admin/super-admin"
                     class="layout-topbar-action relative"
@@ -118,8 +134,30 @@ import { AuthService } from '@/app/core/auth.service';
                             class="flex flex-col gap-1 pt-1 border-t"
                             style="border-top-color: var(--surface-border, #e2e8f0);"
                         >
-                            @if (auth.isMasterUser()) {
-                                <!-- Link Super Admin (Apenas Usuário Master) -->
+                            <!-- Alternador de Contexto (Apenas quem tem acesso à Gestão) -->
+                            @if (auth.hasManagementAccess()) {
+                                <button
+                                    type="button"
+                                    (click)="toggleContext()"
+                                    class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-surface-800 dark:text-surface-100 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer group"
+                                >
+                                    <span class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-surface-200/70 dark:bg-surface-700 text-surface-700 dark:text-surface-300 flex items-center justify-center">
+                                            <i [ngClass]="auth.isMemberContext() ? 'pi pi-shield text-xs' : 'pi pi-user text-xs'"></i>
+                                        </div>
+                                        <span class="text-xs font-medium">Ambiente Ativo</span>
+                                    </span>
+                                    <span
+                                        class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-all"
+                                        [ngClass]="auth.isMemberContext() ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20'"
+                                    >
+                                        {{ auth.isMemberContext() ? 'Área do Membro' : 'Gestão Oficial' }}
+                                    </span>
+                                </button>
+                            }
+
+                            @if (auth.isMasterUser() && !auth.isMemberContext()) {
+                                <!-- Link Super Admin (Apenas Usuário Master no modo Gestão) -->
                                 <a
                                     routerLink="/admin/super-admin"
                                     (click)="userMenuOpen.set(false)"
@@ -197,9 +235,17 @@ import { AuthService } from '@/app/core/auth.service';
 export class AppTopbar {
     layoutService = inject(LayoutService);
     auth = inject(AuthService);
+    router = inject(Router);
     user = this.auth.user;
 
     userMenuOpen = signal(false);
+
+    toggleContext() {
+        const next = this.auth.isMemberContext() ? 'admin' : 'membro';
+        this.auth.setContext(next);
+        this.userMenuOpen.set(false);
+        this.router.navigate(['/dashboard']);
+    }
 
     userInitials = computed(() => {
         const name = this.user()?.name || 'U';

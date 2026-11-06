@@ -7,6 +7,7 @@ import { AuthUser, LoginResponse } from './models';
 
 const TOKEN_KEY = 'ebd_token';
 const USER_KEY = 'ebd_user';
+const CONTEXT_KEY = 'ebd_active_context';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -17,6 +18,10 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => !!this._user() && !!this.token());
 
+  private _activeContext = signal<'membro' | 'admin'>(this.readStoredContext());
+  readonly activeContext = this._activeContext.asReadonly();
+  readonly isMemberContext = computed(() => this._activeContext() === 'membro');
+
   token(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }
@@ -24,6 +29,19 @@ export class AuthService {
   private readStoredUser(): AuthUser | null {
     const raw = localStorage.getItem(USER_KEY);
     return raw ? (JSON.parse(raw) as AuthUser) : null;
+  }
+
+  private readStoredContext(): 'membro' | 'admin' {
+    const raw = localStorage.getItem(CONTEXT_KEY);
+    return raw === 'admin' ? 'admin' : 'membro';
+  }
+
+  setContext(context: 'membro' | 'admin'): void {
+    if (context === 'admin' && !this.hasManagementAccess()) {
+      return;
+    }
+    localStorage.setItem(CONTEXT_KEY, context);
+    this._activeContext.set(context);
   }
 
   async login(username: string, password: string): Promise<void> {
@@ -73,8 +91,10 @@ export class AuthService {
   clearSession(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(CONTEXT_KEY);
     localStorage.removeItem('ipb_super_admin_mode');
     this._user.set(null);
+    this._activeContext.set('membro');
   }
 
   /**
@@ -96,9 +116,28 @@ export class AuthService {
   });
 
   /**
+   * Verifica se o usuário autenticado possui papéis ou permissões de gestão (oficial/diretoria).
+   */
+  readonly hasManagementAccess = computed(() => {
+    const u = this._user();
+    if (!u) return false;
+    if (this.isMasterUser()) return true;
+    const managementRoles = [
+      'admin', 'pastor', 'presbitero', 'diacono', 'superintendente',
+      'professor', 'tesoureiro', 'secretario', 'conselho', 'diretoria', 'programador'
+    ];
+    const roles = u.roles || [];
+    const hasRole = roles.some(r => managementRoles.includes(r.toLowerCase()));
+    const hasPerm = !!(u.permissions && u.permissions.length > 0);
+    return hasRole || hasPerm;
+  });
+
+  /**
    * Central Super Admin e privilégios de parametrização são exclusivos do Usuário Master.
+   * Quando o usuário estiver no contexto da Área do Membro, o modo Super Admin fica inativo.
    */
   readonly isSuperAdmin = computed(() => {
+    if (this.isMemberContext()) return false;
     return this.isMasterUser();
   });
 
@@ -115,6 +154,10 @@ export class AuthService {
   }
 
   can(permission: string): boolean {
+    // Quando estiver na Área do Membro, nenhuma permissão administrativa é concedida
+    if (this.isMemberContext()) {
+      return false;
+    }
     if (this.isSuperAdmin()) return true;
     const u = this._user();
     if (!u) return false;

@@ -143,6 +143,12 @@ export class AppMenu implements OnInit {
             this.pendingIndicators.indicators();
             this.rebuildMenu();
         });
+
+        // Re-renderiza o menu instantaneamente ao alternar entre Área do Membro e Gestão
+        effect(() => {
+            this.auth.activeContext();
+            this.rebuildMenu();
+        });
     }
 
     ngOnInit() {
@@ -162,6 +168,12 @@ export class AppMenu implements OnInit {
     }
 
     rebuildMenu(): void {
+        // Se estiver no contexto da Área do Membro, monta EXCLUSIVAMENTE o menu dos 12 módulos do membro
+        if (this.auth.isMemberContext()) {
+            this.buildMemberMenu();
+            return;
+        }
+
         const pendingCalls = this.pendingIndicators.getPendingCalls();
         const pendingDiaconato = this.pendingIndicators.getPendingDiaconato();
         const pendingOS = this.pendingIndicators.getPendingOS();
@@ -511,6 +523,109 @@ export class AppMenu implements OnInit {
         this.model = this.filterVisibleHierarchy(rawStructure);
 
         // Prepara lista indexada de todas as páginas para pesquisa rápida
+        this.allFlatItems = this.extractFlatItems(this.model);
+    }
+
+    /**
+     * Monta o menu exclusivo da Área do Membro contendo estritamente os 12 módulos
+     * previstos nas diretrizes oficiais da IPB, sem expor nenhuma tela administrativa.
+     */
+    private buildMemberMenu(): void {
+        const memberStructure: AppMenuItemConfig[] = [
+            {
+                label: 'Área do Membro',
+                id: 'area_membro',
+                icon: 'pi pi-fw pi-user',
+                items: [
+                    {
+                        label: 'Início',
+                        icon: 'pi pi-fw pi-home',
+                        routerLink: ['/dashboard'],
+                        visible: this.screenConfig.isScreenEnabled('mural') || this.screenConfig.isScreenEnabled('dashboard'),
+                        keywords: ['inicio', 'home', 'painel', 'avisos', 'versiculo', 'destaques'],
+                    },
+                    {
+                        label: 'Minha Igreja',
+                        icon: 'pi pi-fw pi-building',
+                        routerLink: ['/instituicoes'],
+                        visible: this.screenConfig.isScreenEnabled('minha_igreja') || this.screenConfig.isScreenEnabled('instituicoes'),
+                        keywords: ['minha igreja', 'historia', 'pastor', 'lideranca', 'congregacoes'],
+                    },
+                    {
+                        label: 'Escola Bíblica Dominical',
+                        icon: 'pi pi-fw pi-book',
+                        routerLink: ['/classes'],
+                        visible: this.screenConfig.isScreenEnabled('ebd') || this.screenConfig.isScreenEnabled('classes'),
+                        keywords: ['ebd', 'minha classe', 'licao', 'revistas', 'mural'],
+                    },
+                    {
+                        label: 'Bíblia e Hinário',
+                        icon: 'pi pi-fw pi-bookmark',
+                        routerLink: ['/discipulado-biblioteca'],
+                        visible: this.screenConfig.isScreenEnabled('biblia_hinario') || this.screenConfig.isScreenEnabled('discipulado_biblioteca'),
+                        keywords: ['biblia', 'hinario', 'novo cantico', 'letras', 'versiculos'],
+                    },
+                    {
+                        label: 'Agenda e Eventos',
+                        icon: 'pi pi-fw pi-calendar',
+                        routerLink: ['/calendario'],
+                        visible: this.screenConfig.isScreenEnabled('agenda_eventos') || this.screenConfig.isScreenEnabled('calendario'),
+                        keywords: ['agenda', 'eventos', 'cultos', 'programacao', 'inscricoes'],
+                    },
+                    {
+                        label: 'Vida Cristã',
+                        icon: 'pi pi-fw pi-heart',
+                        routerLink: ['/discipulado-biblioteca'],
+                        visible: this.screenConfig.isScreenEnabled('vida_crista') || this.screenConfig.isScreenEnabled('discipulado_biblioteca'),
+                        keywords: ['vida crista', 'devocionais', 'plano de leitura', 'leitura biblica'],
+                    },
+                    {
+                        label: 'Biblioteca',
+                        icon: 'pi pi-fw pi-folder',
+                        routerLink: ['/discipulado-biblioteca'],
+                        visible: this.screenConfig.isScreenEnabled('biblioteca') || this.screenConfig.isScreenEnabled('discipulado_biblioteca'),
+                        keywords: ['biblioteca', 'livros', 'estudos biblicos', 'documentos', 'revistas'],
+                    },
+                    {
+                        label: 'Dízimos e Ofertas',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/dizimos/historico'],
+                        visible: this.screenConfig.isScreenEnabled('dizimos_ofertas') || this.screenConfig.isScreenEnabled('dizimos'),
+                        keywords: ['dizimos', 'ofertas', 'pix', 'contribuicao', 'recibos', 'extrato'],
+                    },
+                    {
+                        label: 'Solicitações',
+                        icon: 'pi pi-fw pi-envelope',
+                        routerLink: ['/secretaria/modelos-cartas'],
+                        visible: this.screenConfig.isScreenEnabled('solicitacoes_secretaria') || this.screenConfig.isScreenEnabled('cartas'),
+                        keywords: ['solicitacoes', 'certidoes', 'atualizacao cadastral', 'secretaria'],
+                    },
+                    {
+                        label: 'Avisos e Notificações',
+                        icon: 'pi pi-fw pi-bell',
+                        routerLink: ['/secretaria/boletim'],
+                        visible: this.screenConfig.isScreenEnabled('boletim'),
+                        keywords: ['avisos', 'notificacoes', 'boletim', 'comunicados pastorais'],
+                    },
+                    {
+                        label: 'Meus Dados',
+                        icon: 'pi pi-fw pi-id-card',
+                        routerLink: ['/pessoas'],
+                        visible: this.screenConfig.isScreenEnabled('minha_ficha') || this.screenConfig.isScreenEnabled('pessoas'),
+                        keywords: ['meus dados', 'carteirinha', 'dependentes', 'dispositivos', 'seguranca'],
+                    },
+                    {
+                        label: 'Contatos da Igreja',
+                        icon: 'pi pi-fw pi-phone',
+                        routerLink: ['/instituicoes'],
+                        visible: this.screenConfig.isScreenEnabled('minha_igreja') || this.screenConfig.isScreenEnabled('instituicoes'),
+                        keywords: ['contatos', 'telefones', 'whatsapp', 'secretaria', 'endereco', 'redes'],
+                    },
+                ],
+            },
+        ];
+
+        this.model = this.filterVisibleHierarchy(memberStructure);
         this.allFlatItems = this.extractFlatItems(this.model);
     }
 

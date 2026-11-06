@@ -80,6 +80,8 @@ export class LoginPage {
     this.loading.set(true);
     try {
       await this.auth.login(this.username(), this.password());
+      const targetContext = this.loginProfile() === 'membro' ? 'membro' : 'admin';
+      this.auth.setContext(targetContext);
       this.router.navigate(['/']);
     } catch (e: any) {
       const msg = e?.error?.errors?.password?.[0] || e?.error?.errors?.username?.[0] || e?.error?.message || 'Falha no login.';
