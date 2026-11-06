@@ -206,7 +206,6 @@ export class MembrosRolPage implements OnInit {
       },
     });
   }
-  }
 
   carregarMembros(): void {
     this.loading.set(true);
