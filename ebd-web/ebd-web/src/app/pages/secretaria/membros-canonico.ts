@@ -7,6 +7,8 @@ import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
+import { RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { SecretariaService, MembroRol, RolMembrosStats, FichaMinisterial } from '../../core/secretaria.service';
 import { PastorInfo } from '../../core/models';
@@ -26,6 +28,8 @@ import { StatCardComponent } from '../../shared/components/stat-card';
     InputTextModule,
     DialogModule,
     ToastModule,
+    TooltipModule,
+    RouterModule,
     StatCardComponent,
   ],
   providers: [MessageService],
@@ -71,8 +75,137 @@ export class MembrosRolPage implements OnInit {
   pastoresDisponiveis = signal<PastorInfo[]>([]);
   selectedPastorId = signal<number | null>(null);
 
+  // Aba Ativa (Rol vs Solicitações)
+  activeTab = signal<'rol' | 'solicitacoes'>('rol');
+
+  // Solicitações de Cadastro (Link Público)
+  solicitacoes = signal<any[]>([]);
+  totalSolicitacoesPendentes = signal<number>(0);
+  loadingSolicitacoes = signal<boolean>(false);
+  selectedSolicitacao = signal<any | null>(null);
+  detalheSolicitacaoDialog = false;
+  rejeitarDialog = false;
+  motivoRejeicao = '';
+
+  // Modal Gerar Link de Cadastro
+  linkPublicoDialog = false;
+  linkPublicoUrl = signal<string>('');
+  linkCopiado = signal<boolean>(false);
+
   ngOnInit(): void {
     this.carregarMembros();
+    this.carregarSolicitacoes();
+  }
+
+  carregarSolicitacoes(): void {
+    this.loadingSolicitacoes.set(true);
+    this.secService.getMemberApplications().subscribe({
+      next: (res) => {
+        const data = res.data || [];
+        this.solicitacoes.set(data);
+        const pendentes = data.filter((x: any) => x.status === 'pendente').length;
+        this.totalSolicitacoesPendentes.set(pendentes);
+        this.loadingSolicitacoes.set(false);
+      },
+      error: () => {
+        this.loadingSolicitacoes.set(false);
+      },
+    });
+  }
+
+  abrirModalLinkPublico(): void {
+    const origin = window.location.origin;
+    // O link público leva à rota de cadastro público de membros
+    this.linkPublicoUrl.set(`${origin}/cadastro-membro`);
+    this.linkCopiado.set(false);
+    this.linkPublicoDialog = true;
+  }
+
+  copiarLinkPublico(): void {
+    if (!this.linkPublicoUrl()) return;
+    navigator.clipboard.writeText(this.linkPublicoUrl()).then(() => {
+      this.linkCopiado.set(true);
+      this.msg.add({
+        severity: 'success',
+        summary: 'Link Copiado!',
+        detail: 'O endereço de cadastro de novos membros foi copiado para sua área de transferência.',
+      });
+      setTimeout(() => this.linkCopiado.set(false), 3000);
+    });
+  }
+
+  abrirWhatsAppLink(): void {
+    const texto = encodeURIComponent(
+      `Paz do Senhor! Segue o link oficial para realizar o cadastro de membro em nossa Igreja Presbiteriana: ${this.linkPublicoUrl()}`
+    );
+    window.open(`https://wa.me/?text=${texto}`, '_blank');
+  }
+
+  verDetalhesSolicitacao(app: any): void {
+    this.selectedSolicitacao.set(app);
+    this.detalheSolicitacaoDialog = true;
+  }
+
+  aprovarSolicitacao(app: any): void {
+    if (!app || !app.id) return;
+    this.secService.approveMemberApplication(app.id).subscribe({
+      next: (res) => {
+        this.msg.add({
+          severity: 'success',
+          summary: 'Cadastro Aprovado!',
+          detail: `${app.full_name} agora faz parte do Rol de Membros da igreja.`,
+        });
+        this.detalheSolicitacaoDialog = false;
+        this.carregarSolicitacoes();
+        this.carregarMembros();
+      },
+      error: (err) => {
+        this.msg.add({
+          severity: 'error',
+          summary: 'Erro ao Aprovar',
+          detail: err.error?.message || 'Falha ao processar a aprovação da solicitação.',
+        });
+      },
+    });
+  }
+
+  abrirDialogRejeitar(app: any): void {
+    this.selectedSolicitacao.set(app);
+    this.motivoRejeicao = '';
+    this.rejeitarDialog = true;
+  }
+
+  confirmarRejeicao(): void {
+    const app = this.selectedSolicitacao();
+    if (!app || !this.motivoRejeicao.trim()) {
+      this.msg.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Informe o motivo da rejeição da solicitação.',
+      });
+      return;
+    }
+
+    this.secService.rejectMemberApplication(app.id, this.motivoRejeicao).subscribe({
+      next: () => {
+        this.msg.add({
+          severity: 'info',
+          summary: 'Solicitação Rejeitada',
+          detail: 'O registro foi arquivado como rejeitado com o motivo informado.',
+        });
+        this.rejeitarDialog = false;
+        this.detalheSolicitacaoDialog = false;
+        this.carregarSolicitacoes();
+      },
+      error: (err) => {
+        this.msg.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: err.error?.message || 'Falha ao rejeitar solicitação.',
+        });
+      },
+    });
+  }
   }
 
   carregarMembros(): void {

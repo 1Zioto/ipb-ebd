@@ -11,6 +11,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/public/inscricao-evento/inscricao-evento').then((m) => m.InscricaoEventoPublicaPage),
   },
   {
+    path: 'cadastro-membro/:slug',
+    loadComponent: () => import('./pages/public/cadastro-membro/cadastro-membro').then((m) => m.CadastroMembroPublicoPage),
+  },
+  {
+    path: 'cadastro-membro',
+    loadComponent: () => import('./pages/public/cadastro-membro/cadastro-membro').then((m) => m.CadastroMembroPublicoPage),
+  },
+  {
     path: '',
     loadComponent: () => import('./layout/component/app.layout').then((m) => m.AppLayout),
     canActivate: [authGuard],

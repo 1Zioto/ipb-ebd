@@ -494,4 +494,24 @@ export class SecretariaService {
     if (pastorId) p = p.set('pastor_id', pastorId.toString());
     return this.http.get<FichaMinisterial>(`${this.api}/relatorios-oficiais/ficha-ministerial/${personId}`, { params: p });
   }
+
+  // 📝 Solicitações de Cadastro de Membro (Link Público & Aprovação)
+  getMemberApplications(params?: { status?: string; page?: number }): Observable<any> {
+    let p = new HttpParams();
+    if (params?.status) p = p.set('status', params.status);
+    if (params?.page) p = p.set('page', params.page.toString());
+    return this.http.get<any>(`${this.api}/secretaria/applications`, { params: p });
+  }
+
+  getMemberApplication(id: number): Observable<any> {
+    return this.http.get<any>(`${this.api}/secretaria/applications/${id}`);
+  }
+
+  approveMemberApplication(id: number): Observable<any> {
+    return this.http.post<any>(`${this.api}/secretaria/applications/${id}/approve`, {});
+  }
+
+  rejectMemberApplication(id: number, reason: string): Observable<any> {
+    return this.http.post<any>(`${this.api}/secretaria/applications/${id}/reject`, { reason });
+  }
 }

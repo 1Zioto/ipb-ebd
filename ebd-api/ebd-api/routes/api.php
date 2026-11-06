@@ -42,6 +42,9 @@ use App\Http\Controllers\Api\SociedadesController;
 use App\Http\Controllers\Api\ScreenConfigController;
 use App\Http\Controllers\Api\SystemAdminController;
 use App\Http\Controllers\Api\EcclesiasticalIntelligenceController;
+use App\Http\Controllers\Api\ChurchMemberApplicationController;
+use App\Http\Controllers\Api\ChurchAppConfigController;
+use App\Http\Controllers\Api\Financial\FinancialAnnualClosingController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -57,6 +60,12 @@ Route::prefix('v1')->group(function () {
     // Inscrição pública em eventos e retiros da igreja
     Route::get('public/events/{slug}', [PublicEventController::class, 'showBySlug']);
     Route::post('public/events/{slug}/register', [PublicEventController::class, 'register']);
+
+    // Link público de cadastro de membro & informações da igreja
+    Route::get('public/church/{slug}/membership-info', [ChurchMemberApplicationController::class, 'getFormInfo']);
+    Route::post('public/church/{slug}/membership-applications', [ChurchMemberApplicationController::class, 'submitPublicApplication']);
+    Route::get('public/church/{slug}/app-modules', [ChurchAppConfigController::class, 'publicModules']);
+    Route::get('public/church/{institutionId}/prestacao-contas/{year?}', [FinancialAnnualClosingController::class, 'publicMemberView']);
 
     // ---- Autenticado ----
     Route::middleware('auth:sanctum')->group(function () {
@@ -296,6 +305,13 @@ Route::prefix('v1')->group(function () {
             Route::get('accounting/export-csv', [FinancialAccountingController::class, 'exportCsv'])->middleware('permission:financial.accounting.view');
             Route::post('accounting/close-month', [FinancialAccountingController::class, 'closeMonth'])->middleware('permission:financial.accounting.close');
             Route::post('accounting/reopen-month', [FinancialAccountingController::class, 'reopenMonth'])->middleware('permission:financial.accounting.close');
+
+            // Fechamento de Exercício Financeiro Anual & Prestação de Contas
+            Route::get('annual-closings', [FinancialAnnualClosingController::class, 'index'])->middleware('permission:financial.accounting.view');
+            Route::get('annual-closings/{id}', [FinancialAnnualClosingController::class, 'show'])->middleware('permission:financial.accounting.view');
+            Route::post('annual-closings/fechar-exercicio', [FinancialAnnualClosingController::class, 'closeExercise'])->middleware('permission:financial.accounting.close');
+            Route::post('annual-closings/{id}/aprovar-conselho', [FinancialAnnualClosingController::class, 'approveConselho'])->middleware('permission:conselho.approve');
+            Route::post('annual-closings/{id}/publicar-membros', [FinancialAnnualClosingController::class, 'publishToMembers'])->middleware('permission:financial.accounting.close');
         });
 
         // ---- 🏛️ 1. Secretaria & Conselho da Igreja (Oficial IPB) ----
@@ -312,7 +328,17 @@ Route::prefix('v1')->group(function () {
             Route::get('atas/{ata}', [SecretariaController::class, 'showAta'])->middleware('permission.any:secretaria.atas.view,conselho.approve');
             Route::put('atas/{ata}', [SecretariaController::class, 'updateAta'])->middleware('permission:secretaria.atas.manage');
             Route::patch('atas/{ata}/aprovar', [SecretariaController::class, 'aprovarAta'])->middleware('permission:conselho.approve');
+
+            // Solicitações de Cadastro de Membros (Link Público)
+            Route::get('applications', [ChurchMemberApplicationController::class, 'index'])->middleware('permission:secretaria.rol.view');
+            Route::get('applications/{id}', [ChurchMemberApplicationController::class, 'show'])->middleware('permission:secretaria.rol.view');
+            Route::post('applications/{id}/approve', [ChurchMemberApplicationController::class, 'approve'])->middleware('permission:secretaria.rol.manage');
+            Route::post('applications/{id}/reject', [ChurchMemberApplicationController::class, 'reject'])->middleware('permission:secretaria.rol.manage');
         });
+
+        // Configuração Dinâmica dos Módulos do Aplicativo do Membro
+        Route::get('church-app-config', [ChurchAppConfigController::class, 'show']);
+        Route::put('church-app-config', [ChurchAppConfigController::class, 'update'])->middleware('permission:institution.manage');
 
         // ---- 📅 Eventos & Inscrições da Igreja ----
         Route::prefix('church-events')->group(function () {
